@@ -1127,7 +1127,7 @@ namespace UnityEditor.UI
 			image.color = new Color(1f, 1f, 1f, 0.392f);
 
 
-			SelectionBox selectableArea = go.AddComponent<SelectionBox>();
+			UnityEngine.UI.Extensions.SelectionBox selectableArea = go.AddComponent<UnityEngine.UI.Extensions.SelectionBox>();
 			selectableArea.selectionMask = rect;
 			selectableArea.color = new Color(0.816f, 0.816f, 0.816f, 0.353f);
 
