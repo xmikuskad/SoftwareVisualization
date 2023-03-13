@@ -53,6 +53,10 @@ public class ExternalJsonLoader : MonoBehaviour
         {
             StartCoroutine(OutputRoutine(new System.Uri(paths[0]).AbsoluteUri));
         }
+        else
+        {
+            SetLoading(false);
+        }
     }
 
     // Manages loading screen
@@ -73,7 +77,6 @@ public class ExternalJsonLoader : MonoBehaviour
                 // Alternative to the OnFinished callback
                 SingletonManager.Instance.dataManager.LoadData(dataLoaderJob.dataHolder);
                 dataLoaderJob = null;
-                SetLoading(false);
             }
         }
     }

@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Reflection;
 
+[Serializable]
 public class VerticeData
 {
     public long id { get; set; }
