@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -6,7 +7,7 @@ using UnityEngine;
 public class VerticeRenderer : MouseOverRenderer
 {
 
-    public VerticeData verticeData;
+    private VerticeData verticeData;
     private MeshRenderer meshRenderer;
 
     [Header("References")] private Canvas hoverCanvas;
@@ -16,20 +17,25 @@ public class VerticeRenderer : MouseOverRenderer
     public Material hoverMaterial;
     public Material nonHoverMaterial;
 
+    private Vector3 offPosition = new (2000, 20000, 2000);
+
+
+    protected void Awake()
+    {
+        meshRenderer = GetComponent<MeshRenderer>();
+    }
 
     protected new void Start()
     {
-        meshRenderer = GetComponent<MeshRenderer>();
         base.Start();
     }
 
     public override void OnHoverEnter()
     {
         if (verticeData == null) {
-            Debug.Log("IS NULL");
             return;
         }
-        hoverElement.SetActive(true);
+        // hoverElement.SetActive(true);
         
         hoverText.text = verticeData.ToString();
         meshRenderer.sharedMaterial = hoverMaterial;
@@ -37,7 +43,8 @@ public class VerticeRenderer : MouseOverRenderer
 
     public override void OnHoverExit()
     {
-        if(hoverElement) hoverElement.SetActive(false);
+        // if(hoverElement) hoverElement.SetActive(false);
+        hoverElement.transform.position = offPosition;
         meshRenderer.material = nonHoverMaterial;
     }
     
@@ -61,5 +68,19 @@ public class VerticeRenderer : MouseOverRenderer
     public override GameObject GetHoverObject()
     {
         return hoverElement;
+    }
+
+    public void SetVerticeData(VerticeData verticeData, Material material)
+    {
+        this.verticeData = verticeData;
+        this.nonHoverMaterial = material;
+        Debug.Log(meshRenderer);
+        Debug.Log(meshRenderer.materials);
+        meshRenderer.materials = new[] {material};
+    }
+
+    public VerticeData GetVerticeData()
+    {
+        return this.verticeData;
     }
 }

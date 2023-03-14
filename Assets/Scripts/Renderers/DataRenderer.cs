@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -11,7 +12,13 @@ public class DataRenderer: MonoBehaviour
     private Dictionary<long, Dictionary<long, VerticeRenderer>> vertices = new ();
     private Dictionary<long, Dictionary<long, EdgeRenderer>> edges = new();
 
+    private Dictionary<VerticeType, Material> verticeMaterial = new();
+    private Dictionary<EdgeType, Material> edgeMaterial = new();
+
     [Header("Properties")] public int instantiatePerFrame = 10;
+
+    public List<VerticeMaterial> verticeMaterialsList;
+    public List<EdgeMaterial> edgeMaterialsList;
     
     [Header("References")] 
     public GameObject verticePrefab;
@@ -29,6 +36,9 @@ public class DataRenderer: MonoBehaviour
         // hoverElement = GameObject.FindGameObjectWithTag("HoverElement");
         // hoverCanvas = GameObject.FindGameObjectWithTag("MainCanvas").GetComponent<Canvas>();
         // hoverText = hoverElement.transform.GetChild(0).GetComponent<TMP_Text>();
+
+        verticeMaterial = verticeMaterialsList.ToDictionary(key => key.verticeType, value => value.material);
+        edgeMaterial = edgeMaterialsList.ToDictionary(key => key.edgeType, value => value.material);
     }
 
     public void AddData(List<DataHolder> dataHolder, bool rerender)
@@ -92,8 +102,9 @@ public class DataRenderer: MonoBehaviour
                 GameObject obj = Instantiate(verticePrefab, new Vector3(x, 0, 0), Quaternion.identity);
                 VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
                 verticeRenderer.SetUpReferences(hoverCanvas,hoverElement,hoverText);
-                verticeRenderer.verticeData = project.verticeData[verticeEl.Key];
-                verticeTmp.Add(verticeRenderer.verticeData.id,verticeRenderer);
+                VerticeData d = project.verticeData[verticeEl.Key];
+                verticeRenderer.SetVerticeData(d, verticeMaterial[d.verticeType]);
+                verticeTmp.Add(d.id,verticeRenderer);
                 x += 2;
                 index--;
                 if (index < 0)
@@ -111,8 +122,9 @@ public class DataRenderer: MonoBehaviour
                 GameObject obj = Instantiate(edgePrefab, new Vector3(x, 2, 0), Quaternion.identity);
                 EdgeRenderer edgeRenderer = obj.GetComponent<EdgeRenderer>();
                 edgeRenderer.SetUpReferences(hoverCanvas,hoverElement,hoverText);
-                edgeRenderer.edgeData = project.edgeData[edgeEl.Key];
-                edgeTmp.Add(edgeRenderer.edgeData.id,edgeRenderer);
+                EdgeData e = project.edgeData[edgeEl.Key];
+                edgeRenderer.SetEdgeData(e, edgeMaterial[e.type]);
+                edgeTmp.Add(e.id,edgeRenderer);
                 x += 2;
                 index--;
                 if (index < 0)

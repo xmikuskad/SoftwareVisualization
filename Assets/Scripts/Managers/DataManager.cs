@@ -32,7 +32,6 @@ public class DataManager: MonoBehaviour
         
         Debug.Log(string.Join("\n", holder.edgeData.Values.Select(x => x.ToString()).ToArray()));
         Debug.Log(string.Join("\n", holder.verticeData.Values.Select(x => x.ToString()).ToArray()));
-        Debug.Log(holder.projectId);
         dataRenderer.AddData(holder, false);
     }
 

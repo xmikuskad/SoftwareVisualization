@@ -7,7 +7,7 @@ using UnityEngine;
 public class EdgeRenderer : MouseOverRenderer
 {
     private MeshRenderer meshRenderer;
-    public EdgeData edgeData;
+    private EdgeData edgeData;
 
     [Header("References")] private Canvas hoverCanvas;
     private GameObject hoverElement;
@@ -15,10 +15,16 @@ public class EdgeRenderer : MouseOverRenderer
 
     public Material hoverMaterial;
     public Material nonHoverMaterial;
+    
+    private Vector3 offPosition = new(2000, 2000, 2000);
+    
+    protected new void Awake()
+    {
+        meshRenderer = GetComponent<MeshRenderer>();
+    }
 
     protected new void Start()
     {
-        meshRenderer = GetComponent<MeshRenderer>();
         base.Start();
     }
 
@@ -26,10 +32,9 @@ public class EdgeRenderer : MouseOverRenderer
     {
         if (edgeData == null)
         {
-            Debug.Log("IS NULL");
             return;
         }
-        hoverElement.SetActive(true);
+        // hoverElement.SetActive(true);
 
         hoverText.text = edgeData.ToString();
         meshRenderer.material = hoverMaterial;
@@ -37,7 +42,8 @@ public class EdgeRenderer : MouseOverRenderer
 
     public override void OnHoverExit()
     {
-        if(hoverElement) hoverElement.SetActive(false);
+        // if(hoverElement) hoverElement.SetActive(false);
+        hoverElement.transform.position = offPosition;
         meshRenderer.material = nonHoverMaterial;
     }
     
@@ -61,5 +67,23 @@ public class EdgeRenderer : MouseOverRenderer
     public override GameObject GetHoverObject()
     {
         return hoverElement;
+    }
+    
+    // public void SetEdgeData(EdgeData edgeData)
+    // {
+    //     this.edgeData = edgeData;
+    //     // meshRenderer.material.color = Color.blue;
+    // }
+    
+    public void SetEdgeData(EdgeData edgeData, Material material)
+    {
+        this.edgeData = edgeData;
+        this.nonHoverMaterial = material;
+        meshRenderer.materials = new[] {material};
+    }
+
+    public EdgeData GetEdgeData()
+    {
+        return this.edgeData;
     }
 }
