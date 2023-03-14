@@ -13,16 +13,16 @@ public class DataHolder
     {
     }
 
-    public DataHolder(DataHolder original, HashSet<EdgeType> edgeFilter, HashSet<VerticeType> verticeFilter)
+    public DataHolder(DataHolder original, FilterHolder holder)
     {
         projectId = original.projectId;
         edgeData =original.edgeData
             .Select(e=>e.Value)
-            .Where(e => !edgeFilter.Contains(e.type))
+            .Where(e => holder.allowedEdges.Contains(e.type))
             .ToDictionary(i=>i.id);
         verticeData =original.verticeData
             .Select(e=>e.Value)
-            .Where(e => !verticeFilter.Contains(e.verticeType))
+            .Where(e => holder.allowedVertices.Contains(e.verticeType))
             .ToDictionary(i=>i.id);
     }
 }

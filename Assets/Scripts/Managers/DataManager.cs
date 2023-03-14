@@ -15,8 +15,7 @@ public class DataManager: MonoBehaviour
     private DataRenderer dataRenderer;
 
     // Filters
-    private HashSet<EdgeType> edgeFilter;
-    private HashSet<VerticeType> verticeFilter;
+    private FilterHolder filterHolder;
     
     private void Start()
     {
@@ -36,13 +35,18 @@ public class DataManager: MonoBehaviour
         Debug.Log(holder.projectId);
         dataRenderer.AddData(holder, false);
     }
-    
+
+    public void SetFilter(FilterHolder h)
+    {
+        this.filterHolder = h;
+        ApplyFilter();
+    }
     
     public void ApplyFilter()
     {
         filteredDataHolders.Clear();
         filteredDataHolders = unchangedDataHolders
-            .Select(h => new DataHolder(h.Value, edgeFilter, verticeFilter))
+            .Select(h => new DataHolder(h.Value, filterHolder))
             .ToDictionary(i => i.projectId);
         
         dataRenderer.ResetData();
