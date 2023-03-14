@@ -32,6 +32,6 @@ public class EdgeData
     // for debugging
     public override string ToString()
     {
-        return $"EdgeData {{ id={id}, to={to}, from={from}, type={type},relation={relation} }}";
+        return $"EdgeData {{ id={id}, to={to}, from={from}, type=<b>{type}</b>,relation={relation} }}";
     }
 }

@@ -94,7 +94,7 @@ public class VerticeData
     public override string ToString()
     {
         return $"Vertice Data {nameof(id)}: {id}, {nameof(text)}: {text}, {nameof(title)}: {title}, " +
-               $"{nameof(verticeType)}: {verticeType}, {nameof(eid)}: {eid}, {nameof(name)}: {name}, " +
+               $"{nameof(verticeType)}: <b>{verticeType}</b>, {nameof(eid)}: {eid}, {nameof(name)}: {name}, " +
                $"{nameof(description)}: {description}, {nameof(comment)}: {comment}, {nameof(message)}: {message}, " +
                $"{nameof(identities)}: {identities}, {nameof(emails)}: {emails}, {nameof(roles)}: {roles}, " +
                $"{nameof(author)}: {author}, {nameof(created)}: {created}, {nameof(url)}: {url}, " +
