@@ -5,11 +5,9 @@ using UnityEngine.Networking;
 
 public class ExternalJsonLoader : MonoBehaviour
 {
-    private bool isLoading = false;
     private DataLoaderJob dataLoaderJob;
 
     [Header("References")] public GameObject loadingBar;
-    public GameObject prefab;
     public GameObject loadBtn;
 
     private void Start()
@@ -19,7 +17,7 @@ public class ExternalJsonLoader : MonoBehaviour
 
     private void Update()
     {
-        processJobs();
+        ProcessJobs();
     }
     
     // Load file from disk
@@ -62,13 +60,13 @@ public class ExternalJsonLoader : MonoBehaviour
     // Manages loading screen
     public void SetLoading(bool status)
     {
-        isLoading = status;
+        SingletonManager.Instance.pauseManager.SetPaused(status);
         loadingBar.SetActive(status);
         loadBtn.SetActive(!status);
     }
 
     // Takes care of async jobs and handling
-    private void processJobs()
+    private void ProcessJobs()
     {
         if (dataLoaderJob != null)
         {

@@ -166,6 +166,7 @@ public class DataRenderer: MonoBehaviour
     // Manages loading screen
     public void SetLoading(bool status)
     {
+        SingletonManager.Instance.pauseManager.SetPaused(status);
         loadingBar.SetActive(status);
         loadBtn.SetActive(!status);
     }

@@ -22,6 +22,11 @@ public class MovementController : MonoBehaviour
 
     void Update()
     {
+        if (SingletonManager.Instance.pauseManager.IsPaused())
+        {
+            return;
+        }
+        
         // Move the object when the left mouse button is held down
         if (Input.GetMouseButton(0))
         {

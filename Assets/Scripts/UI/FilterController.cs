@@ -1,9 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using UnityEditor.Experimental.GraphView;
+using UIWidgets;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -52,10 +51,12 @@ public class FilterController : MonoBehaviour
     public void CloseDialog()
     {
         dialogObj.SetActive(false);
+        SingletonManager.Instance.pauseManager.SetPaused(false);
     }
     
     public void OpenDialog()
     {
         dialogObj.SetActive(true);
+        SingletonManager.Instance.pauseManager.SetPaused(true);
     }
 }

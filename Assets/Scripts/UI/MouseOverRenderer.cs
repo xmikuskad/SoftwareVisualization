@@ -34,6 +34,10 @@ public abstract class MouseOverRenderer : MonoBehaviour {
     }
 
     private void OnMouseEnter() {
+        if (SingletonManager.Instance.pauseManager.IsPaused())
+        {
+            return;
+        }
         if(GetCanvas() == null) return;
         SetHoverPosition();
         OnHoverEnter();
@@ -45,6 +49,10 @@ public abstract class MouseOverRenderer : MonoBehaviour {
 
     private void OnMouseUp()
     {
+        if (SingletonManager.Instance.pauseManager.IsPaused())
+        {
+            return;
+        }
         // TODO show window in click?
         Debug.Log("CLICKED");
         OnClick();
