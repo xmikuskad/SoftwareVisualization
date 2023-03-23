@@ -251,7 +251,7 @@
 		bool modal;
 
 		/// <summary>
-		/// Is sidebar should be closed with click outside block.
+		/// If sidebar should be closed with click outside block.
 		/// </summary>
 		public bool Modal
 		{
@@ -332,7 +332,7 @@
 		{
 			get
 			{
-				return AnimateWithLayout && Content != null && ContentLayout != null;
+				return false;
 			}
 		}
 
@@ -1766,7 +1766,7 @@
 			Animations.Add(AnimationCoroutine(SidebarRect, SidebarPosition, 1f));
 			if (CanAnimateWithLayout)
 			{
-				Animations.Add(ResizeWithLayoutCoroutine());
+				// Animations.Add(ResizeWithLayoutCoroutine());
 			}
 			else
 			{

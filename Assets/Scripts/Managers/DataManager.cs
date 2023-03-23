@@ -30,8 +30,8 @@ public class DataManager: MonoBehaviour
         holder.projectId = projectIdCounter;
         unchangedDataHolders.Add(projectIdCounter,holder);
         
-        Debug.Log(string.Join("\n", holder.edgeData.Values.Select(x => x.ToString()).ToArray()));
-        Debug.Log(string.Join("\n", holder.verticeData.Values.Select(x => x.ToString()).ToArray()));
+        // Debug.Log(string.Join("\n", holder.edgeData.Values.Select(x => x.ToString()).ToArray()));
+        // Debug.Log(string.Join("\n", holder.verticeData.Values.Select(x => x.ToString()).ToArray()));
         dataRenderer.AddData(holder, false);
     }
 

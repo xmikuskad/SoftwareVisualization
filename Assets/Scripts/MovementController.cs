@@ -28,7 +28,7 @@ public class MovementController : MonoBehaviour
         }
         
         // Move the object when the left mouse button is held down
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(2))
         {
             var position = cameraTransform.position;
             position += cameraTransform.right * (Input.GetAxis("Mouse X") * moveSpeed * Time.deltaTime);
