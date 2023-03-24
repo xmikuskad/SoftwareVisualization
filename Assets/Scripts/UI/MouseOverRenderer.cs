@@ -54,7 +54,7 @@ public abstract class MouseOverRenderer : MonoBehaviour {
             return;
         }
         // TODO show window in click?
-        Debug.Log("CLICKED");
+        // Debug.Log("CLICKED");
         OnClick();
     }
 

@@ -9,6 +9,7 @@ public class DataLoaderJob : ThreadedJob
     protected override void ThreadFunction()
     {
         RawDataHolder holder = JsonConvert.DeserializeObject<RawDataHolder>(text);
+        
         dataHolder = new DataHolder();
         dataHolder.edgeData = holder.edges.Select((edge) => new EdgeData(edge)).ToDictionary(i=>i.id);
         dataHolder.verticeData = holder.vertices.Select((vertice) => new VerticeData(vertice)).ToDictionary(i=>i.id);

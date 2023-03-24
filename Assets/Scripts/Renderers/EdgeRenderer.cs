@@ -49,7 +49,7 @@ public class EdgeRenderer : MouseOverRenderer
     
     public override void OnClick()
     {
-        Debug.Log(edgeData.ToString());
+        // Debug.Log(edgeData.ToString());
     }
 
     public void SetUpReferences(Canvas hoverCanvas,GameObject hoverElement,TMP_Text hoverText)

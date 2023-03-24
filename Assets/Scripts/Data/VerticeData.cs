@@ -58,6 +58,8 @@ public class VerticeData
     
     public VerticeData(RawVerticeData rawVerticeData)
     {
+        // System.Console.WriteLine(rawVerticeData.attributes["Created"]?.ToString());
+        // System.Console.WriteLine(rawVerticeData.ToString());
         this.id = rawVerticeData.id;
         this.text = rawVerticeData.text;
         this.title = rawVerticeData.title;
@@ -78,7 +80,7 @@ public class VerticeData
                 {
                     info.SetValue(this, float.Parse((String)rawVerticeData.attributes[key], CultureInfo.InvariantCulture), null);
                 }
-                else if (foundType == typeof(DateTime))
+                else if (foundType == typeof(DateTime) || foundType == typeof(DateTime?))
                 {
                     string format = "yyyy-MM-dd HH:mm:ss";
                     info.SetValue(this, DateTime.ParseExact((String)rawVerticeData.attributes[key],format,CultureInfo.InvariantCulture, DateTimeStyles.None),null);

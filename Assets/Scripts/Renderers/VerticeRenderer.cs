@@ -19,10 +19,13 @@ public class VerticeRenderer : MouseOverRenderer
 
     private Vector3 offPosition = new (2000, 20000, 2000);
 
+    private SidebarController sidebarScript;
+
 
     protected void Awake()
     {
         meshRenderer = GetComponent<MeshRenderer>();
+        sidebarScript = FindObjectOfType<SidebarController>();
     }
 
     protected new void Start()
@@ -50,7 +53,8 @@ public class VerticeRenderer : MouseOverRenderer
     
     public override void OnClick()
     {
-        Debug.Log(verticeData.ToString());
+        // Debug.Log(verticeData.ToString());
+        sidebarScript.slideOut(verticeData);
     }
 
     public void SetUpReferences(Canvas hoverCanvas,GameObject hoverElement,TMP_Text hoverText)
@@ -74,8 +78,8 @@ public class VerticeRenderer : MouseOverRenderer
     {
         this.verticeData = verticeData;
         this.nonHoverMaterial = material;
-        Debug.Log(meshRenderer);
-        Debug.Log(meshRenderer.materials);
+        // Debug.Log(meshRenderer);
+        // Debug.Log(meshRenderer.materials);
         meshRenderer.materials = new[] {material};
     }
 
