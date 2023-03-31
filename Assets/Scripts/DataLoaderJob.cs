@@ -13,7 +13,6 @@ public class DataLoaderJob : ThreadedJob
         dataHolder = new DataHolder();
         dataHolder.edgeData = holder.edges.Select((edge) => new EdgeData(edge)).ToDictionary(i=>i.id);
         dataHolder.verticeData = holder.vertices.Select((vertice) => new VerticeData(vertice)).ToDictionary(i=>i.id);
-        
         // Make other computations here!
     }
 
