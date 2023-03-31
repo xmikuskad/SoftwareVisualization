@@ -59,4 +59,9 @@ public class FilterController : MonoBehaviour
         dialogObj.SetActive(true);
         SingletonManager.Instance.pauseManager.SetPaused(true);
     }
+    
+    public void SetSpeed(float speed)
+    {
+        SingletonManager.Instance.animationManager.SetSpeed(speed);
+    }
 }

@@ -7,6 +7,7 @@ public class SingletonManager : MonoBehaviour
     public static SingletonManager Instance { get { return _instance; } }
     public DataManager dataManager { get; private set; }
     public PauseManager pauseManager { get; private set; }
+    public AnimationManager animationManager { get; private set; }
 
 
     private void Awake()
@@ -21,5 +22,6 @@ public class SingletonManager : MonoBehaviour
         }
         dataManager = GetComponent<DataManager>();
         pauseManager = GetComponent<PauseManager>();
+        animationManager = GetComponent<AnimationManager>();
     }
 }
