@@ -24,35 +24,42 @@ using System;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshRenderer))]
-public abstract class MouseOverRenderer : MonoBehaviour {
+public abstract class MouseOverRenderer : MonoBehaviour
+{
     [Header("Properties")] [SerializeField]
     private float offsetY = 1.5f;
+
     private Canvas canvas;
 
-    protected virtual void Start() {
+    protected virtual void Start()
+    {
         OnMouseExit();
     }
 
-    private void OnMouseEnter() {
-        if (SingletonManager.Instance.pauseManager.IsPaused())
+    private void OnMouseEnter()
+    {
+        if (SingletonManager.Instance.pauseManager.IsInteractionPaused())
         {
             return;
         }
-        if(GetCanvas() == null) return;
+
+        if (GetCanvas() == null) return;
         SetHoverPosition();
         OnHoverEnter();
     }
 
-    private void OnMouseExit() {
+    private void OnMouseExit()
+    {
         OnHoverExit();
     }
 
     private void OnMouseUp()
     {
-        if (SingletonManager.Instance.pauseManager.IsPaused())
+        if (SingletonManager.Instance.pauseManager.IsInteractionPaused())
         {
             return;
         }
+
         // TODO show window in click?
         // Debug.Log("CLICKED");
         OnClick();
@@ -60,11 +67,11 @@ public abstract class MouseOverRenderer : MonoBehaviour {
 
     public abstract void OnHoverEnter();
     public abstract void OnHoverExit();
-    
+
     public abstract void OnClick();
     public abstract Canvas GetCanvas();
     public abstract GameObject GetHoverObject();
-    
+
 
     private void SetHoverPosition()
     {
@@ -72,20 +79,21 @@ public abstract class MouseOverRenderer : MonoBehaviour {
         {
             canvas = GetCanvas();
         }
-        
+
         // Offset position above object bbox (in world space)
         float offsetPosY = this.transform.position.y + offsetY;
- 
+
         // Final position of marker above GO in world space
         Vector3 offsetPos = new Vector3(transform.position.x, offsetPosY, transform.position.z);
- 
+
         // Calculate *screen* position (note, not a canvas/recttransform position)
         Vector2 canvasPos;
         Vector2 screenPoint = Camera.main.WorldToScreenPoint(offsetPos);
- 
+
         // Convert screen position to Canvas / RectTransform space <- leave camera null if Screen Space Overlay
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas.GetComponent<RectTransform>(), screenPoint, null, out canvasPos);
- 
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas.GetComponent<RectTransform>(), screenPoint, null,
+            out canvasPos);
+
         // Set
         GetHoverObject().transform.localPosition = canvasPos;
     }

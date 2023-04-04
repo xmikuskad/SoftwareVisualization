@@ -10,10 +10,11 @@ public class DataHolder
     public long projectId;
     public Dictionary<long,EdgeData> edgeData;
     public Dictionary<long,VerticeData> verticeData;
-    public Dictionary<String, long> personData = new();
+    public Dictionary<String, long> personIds = new();
 
     public List<EventData> eventData = new ();
     public Dictionary<long, long> edgeCountForTickets = new();
+    public DateTime startDate;
 
     public DataHolder()
     {
@@ -34,36 +35,43 @@ public class DataHolder
 
     public void CreateEventData()
     {
+        this.eventData.Clear();
+        // Create a map so we can get personId from personString
         foreach (var data in this.verticeData.Values.Where(e=>e.verticeType == VerticeType.Person))
         {
-            personData[data.name]=data.id;
+            personIds[data.name]=data.id;
         }
+        
+        // Process all tickets and add their creation to events
         foreach (var data in this.verticeData.Values.Where(e=>e.verticeType == VerticeType.Ticket))
         {
-            eventData.Add(new EventData(projectId,personData[data.author[0]],data.created.Value,data.id,EventActionType.CREATE,0));
+            eventData.Add(new EventData(projectId,GetPersonIds(data.author),data.created.Value,data.id,EventActionType.CREATE,0));
 
             // TODO what to do if start is sooner than creation ???
             DateTime start = data.created.Value >= data.start.Value
                 ? data.created.Value.AddMilliseconds(1)
                 : data.start.Value;
-            eventData.Add(new EventData(projectId,personData[data.assignee[0]],start,data.id,EventActionType.UPDATE,0));
+            eventData.Add(new EventData(projectId,GetPersonIds(data.assignee),start,data.id,EventActionType.UPDATE,0));
         }
         
+        // Get all ticket ids for faster comparision
         HashSet<long> ticketIds = this.verticeData.Values.Where(e=>e.verticeType == VerticeType.Ticket).Select(i=>i.id).ToHashSet();
+        // Now find all changes which are related to tickets.
         foreach (var data in this.edgeData.Values)
         {
             if (ticketIds.Contains(data.from))
             {
                 VerticeData vertice = verticeData[data.to];
-                if (vertice.author == null)
-                {
-                    Debug.Log("Null author, skipping");
-                    continue;
-                }
 
                 switch (vertice.verticeType)
                 {
                     case VerticeType.Change:
+                        if (vertice.author == null)
+                        {
+                            Debug.Log("Null author, skipping");
+                            continue;
+                        }
+                        
                         VerticeData ticket = verticeData[data.from];
                         if (!edgeCountForTickets.ContainsKey(data.from))
                         {
@@ -76,14 +84,14 @@ public class DataHolder
                             DateTime commitedTime = ticket.created.Value >= vertice.committed.Value
                                 ? ticket.created.Value.AddMilliseconds(5)
                                 : vertice.committed.Value;
-                            eventData.Add(new EventData(projectId,personData[vertice.author[0]],commitedTime,data.from,EventActionType.MOVE,data.id));
+                            eventData.Add(new EventData(projectId,GetPersonIds(vertice.author),commitedTime,data.from,EventActionType.MOVE,data.id));
                             edgeCountForTickets[data.from]++;
                         }
                         // TODO this happens !?!?!
                         DateTime createdTime = ticket.created.Value >= vertice.created.Value
                             ? ticket.created.Value.AddMilliseconds(3)
                             : vertice.created.Value;
-                        eventData.Add(new EventData(projectId,personData[vertice.author[0]],createdTime,data.from,EventActionType.MOVE,data.id));
+                        eventData.Add(new EventData(projectId,GetPersonIds(vertice.author),createdTime,data.from,EventActionType.MOVE,data.id));
                         edgeCountForTickets[data.from]++;
                         break;
                     default:
@@ -94,6 +102,19 @@ public class DataHolder
         }
 
         eventData = eventData.OrderBy(x => x.when).ToList();
-        Debug.Log("DONE?");
+        startDate = eventData[0].when;
+
+        // eventData.GroupBy(e => e.when.Date).Select(group => new EventDataDate(group.ToList(), group.Key))
+        //     .OrderBy(e => e.eventDate);
+        
+        Debug.Log("Event data created");
+    }
+
+    // Get person ids based on names
+    private List<long> GetPersonIds(string[] person)
+    {
+        if (person == null)
+            return new List<long>();
+        return person.Select(x => personIds[x]).Distinct().ToList();
     }
 }

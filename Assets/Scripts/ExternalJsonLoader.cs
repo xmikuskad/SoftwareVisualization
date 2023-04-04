@@ -60,7 +60,7 @@ public class ExternalJsonLoader : MonoBehaviour
     // Manages loading screen
     public void SetLoading(bool status)
     {
-        SingletonManager.Instance.pauseManager.SetPaused(status);
+        SingletonManager.Instance.pauseManager.SetEverythingPaused(status);
         loadingBar.SetActive(status);
         loadBtn.SetActive(!status);
     }
