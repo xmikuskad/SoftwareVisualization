@@ -20,7 +20,7 @@ namespace Renderers
 
         public void NextQueue()
         {
-            if (SingletonManager.Instance.pauseManager.IsPaused() || queue.Count == 0)
+            if (SingletonManager.Instance.pauseManager.IsSomethingPaused() || queue.Count == 0)
             {
                 return;
             }

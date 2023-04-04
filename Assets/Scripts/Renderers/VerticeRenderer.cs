@@ -46,7 +46,15 @@ public class VerticeRenderer : MouseOverRenderer
         // hoverElement.SetActive(true);
         
         // hoverText.text = verticeData.ToString();
-        hoverText.text = completedCount +" / "+taskCount;
+        if (verticeData.verticeType == VerticeType.Ticket)
+        {
+            hoverText.text = completedCount + " / " + taskCount;
+        }
+        else
+        {
+            hoverText.text = verticeData.ToString();
+        }
+
         meshRenderer.sharedMaterial = hoverMaterial;
     }
 
@@ -86,15 +94,19 @@ public class VerticeRenderer : MouseOverRenderer
         
         // We need to duplicate material because otherwise all objects with that material will be changed
         Material newMat = new Material(material);
-        newMat.color = new Color(1f,0f,0f);
+        if (verticeData.verticeType == VerticeType.Ticket)
+        {
+            newMat.color = new Color(1f, 0f, 0f);
+        }
+
         meshRenderer.materials = new[] {newMat};
         
         this.nonHoverMaterial = newMat;
     }
 
-    public void AddCompletedEdge(long maxTasks)
+    public void AddCompletedEdge(long count, long maxTasks)
     {
-        this.completedCount++;
+        this.completedCount+=count;
         this.taskCount = maxTasks;
         this.nonHoverMaterial.DOColor(
             GetColorFromRedYellowGreenGradient((this.completedCount * 1.0f) / (maxTasks * 1.0f) * 100f), SingletonManager.Instance.animationManager.GetColorChangeAnimTime());
@@ -117,9 +129,11 @@ public class VerticeRenderer : MouseOverRenderer
 
         if (percentage > 99.9f)
         {
-            return new Color(0f, 1f, 0f);
+            return new Color(0f, 0f, 0f);
+            // return new Color(0f, 1f, 0f);
         }
 
-        return new Color((percentage > 50f ? 1f - 2f * (percentage - 50f) / 100.0f : 1.0f), (percentage > 50f ? 0.6f : 2f * percentage / 100.0f), 0f);
+        return new Color((percentage > 50f ? 1f - 2f * (percentage - 50f) / 100.0f : 1.0f), (percentage > 50f ? 1.0f : 2f * percentage / 100.0f), 0f);
+        // return new Color((percentage > 50f ? 1f - 2f * (percentage - 50f) / 100.0f : 1.0f), (percentage > 50f ? 0.6f : 2f * percentage / 100.0f), 0f);
     }
 }

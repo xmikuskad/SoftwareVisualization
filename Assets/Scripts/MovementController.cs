@@ -22,7 +22,7 @@ public class MovementController : MonoBehaviour
 
     void Update()
     {
-        if (SingletonManager.Instance.pauseManager.IsPaused())
+        if (SingletonManager.Instance.pauseManager.IsInteractionPaused())
         {
             return;
         }
