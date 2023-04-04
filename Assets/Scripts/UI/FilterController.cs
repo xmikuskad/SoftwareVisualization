@@ -51,13 +51,13 @@ public class FilterController : MonoBehaviour
     public void CloseDialog()
     {
         dialogObj.SetActive(false);
-        SingletonManager.Instance.pauseManager.SetPaused(false);
+        SingletonManager.Instance.pauseManager.SetEverythingPaused(false);
     }
     
     public void OpenDialog()
     {
         dialogObj.SetActive(true);
-        SingletonManager.Instance.pauseManager.SetPaused(true);
+        SingletonManager.Instance.pauseManager.SetEverythingPaused(true);
     }
     
     public void SetSpeed(float speed)

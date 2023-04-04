@@ -5,17 +5,42 @@ using UnityEngine;
 
 public class PauseManager : MonoBehaviour
 {
-    private bool isPaused = false;
 
-    public bool IsPaused()
+    private bool isInteractionPaused = false;
+    private bool isAnimationPaused = false;
+
+    public bool IsAnimationPaused()
     {
-        return isPaused;
+        return isAnimationPaused;
+    }
+    
+    public bool IsInteractionPaused()
+    {
+        return isInteractionPaused;
     }
 
-    public void SetPaused(bool paused)
+    public bool IsSomethingPaused()
     {
-        this.isPaused = paused;
-        if (isPaused)
+        return isInteractionPaused || isAnimationPaused;
+    }
+
+    public void SetAnimationPaused(bool paused)
+    {
+        this.isAnimationPaused = paused;
+        if (isAnimationPaused)
+        {
+            DOTween.PauseAll();
+        }
+        else
+        {
+            DOTween.PlayAll();
+        }
+    }
+    
+    public void SetInteractionPaused(bool paused)
+    {
+        this.isAnimationPaused = paused;
+        if (isAnimationPaused)
         {
             DOTween.PauseAll();
         }
@@ -25,9 +50,10 @@ public class PauseManager : MonoBehaviour
         }
     }
 
-    public void SetPausedWithTime(bool paused)
+    public void SetEverythingPaused(bool paused)
     {
-        SetPaused(paused);
-        Time.timeScale = paused ? 0 : 1;
+        SetAnimationPaused(paused);
+        SetInteractionPaused(paused);
     }
+
 }

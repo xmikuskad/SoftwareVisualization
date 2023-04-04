@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class AnimationManager : MonoBehaviour
 {
-    private float speed = 0.5f;
+    private float speed = 0.8f;
     
     [Header("Animation settings")] 
     public float minSpawnAnimTime = 0.0001f;
@@ -14,6 +14,11 @@ public class AnimationManager : MonoBehaviour
     public float maxMoveAnimTime = 1f;
     public float minColorChangeAnimTime = 0.0001f;
     public float maxColorChangeAnimTime = 1f;
+    public float minLineDisappearAnimTime = 0.0001f;
+    public float maxLineDisappearAnimTime = 0.2f;
+    
+    public float minWaitAnimTime = 0.0001f;
+    public float maxWaitAnimTime = 0.3f;
     
     public void SetSpeed(float speed)
     {
@@ -33,5 +38,15 @@ public class AnimationManager : MonoBehaviour
     public float GetColorChangeAnimTime()
     {
         return minColorChangeAnimTime + (1f-speed)*maxColorChangeAnimTime;
+    }
+    
+    public float GetLineDisappearTime()
+    {
+        return minLineDisappearAnimTime + (1f-speed)*maxLineDisappearAnimTime;
+    }
+    
+    public float GetWaitTime()
+    {
+        return minWaitAnimTime + (1f-speed)*maxWaitAnimTime;
     }
 }
