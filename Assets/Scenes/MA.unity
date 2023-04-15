@@ -3986,7 +3986,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 268, y: 300}
+  m_AnchoredPosition: {x: 266, y: 300}
   m_SizeDelta: {x: 50, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &487792634
@@ -7152,7 +7152,6 @@ GameObject:
   - component: {fileID: 1042307048}
   - component: {fileID: 1042307047}
   - component: {fileID: 1042307044}
-  - component: {fileID: 1042307046}
   - component: {fileID: 1042307045}
   m_Layer: 5
   m_Name: TicketList
@@ -7196,10 +7195,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe642d4ddb9b6047999c01b38a55a84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  items: []
-  DestroyGameObjects: 1
+  items:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  DestroyGameObjects: 0
   multipleSelect: 0
-  selectedIndex: -1
+  selectedIndex: 1
   RangeMode: 1
   StyleTable: 0
   Navigation: 1
@@ -7290,11 +7302,11 @@ MonoBehaviour:
   LimitScrollValue: 0
   allowColoring: 1
   defaultBackgroundColor: {r: 1, g: 1, b: 1, a: 0}
-  defaultColor: {r: 1, g: 0.84313726, b: 0.4509804, a: 1}
-  highlightedBackgroundColor: {r: 0.70980394, g: 0.47843137, b: 0.14117648, a: 1}
-  highlightedColor: {r: 0, g: 0, b: 0, a: 1}
-  selectedBackgroundColor: {r: 0.76862746, g: 0.6117647, b: 0.15294118, a: 1}
-  selectedColor: {r: 0, g: 0, b: 0, a: 1}
+  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  highlightedBackgroundColor: {r: 0.15294118, g: 0.15686275, b: 0.16862746, a: 1}
+  highlightedColor: {r: 1, g: 0.907463, b: 0.6367924, a: 1}
+  selectedBackgroundColor: {r: 0.15294118, g: 0.15686275, b: 0.16862746, a: 1}
+  selectedColor: {r: 1, g: 0.786975, b: 0.1745283, a: 1}
   FixHighlightItemUnderPointer: 1
   FadeDuration: 0
   scrollRect: {fileID: 615535724}
@@ -7333,9 +7345,42 @@ MonoBehaviour:
   AutoScrollSpeed: 200
   customItems: []
   defaultItem: {fileID: 502285012}
-  Components: []
-  Templates: []
-  ComponentsDisplayedIndices: 
+  Components:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  Templates:
+  - template: {fileID: 502285012}
+    id: 22324
+    instances:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    requested: []
+    cache: []
+    container: {fileID: 2079539773}
+    owner: {fileID: 1042307044}
+  ComponentsDisplayedIndices: 000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000b0000000c000000
   OnSelectObject:
     m_PersistentCalls:
       m_Calls: []
@@ -7394,25 +7439,6 @@ MonoBehaviour:
   ReceiveItems: 1
   ReceiveNodes: 1
   ReceiveOnlyEmptyNode: 1
---- !u!114 &1042307046
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1042307042}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec75788440c720d409ac5b227a2281a7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  file: {fileID: 4900000, guid: 9c64f9c6663dd684cb38e8b394055f08, type: 3}
-  CommentsStartWith:
-  - '#'
-  - //
-  Unique: 1
-  AllowEmptyItems: 0
-  CreateNewList: 0
 --- !u!114 &1042307047
 MonoBehaviour:
   m_ObjectHideFlags: 0

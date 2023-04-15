@@ -106,7 +106,6 @@ public class CollabMatrix : MonoBehaviour
         }        
         int min = matrixValues.Cast<int>().Min();
         int max = matrixValues.Cast<int>().Max();
-        Debug.Log("min is " + min.ToString() + " and max is " + max.ToString());
 
         // Generate conf matrix representation in canvas
         for (int i = 0; i < matrixValues.GetLength(0); i++) {
@@ -119,6 +118,7 @@ public class CollabMatrix : MonoBehaviour
                 float r = (matrixValues[i,j] < max/2 ? 0.5f : 0.5f - 0.5f/max*matrixValues[i,j]);
                 float g = (matrixValues[i,j] < max/2 ? 0.5f/max*matrixValues[i,j]*2 : 0.5f);
                 newImage2.color = new Color(r, g, 0.1f, 1.0f);
+                if (i == j) newImage2.color = new Color(0.15294f, 0.15686f, 0.16863f, 1.0f);
                 TMP_Text newText = Instantiate(matrixDefaultTextElement, pos, Quaternion.identity, matrixArea.transform);
                 newText.text = matrixValues[i,j].ToString();
                 newText.fontSize = 30 - collaborants.Count;
@@ -148,12 +148,16 @@ public class CollabMatrix : MonoBehaviour
     public void onClickTicketList(List<VerticeData> relatedTickets, string a, string b) {
         ticketListViewHeader.text = "Collaborations " + a + " - " + b;
         ticketListView.Clear();
-        // clear after first render because default values are initialized
         foreach (VerticeData relatedTicket in relatedTickets) {
             ticketListView.Add(relatedTicket.id + " " + relatedTicket.name);
-            // open sidebar with ticket on click
         }
+        ticketListView.ItemsEvents.PointerClick.RemoveAllListeners();
+        ticketListView.ItemsEvents.PointerClick.AddListener((x,y,z) => onClickTicket(relatedTickets, x));
         ticketListViewHolder.SetActive(true);
+    }
+
+    public void onClickTicket(List<VerticeData> ticketsInList, int indexOfClicked) {
+        sidebarController.slideOutTicketSidebar(ticketsInList[indexOfClicked]);
     }
 
     public void writeDebugClicked() {
