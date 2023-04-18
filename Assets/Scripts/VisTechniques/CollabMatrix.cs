@@ -36,34 +36,37 @@ public class CollabMatrix : MonoBehaviour
 
         // Get list of collaborants
         List<string> collaborants = new List<string>();
+        List<VerticeData> collaborants2 = new List<VerticeData>();
         foreach (KeyValuePair<long,VerticeData> vertice in dataHolder.verticeData) {
             if (vertice.Value.verticeType == VerticeType.Person) {
-                if (vertice.Value.name.ToString() == "unknown") {
-                    collaborants.Add("?");
-                }
-                else {
-                    collaborants.Add(vertice.Value.name.ToString());
-                }
+                collaborants.Add(vertice.Value.name.ToString());
+                collaborants2.Add(vertice.Value);
             };
         }
 
         // Generate collaborant labels in canvas
-        int xOffset = 530/collaborants.Count;
-        int yOffset = -530/collaborants.Count;
-        for (int i = 0; i < collaborants.Count; i++) {
-            int j = i;
+        int xOffset = 530/collaborants2.Count;
+        int yOffset = -530/collaborants2.Count;
+        int helpIndex = 0;
+        foreach (VerticeData collaborant in collaborants2) {
+
+            int helpIndex2 = helpIndex;
 
             Vector3 pos = matrixDefaultTextElement.transform.position;
-            pos.x = pos.x + xOffset*i + xOffset;
+            pos.x = pos.x + xOffset*helpIndex + xOffset;
             TMP_Text newText = Instantiate(matrixDefaultTextElement, pos, Quaternion.identity, matrixArea.transform);
-            newText.text = collaborants[i];
-            newText.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeData[j]));
+            newText.text = collaborant.name;
+            if (collaborant.name == "unknown") newText.text = "??";
+            newText.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeData[helpIndex2]));
             
             pos = matrixDefaultTextElement.transform.position;
-            pos.y = pos.y + yOffset*i + yOffset;
+            pos.y = pos.y + yOffset*helpIndex + yOffset;
             TMP_Text newText2 = Instantiate(matrixDefaultTextElement, pos, Quaternion.identity, matrixArea.transform);
-            newText2.text = collaborants[i];
-            newText2.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeData[j]));
+            newText2.text = collaborant.name;
+            if (collaborant.name == "unknown") newText2.text = "??";
+            newText2.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeData[helpIndex2]));
+
+            helpIndex++;
         }
 
         // All ticket IDs in data
@@ -72,8 +75,11 @@ public class CollabMatrix : MonoBehaviour
         // Dictionary<long, List<long>> ticketChangesIDs = new Dictionary<long, List<long>>();
         Dictionary<long, List<long>> ticketChangesIDs = ticketIds.ToDictionary(h => h, h => new List<long>());
 
-        // Dict where key is ticket ID and value is a list of contributors to that ticket
-        Dictionary<long, List<string>> ticketContributors = ticketIds.ToDictionary(h => h, h => new List<string>());
+        // Dict where key is ticket ID and value is a list of contributor names to that ticket
+        Dictionary<long, List<string>> ticketContributorsStrs = ticketIds.ToDictionary(h => h, h => new List<string>());
+
+        // Dict where key is ticket ID and value is a list of contributor vertices to that ticket
+        Dictionary<long, List<VerticeData>> ticketContributors = ticketIds.ToDictionary(h => h, h => new List<VerticeData>());
 
         // Fill the helping dicts
         foreach (EdgeData edge in dataHolder.edgeData.Values) {
@@ -84,18 +90,18 @@ public class CollabMatrix : MonoBehaviour
             // If change ID not yet logged, log it in ticketChangesIDs
             if (!ticketChangesIDs[ticket.id].Contains(change.id)) ticketChangesIDs[ticket.id].Add(change.id);
             // If author is unknown and is not yet logged, log it in ticketContributors as ?
-            if ((change.author == null || change.author[0] == null) && !ticketContributors[ticket.id].Contains("?")) {
-                ticketContributors[ticket.id].Add("?");
+            if ((change.author == null || change.author[0] == null) && !ticketContributorsStrs[ticket.id].Contains("unknown")) {
+                ticketContributorsStrs[ticket.id].Add("unknown");
             }            
             // If author is not unknown and is not yet logged, log it in ticketContributors
-            else if (change.author != null && change.author[0] != null && !ticketContributors[ticket.id].Contains(change.author[0])) {
-                ticketContributors[ticket.id].Add(change.author[0]);
+            else if (change.author != null && change.author[0] != null && !ticketContributorsStrs[ticket.id].Contains(change.author[0])) {
+                ticketContributorsStrs[ticket.id].Add(change.author[0]);
             }
         }
 
         // Get confusion matrix
-        int[,] matrixValues = new int[collaborants.Count, collaborants.Count];
-        foreach (List<string> contributors in ticketContributors.Values) {
+        int[,] matrixValues = new int[collaborants2.Count, collaborants2.Count];
+        foreach (List<string> contributors in ticketContributorsStrs.Values) {
             if (contributors.Count < 2) continue;
             for (int i = 0; i < contributors.Count; i++) {
                 for (int j = i+1; j < contributors.Count; j++) {
@@ -103,7 +109,7 @@ public class CollabMatrix : MonoBehaviour
                     matrixValues[collaborants.IndexOf(contributors[j]), collaborants.IndexOf(contributors[i])] += 1;
                 }
             }
-        }        
+        }
         int min = matrixValues.Cast<int>().Min();
         int max = matrixValues.Cast<int>().Max();
 
@@ -121,12 +127,12 @@ public class CollabMatrix : MonoBehaviour
                 if (i == j) newImage2.color = new Color(0.15294f, 0.15686f, 0.16863f, 1.0f);
                 TMP_Text newText = Instantiate(matrixDefaultTextElement, pos, Quaternion.identity, matrixArea.transform);
                 newText.text = matrixValues[i,j].ToString();
-                newText.fontSize = 30 - collaborants.Count;
+                newText.fontSize = 30 - collaborants2.Count;
                 if (i == j) continue;
                 List<VerticeData> relatedTickets = new List<VerticeData>();
                 int k = i;
                 int l = j;
-                foreach (KeyValuePair<long, List<string>> ticketCon in ticketContributors) {
+                foreach (KeyValuePair<long, List<string>> ticketCon in ticketContributorsStrs) {
                     if (ticketCon.Value.Contains(collaborants[k]) && ticketCon.Value.Contains(collaborants[l])) {
                         relatedTickets.Add(dataHolder.verticeData[ticketCon.Key]);
                     }
@@ -157,6 +163,7 @@ public class CollabMatrix : MonoBehaviour
     }
 
     public void onClickTicket(List<VerticeData> ticketsInList, int indexOfClicked) {
+        // Debug.Log("tickets in list: " + ticketsInList.Count.ToString() + ", and you clicked on index " + indexOfClicked.ToString());
         sidebarController.slideOutTicketSidebar(ticketsInList[indexOfClicked]);
     }
 

@@ -4278,7 +4278,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: a3ce1bc3a6889304597afd4439dc8d65, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -7195,23 +7195,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe642d4ddb9b6047999c01b38a55a84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  items:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  DestroyGameObjects: 0
+  items: []
+  DestroyGameObjects: 1
   multipleSelect: 0
-  selectedIndex: 1
+  selectedIndex: -1
   RangeMode: 1
   StyleTable: 0
   Navigation: 1
@@ -7301,12 +7288,12 @@ MonoBehaviour:
   disableScrollRect: 0
   LimitScrollValue: 0
   allowColoring: 1
-  defaultBackgroundColor: {r: 1, g: 1, b: 1, a: 0}
+  defaultBackgroundColor: {r: 0.15294118, g: 0.15686275, b: 0.16862746, a: 0}
   defaultColor: {r: 1, g: 1, b: 1, a: 1}
   highlightedBackgroundColor: {r: 0.15294118, g: 0.15686275, b: 0.16862746, a: 1}
-  highlightedColor: {r: 1, g: 0.907463, b: 0.6367924, a: 1}
+  highlightedColor: {r: 1, g: 0.9218844, b: 0.6933962, a: 1}
   selectedBackgroundColor: {r: 0.15294118, g: 0.15686275, b: 0.16862746, a: 1}
-  selectedColor: {r: 1, g: 0.786975, b: 0.1745283, a: 1}
+  selectedColor: {r: 1, g: 0.8101113, b: 0.25943398, a: 1}
   FixHighlightItemUnderPointer: 1
   FadeDuration: 0
   scrollRect: {fileID: 615535724}
@@ -7345,42 +7332,9 @@ MonoBehaviour:
   AutoScrollSpeed: 200
   customItems: []
   defaultItem: {fileID: 502285012}
-  Components:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  Templates:
-  - template: {fileID: 502285012}
-    id: 22324
-    instances:
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    requested: []
-    cache: []
-    container: {fileID: 2079539773}
-    owner: {fileID: 1042307044}
-  ComponentsDisplayedIndices: 000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000b0000000c000000
+  Components: []
+  Templates: []
+  ComponentsDisplayedIndices: 
   OnSelectObject:
     m_PersistentCalls:
       m_Calls: []
