@@ -26,6 +26,8 @@ public class DataRenderer : MonoBehaviour
 
     private List<Pair<bool, LineRenderer>> lineRenderers = new();
 
+    private List<GameObject> gameObjectsToClean = new();    // Storing object which needs to be cleaned for later
+
     [Header("Properties")] public List<VerticeMaterial> verticeMaterialsList;
     public List<EdgeMaterial> edgeMaterialsList;
 
@@ -47,6 +49,8 @@ public class DataRenderer : MonoBehaviour
     public TMP_Text currentDateText;
 
     public CollabMatrix collabMatrix;
+
+    public Material outlineMaterial;
 
     private void Awake()
     {
@@ -109,6 +113,7 @@ public class DataRenderer : MonoBehaviour
         SpawnPeople(1L);
         this.eventRenderer.Init(this.loadedProjects[1].eventData);
         collabMatrix.fillMatrix(this.loadedProjects[1]);
+        SpawnOutlineObjects(1L);
         SetLoading(false);
         this.eventRenderer.NextQueue();
     }
@@ -289,5 +294,29 @@ public class DataRenderer : MonoBehaviour
         }
     }
 
-    
+    private void SpawnOutlineObjects(long projectId)
+    {
+        float idk = renderDistanceBetweenObjs;
+        for(int i=0;i<loadedProjects[projectId].GetTicketCount();i++)
+        {
+            // SpawnOutlineObject(idk, 0); // TODO do we want the top one too?
+            idk += SpawnOutlineObject(idk, -distanceOnComplete);
+        }
+    }
+
+    private float SpawnOutlineObject(float idk, float yPos)
+    {
+        float x = Mathf.Cos(idk) * idk;
+        float y = Mathf.Sin(idk) * idk;
+        GameObject obj = Instantiate(verticePrefab, new Vector3(x, yPos, y), Quaternion.identity);
+        VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
+        verticeRenderer.enabled = false;
+        MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
+        renderer.materials = new[] { outlineMaterial };
+        gameObjectsToClean.Add(obj);
+        
+        return renderDistanceBetweenObjs / idk;
+    }
+
+
 }

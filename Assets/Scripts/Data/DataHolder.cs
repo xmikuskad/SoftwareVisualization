@@ -116,4 +116,10 @@ public class DataHolder
             return new List<long>();
         return person.Select(x => personIds[x]).Distinct().ToList();
     }
+
+    public int GetTicketCount()
+    {
+        return verticeData
+            .Where(e => e.Value.verticeType == VerticeType.Ticket).Count();
+    }
 }
