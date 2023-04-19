@@ -45,6 +45,9 @@ public class DataRenderer : MonoBehaviour
 
     public Material lineMaterial;
     public TMP_Text currentDateText;
+
+    public CollabMatrix collabMatrix;
+
     private void Awake()
     {
         verticeMaterial = verticeMaterialsList.ToDictionary(key => key.verticeType, value => value.material);
@@ -105,6 +108,7 @@ public class DataRenderer : MonoBehaviour
         if (loadedProjects == null) return;
         SpawnPeople(1L);
         this.eventRenderer.Init(this.loadedProjects[1].eventData);
+        collabMatrix.fillMatrix(this.loadedProjects[1]);
         SetLoading(false);
         this.eventRenderer.NextQueue();
     }
@@ -284,4 +288,6 @@ public class DataRenderer : MonoBehaviour
             renderer.Second.enabled = false;
         }
     }
+
+    
 }

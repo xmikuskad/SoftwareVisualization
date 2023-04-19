@@ -11,7 +11,6 @@ public class DataHolder
     public Dictionary<long,EdgeData> edgeData;
     public Dictionary<long,VerticeData> verticeData;
     public Dictionary<String, long> personIds = new();
-
     public List<EventData> eventData = new ();
     public Dictionary<long, long> edgeCountForTickets = new();
     public DateTime startDate;
