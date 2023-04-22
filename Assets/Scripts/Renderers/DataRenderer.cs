@@ -5,6 +5,7 @@ using System.Linq;
 using Data;
 using DG.Tweening;
 using Helpers;
+using PathologicalGames;
 using Renderers;
 using TMPro;
 using UnityEngine;
@@ -33,7 +34,8 @@ public class DataRenderer : MonoBehaviour
 
     public float renderDistanceBetweenObjs = 3;
     public float distanceOnComplete = 4f;
-
+    public bool spawnTopOutlinesForSpiral = false;
+    
     [Header("References")] public EventRenderer eventRenderer;
     public GameObject verticePrefab;
     public GameObject edgePrefab;
@@ -44,13 +46,14 @@ public class DataRenderer : MonoBehaviour
 
     public GameObject loadingBar;
     public GameObject loadBtn;
-
-    public Material lineMaterial;
+    
     public TMP_Text currentDateText;
 
     public CollabMatrix collabMatrix;
 
     public Material outlineMaterial;
+    public LineRenderer lineRenderer;
+    public SidebarController sidebarController;
 
     private void Awake()
     {
@@ -82,15 +85,7 @@ public class DataRenderer : MonoBehaviour
     {
         this.spawnTheta.Clear();
         this.loadedProjects.Clear();
-        // StartCoroutine(DestroyObjects());
-
-        foreach (var keyPair in vertices)
-        {
-            foreach (var keyPairChild in vertices[keyPair.Key])
-            {
-                Destroy(vertices[keyPair.Key][keyPairChild.Key].gameObject);
-            }
-        }
+        PoolManager.Pools[PoolNames.VERTICE].DespawnAll(); // This removes all vertices from scene :)
 
         vertices.Clear();
 
@@ -173,12 +168,6 @@ public class DataRenderer : MonoBehaviour
         }
 
         sequence.AppendInterval(SingletonManager.Instance.animationManager.GetWaitTime());
-        // TODO make color change into transparent?
-        // foreach (var lineRenderer in lineRenderers)
-        // {
-        //     sequence.Append(lineRenderer.Second.DOColor(new Color2(lineRenderer.Second.startColor, lineRenderer.Second.endColor),
-        //         new Color2(Color.clear, Color.clear), SingletonManager.Instance.animationManager.GetLineDisappearTime()));
-        // }
         sequence.OnComplete(() =>
         {
             foreach (var lineRenderer in this.lineRenderers)
@@ -199,16 +188,13 @@ public class DataRenderer : MonoBehaviour
             Pair<bool, LineRenderer> renderer = this.lineRenderers.FirstOrDefault(x => !x.First);
             if (renderer == null)
             {
-                GameObject go = new GameObject("Line");
-                go.AddComponent<LineRenderer>();
-                renderer = new Pair<bool, LineRenderer>(false, go.GetComponent<LineRenderer>());
-                renderer.Second.material = new Material(lineMaterial);
+                LineRenderer ren = PoolManager.Pools[PoolNames.VERTICE_PERSON_LINE].Spawn(lineRenderer.gameObject).GetComponent<LineRenderer>();
+                // LineRenderer ren = Instantiate(lineRenderer);
+                renderer = new Pair<bool, LineRenderer>(false, ren);
                 this.lineRenderers.Add(renderer);
             }
 
             renderer.First = true; // Set as used;
-            renderer.Second.startColor = Color.yellow;
-            renderer.Second.endColor = Color.yellow;
             renderer.Second.startWidth = 0.2f;
             renderer.Second.endWidth = 0.2f;
             renderer.Second.positionCount = 2;
@@ -238,13 +224,13 @@ public class DataRenderer : MonoBehaviour
         float idk = spawnTheta[eventData.projectId];
         float x = Mathf.Cos(idk) * idk;
         float y = Mathf.Sin(idk) * idk;
-        GameObject obj = Instantiate(verticePrefab, new Vector3(x, 0, y), Quaternion.identity);
+        Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(x, 0, y), Quaternion.identity);
 
         obj.transform.localScale = new Vector3(0, 0, 0);
         spawnTheta[eventData.projectId] += renderDistanceBetweenObjs / idk;
 
         VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
-        verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText);
+        verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController);
         VerticeData d = loadedProjects[eventData.projectId].verticeData[eventData.verticeId];
         verticeRenderer.SetVerticeData(d, verticeMaterial[d.verticeType]);
         if (!vertices.ContainsKey(eventData.projectId))
@@ -260,12 +246,10 @@ public class DataRenderer : MonoBehaviour
         long counter = 1;
         foreach (long personId in this.loadedProjects[projectId].personIds.Values)
         {
-
-            GameObject obj = Instantiate(verticePrefab, new Vector3(counter, 10+counter, 0), Quaternion.identity);
-
+            Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(counter, 10+counter, 0), Quaternion.identity);
 
             VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
-            verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText);
+            verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController);
             VerticeData d = loadedProjects[projectId].verticeData[personId];
             verticeRenderer.SetVerticeData(d, verticeMaterial[d.verticeType]);
             if (!vertices.ContainsKey(projectId))
@@ -277,45 +261,33 @@ public class DataRenderer : MonoBehaviour
 
             counter+=2;
         }
-
-        for (int i = 0; i < 20; i++)
-        {
-            GameObject go = new GameObject("Line");
-            go.AddComponent<LineRenderer>();
-            LineRenderer ren = go.GetComponent<LineRenderer>();
-            Pair<bool, LineRenderer> renderer = new Pair<bool, LineRenderer>(false, ren);
-            this.lineRenderers.Add(renderer);
-            renderer.Second.startWidth = 0.2f;
-            renderer.Second.endWidth = 0.2f;
-            renderer.Second.positionCount = 2;
-            renderer.Second.useWorldSpace = true;
-            renderer.Second.material = new Material(lineMaterial);
-            renderer.Second.enabled = false;
-        }
     }
 
     private void SpawnOutlineObjects(long projectId)
     {
-        float idk = renderDistanceBetweenObjs;
+        float pos = renderDistanceBetweenObjs;
         for(int i=0;i<loadedProjects[projectId].GetTicketCount();i++)
         {
-            // SpawnOutlineObject(idk, 0); // TODO do we want the top one too?
-            idk += SpawnOutlineObject(idk, -distanceOnComplete);
+            if (spawnTopOutlinesForSpiral)
+            {
+                SpawnOutlineObject(pos, 0); // TODO do we want the top one too?
+            }
+
+            pos += SpawnOutlineObject(pos, -distanceOnComplete);
         }
     }
 
-    private float SpawnOutlineObject(float idk, float yPos)
+    private float SpawnOutlineObject(float pos, float yPos)
     {
-        float x = Mathf.Cos(idk) * idk;
-        float y = Mathf.Sin(idk) * idk;
-        GameObject obj = Instantiate(verticePrefab, new Vector3(x, yPos, y), Quaternion.identity);
-        VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
-        verticeRenderer.enabled = false;
+        float x = Mathf.Cos(pos) * pos;
+        float y = Mathf.Sin(pos) * pos;
+        Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(x, yPos, y), Quaternion.identity);
+        Destroy(obj.GetComponent<VerticeRenderer>());
         MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
         renderer.materials = new[] { outlineMaterial };
-        gameObjectsToClean.Add(obj);
+        gameObjectsToClean.Add(obj.gameObject);
         
-        return renderDistanceBetweenObjs / idk;
+        return renderDistanceBetweenObjs / pos;
     }
 
 
