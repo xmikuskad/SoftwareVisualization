@@ -30,7 +30,6 @@ public class VerticeRenderer : MouseOverRenderer
     protected void Awake()
     {
         meshRenderer = GetComponent<MeshRenderer>();
-        sidebarScript = FindObjectOfType<SidebarController>();
     }
 
     protected new void Start()
@@ -71,11 +70,12 @@ public class VerticeRenderer : MouseOverRenderer
         sidebarScript.slideOut(verticeData);
     }
 
-    public void SetUpReferences(Canvas hoverCanvas,GameObject hoverElement,TMP_Text hoverText)
+    public void SetUpReferences(Canvas hoverCanvas,GameObject hoverElement,TMP_Text hoverText, SidebarController sidebarController)
     {
         this.hoverElement = hoverElement;
         this.hoverCanvas = hoverCanvas;
         this.hoverText = hoverText;
+        this.sidebarScript = sidebarController;
     }
 
     public override Canvas GetCanvas()
