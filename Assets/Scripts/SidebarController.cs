@@ -11,7 +11,7 @@ public class SidebarController : MonoBehaviour
     [SerializeField] private LayerMask layerMaskToIgnore;
 
     public DataRenderer dataRenderer;
-  
+
     public Sidebar sidebar;
 
     public TMP_Text verticeType;
@@ -26,6 +26,8 @@ public class SidebarController : MonoBehaviour
     public GameObject collabMatrix;
 
     public Button showCollabMatrixBtn;
+
+    public CollabBarChart collabBarChart;
 
     void Update()
     {
@@ -49,36 +51,43 @@ public class SidebarController : MonoBehaviour
     }
 
     // Open
-    public void slideOut(VerticeData verticeData) {
-        if (verticeData.verticeType == VerticeType.Person) {
-            slideOutPersonSidebar(verticeData);
+    public void slideOut(long projectId, VerticeData verticeData)
+    {
+        if (verticeData.verticeType == VerticeType.Person)
+        {
+            slideOutPersonSidebar(projectId, verticeData);
         }
-        else if (verticeData.verticeType == VerticeType.Ticket) {
-            slideOutTicketSidebar(verticeData);
+        else if (verticeData.verticeType == VerticeType.Ticket)
+        {
+            slideOutTicketSidebar(projectId, verticeData);
         }
     }
 
 
-    public void slideOutPersonSidebar(VerticeData verticeData) {
+    public void slideOutPersonSidebar(long projectId, VerticeData verticeData)
+    {
         sidebar.Open();
         focusSidebar(verticeData.verticeType);
         verticeType.text = verticeData.verticeType.ToString();
-        verticeId.text = "id: "+verticeData.id.ToString();
-        personInitials.text = "initials: "+verticeData.name.ToString();
+        verticeId.text = "id: " + verticeData.id.ToString();
+        personInitials.text = "initials: " + verticeData.name.ToString();
         personInitials.gameObject.transform.parent.gameObject.SetActive(true);
     }
 
-    public void slideOutTicketSidebar(VerticeData verticeData) {
+    public void slideOutTicketSidebar(long projectId, VerticeData verticeData)
+    {
+        collabBarChart.fillBarChart(dataRenderer.loadedProjects[projectId], verticeData.id);
         sidebar.Open();
         focusSidebar(verticeData.verticeType);
         verticeType.text = verticeData.verticeType.ToString();
-        verticeId.text = "id: "+verticeData.id.ToString();
-        ticketCreatedDate.text = "created: "+verticeData.start.ToString();
-        ticketDueDate.text = "due: "+verticeData.due.ToString();
+        verticeId.text = "id: " + verticeData.id.ToString();
+        ticketCreatedDate.text = "created: " + verticeData.start.ToString();
+        ticketDueDate.text = "due: " + verticeData.due.ToString();
         personInitials.gameObject.transform.parent.gameObject.SetActive(false);
     }
 
-    public void focusSidebar(VerticeType verticeType) {
+    public void focusSidebar(VerticeType verticeType)
+    {
         if (verticeType == VerticeType.Person) personData.gameObject.SetActive(true);
         else personData.gameObject.SetActive(false);
         if (verticeType == VerticeType.Ticket) ticketData.gameObject.SetActive(true);
@@ -86,11 +95,13 @@ public class SidebarController : MonoBehaviour
     }
 
     // Close
-    public void slideIn() {
+    public void slideIn()
+    {
         sidebar.Close();
     }
 
-    public void showCollabMatrix() {
+    public void showCollabMatrix()
+    {
         collabMatrix.SetActive(true);
     }
 

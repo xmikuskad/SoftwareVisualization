@@ -35,7 +35,7 @@ public class DataRenderer : MonoBehaviour
     public float renderDistanceBetweenObjs = 3;
     public float distanceOnComplete = 4f;
     public bool spawnTopOutlinesForSpiral = false;
-    
+
     [Header("References")] public EventRenderer eventRenderer;
     public GameObject verticePrefab;
     public GameObject edgePrefab;
@@ -46,7 +46,7 @@ public class DataRenderer : MonoBehaviour
 
     public GameObject loadingBar;
     public GameObject loadBtn;
-    
+
     public TMP_Text currentDateText;
 
     public CollabMatrix collabMatrix;
@@ -119,7 +119,7 @@ public class DataRenderer : MonoBehaviour
     {
         DataHolder holder = this.loadedProjects[projectId];
         ResetData();
-        AddData(holder,false);
+        AddData(holder, false);
     }
 
     // Manages loading screen
@@ -138,7 +138,7 @@ public class DataRenderer : MonoBehaviour
     public void ProcessEvent(EventData data)
     {
         // currentDateText.DOText(data.when + " (Day "+(data.when.Subtract(loadedProjects[data.projectId].startDate).Days+1)+")",SingletonManager.Instance.animationManager.GetSpawnAnimTime(),false);
-        currentDateText.text = data.when + " (Day "+(data.when.Subtract(loadedProjects[data.projectId].startDate).Days+1)+")";
+        currentDateText.text = data.when + " (Day " + (data.when.Subtract(loadedProjects[data.projectId].startDate).Days + 1) + ")";
         Sequence sequence = DOTween.Sequence();
 
         if (data.actionType == EventActionType.CREATE)
@@ -206,11 +206,11 @@ public class DataRenderer : MonoBehaviour
                 vertices[projectId][personId].transform
                     .position); //x,y and z position of the starting point of the line
             renderer.Second.SetPosition(1, oldPos); //x,y and z position of the end point of the line
-            
+
             // TODO maybe increase scale with number of changes?
             // sequence.Append(vertices[projectId][personId].transform.DOScaleX(vertices[projectId][personId].transform.localScale.x+0.05f,SingletonManager.Instance.animationManager.GetMoveAnimTime()) );
-            
-            sequence.Append( DOTween.To(() => oldPos, x =>
+
+            sequence.Append(DOTween.To(() => oldPos, x =>
             {
                 oldPos = x;
                 renderer.Second.SetPosition(1, x);
@@ -232,7 +232,7 @@ public class DataRenderer : MonoBehaviour
         spawnTheta[eventData.projectId] += renderDistanceBetweenObjs / idk;
 
         VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
-        verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController,this);
+        verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController, this);
         VerticeData d = loadedProjects[eventData.projectId].verticeData[eventData.verticeId];
         verticeRenderer.SetVerticeData(d, eventData.projectId, verticeMaterial[d.verticeType]);
         if (!vertices.ContainsKey(eventData.projectId))
@@ -241,7 +241,7 @@ public class DataRenderer : MonoBehaviour
         }
 
         vertices[eventData.projectId].Add(eventData.verticeId, verticeRenderer);
-        
+
         CheckAndApplyHighlight(eventData.projectId, eventData.verticeId);
         verticeRenderer.SetIsLoaded(true);
     }
@@ -251,7 +251,10 @@ public class DataRenderer : MonoBehaviour
         long counter = 1;
         foreach (long personId in this.loadedProjects[projectId].personIds.Values)
         {
-            Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(counter, 10+counter, 0), Quaternion.identity);
+
+            if (!this.loadedProjects[projectId].verticeData.ContainsKey(personId)) continue;
+
+            Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(counter, 10 + counter, 0), Quaternion.identity);
 
             VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
             verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController, this);
@@ -264,14 +267,14 @@ public class DataRenderer : MonoBehaviour
 
             vertices[projectId].Add(personId, verticeRenderer);
             verticeRenderer.SetIsLoaded(true);
-            counter+=2;
+            counter += 2;
         }
     }
 
     private void SpawnOutlineObjects(long projectId)
     {
         float pos = renderDistanceBetweenObjs;
-        for(int i=0;i<loadedProjects[projectId].GetTicketCount();i++)
+        for (int i = 0; i < loadedProjects[projectId].GetTicketCount(); i++)
         {
             if (spawnTopOutlinesForSpiral)
             {
@@ -292,7 +295,7 @@ public class DataRenderer : MonoBehaviour
         MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
         renderer.materials = new[] { outlineMaterial };
         gameObjectsToClean.Add(obj.gameObject);
-        
+
         return renderDistanceBetweenObjs / pos;
     }
 
@@ -314,12 +317,12 @@ public class DataRenderer : MonoBehaviour
         }
 
         VerticeRenderer renderer;
-        if(this.vertices[projectId].TryGetValue(verticeId, out renderer))
+        if (this.vertices[projectId].TryGetValue(verticeId, out renderer))
         {
             renderer.SetHighlighted(true);
         }
     }
-    
+
     public void HighlightVerticeByDate(long projectId, DateTime date)
     {
         foreach (var keyValuePair in this.vertices[projectId])
@@ -327,10 +330,10 @@ public class DataRenderer : MonoBehaviour
             keyValuePair.Value.SetHidden(true);
         }
         // this.vertices[projectId][verticeId].SetHighlighted(true);
-        foreach (var l in this.loadedProjects[projectId].eventsByDate[date.Date].Select(x=>x.verticeId).Distinct())
+        foreach (var l in this.loadedProjects[projectId].eventsByDate[date.Date].Select(x => x.verticeId).Distinct())
         {
             VerticeRenderer renderer;
-            if(this.vertices[projectId].TryGetValue(l, out renderer))
+            if (this.vertices[projectId].TryGetValue(l, out renderer))
             {
                 renderer.SetHighlighted(true);
             }
@@ -340,7 +343,7 @@ public class DataRenderer : MonoBehaviour
     // TODO optimize
     public void CheckAndApplyHighlight(long projectId, long verticeId)
     {
-        if(!loadedProjects.ContainsKey(projectId) || !this.vertices.ContainsKey(projectId) || !this.vertices[projectId].ContainsKey(verticeId))
+        if (!loadedProjects.ContainsKey(projectId) || !this.vertices.ContainsKey(projectId) || !this.vertices[projectId].ContainsKey(verticeId))
             return;
         // Check for active highlights
         if (SingletonManager.Instance.dataManager.highlightedDate.HasValue)
@@ -354,7 +357,8 @@ public class DataRenderer : MonoBehaviour
             {
                 this.vertices[projectId][verticeId].SetHidden(true);
             }
-        } else if (SingletonManager.Instance.dataManager.highlightedVerticeId >= 0)
+        }
+        else if (SingletonManager.Instance.dataManager.highlightedVerticeId >= 0)
         {
             if (SingletonManager.Instance.dataManager.highlightedVerticeId == verticeId && SingletonManager.Instance.dataManager.highlightedProjectId == projectId)
             {

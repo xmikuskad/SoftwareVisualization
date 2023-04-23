@@ -13,7 +13,7 @@ namespace Renderers
     public class TimelineRenderer : MonoBehaviour
     {
         private List<MonthGroup> groupByMonth;
-        private Dictionary<DateTime, TimelineBar> barObjects = new ();
+        private Dictionary<DateTime, TimelineBar> barObjects = new();
 
         [Header("References")] public RectTransform graphContainer;
         public RectTransform textPrefab;
@@ -42,15 +42,15 @@ namespace Renderers
                 if (value < minValue)
                     minValue = value;
             }
-            
+
             // Prepare max width/height
             long containerHeight = Convert.ToInt64(graphContainer.sizeDelta.y * 0.9f);
             long containerWidth = Convert.ToInt64(graphContainer.sizeDelta.x * 0.9f);
-            long barWidth = Convert.ToInt64(containerWidth / (counts.Count+1f) * 0.9f);
+            long barWidth = Convert.ToInt64(containerWidth / (counts.Count + 1f) * 0.9f);
             long index = 0;
             long lastMonth = -1;
             Material activeMaterial = oddMaterial;
-            foreach (var date in counts.Keys.OrderBy(x=>x))
+            foreach (var date in counts.Keys.OrderBy(x => x))
             {
                 if (date.Month != lastMonth)
                 {
@@ -58,7 +58,7 @@ namespace Renderers
                     lastMonth = date.Month;
                 }
                 float xPosition = barWidth + index * barWidth;
-                float yPosition = (counts[date] / (maxValue*1f)) * containerHeight;
+                float yPosition = (counts[date] / (maxValue * 1f)) * containerHeight;
                 TimelineBar timelineBar = CreateBar(new Vector2(xPosition, yPosition), barWidth * .9f, date, activeMaterial);
                 this.barObjects[date] = timelineBar;
                 // RectTransform labelX = Instantiate(textPrefab);
@@ -71,7 +71,7 @@ namespace Renderers
                 // labelX.pivot = new Vector2(.5f, 0f);
                 // labelX.GetComponent<TMP_Text>().text =date.ToString("dd");
                 // // labelX.GetComponent<TMP_Text>().text =date.ToString("dd/MM/yy");
-                
+
                 index++;
             }
 
@@ -85,31 +85,32 @@ namespace Renderers
                     year = g.Key.Year,
                     count = g.Count()
                 }).ToList();
-            
-            float offset = barWidth/2f;
+
+            float offset = barWidth / 2f;
             activeMaterial = evenMaterial;
             foreach (var group in groupByMonth)
             {
                 RectTransform labelX = Instantiate(textPrefab);
                 labelX.SetParent(graphContainer, false);
-                labelX.sizeDelta = new Vector2(barWidth*group.count, 30f);
+                labelX.sizeDelta = new Vector2(barWidth * group.count, 30f);
                 labelX.gameObject.SetActive(true);
-                labelX.anchoredPosition = new Vector2(offset + (barWidth*group.count/2f), -30f);
+                labelX.anchoredPosition = new Vector2(offset + (barWidth * group.count / 2f), -30f);
                 labelX.anchorMin = new Vector2(0, 0);
                 labelX.anchorMax = new Vector2(0, 0);
                 labelX.pivot = new Vector2(.5f, 0f);
-                labelX.GetComponent<TMP_Text>().text =GetTooltip(group);
-                labelX.GetComponent<TMP_Text>().color =activeMaterial.color;
+                labelX.GetComponent<TMP_Text>().text = GetTooltip(group);
+                labelX.GetComponent<TMP_Text>().color = activeMaterial.color;
                 offset += barWidth * group.count;
                 activeMaterial = activeMaterial == oddMaterial ? evenMaterial : oddMaterial;
             }
         }
-        
-        private TimelineBar CreateBar(Vector2 graphPosition, float barWidth, DateTime dateTime, Material material) {
+
+        private TimelineBar CreateBar(Vector2 graphPosition, float barWidth, DateTime dateTime, Material material)
+        {
             // GameObject gameObject = new GameObject("bar", typeof(Image));
             // gameObject.transform.SetParent(graphContainer, false);
             RectTransform rectTransform = Instantiate(barPrefab, graphContainer, false);
-            
+
             // RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
             rectTransform.anchoredPosition = new Vector2(graphPosition.x, 0f);
             rectTransform.sizeDelta = new Vector2(barWidth, graphPosition.y);
@@ -117,7 +118,7 @@ namespace Renderers
             rectTransform.anchorMax = new Vector2(0, 0);
             rectTransform.pivot = new Vector2(.5f, 0f);
 
-            TimelineBar timelineBar = rectTransform.GetComponent<TimelineBar>(); 
+            TimelineBar timelineBar = rectTransform.GetComponent<TimelineBar>();
             timelineBar.SetUp(dateTime, tooltipPrefab, material, highlightMaterial, this);
             rectTransform.GetComponent<Image>().material = material;
             return timelineBar;
@@ -154,25 +155,25 @@ namespace Renderers
         public void SelectDate(DateTime date)
         {
             UnhighlightElements();
-            SingletonManager.Instance.dataManager.HightlightDate(1L,date);
+            SingletonManager.Instance.dataManager.HightlightDate(1L, date);
             // TODO call data renderer to filter
         }
-        
+
         public void HighlightDate(DateTime date)
         {
             barObjects[date].SetHighlighted(true);
         }
-        
-        
+
+
         public void HighlightDates(List<DateTime> dates)
         {
             foreach (var dateTime in dates)
             {
-                barObjects[dateTime].SetHighlighted(true);   
+                barObjects[dateTime].SetHighlighted(true);
             }
         }
     }
-    
+
     class MonthGroup
     {
         public int month { get; set; }
