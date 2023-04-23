@@ -29,6 +29,7 @@ public class SidebarController : MonoBehaviour
 
     void Update()
     {
+        // TODO this should be moved somewhere ?
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -42,6 +43,7 @@ public class SidebarController : MonoBehaviour
             else
             {
                 this.slideIn();
+                SingletonManager.Instance.dataManager.Unhighlight();
             }
         }
     }

@@ -20,7 +20,7 @@ public class DataRenderer : MonoBehaviour
 
     // Instantiated objects
     private Dictionary<long, Dictionary<long, VerticeRenderer>> vertices = new();
-    private Dictionary<long, Dictionary<long, EdgeRenderer>> edges = new();
+    // private Dictionary<long, Dictionary<long, EdgeRenderer>> edges = new();
 
     private Dictionary<VerticeType, Material> verticeMaterial = new();
     private Dictionary<EdgeType, Material> edgeMaterial = new();
@@ -54,6 +54,7 @@ public class DataRenderer : MonoBehaviour
     public Material outlineMaterial;
     public LineRenderer lineRenderer;
     public SidebarController sidebarController;
+    public TimelineRenderer timelineRenderer;
 
     private void Awake()
     {
@@ -89,15 +90,15 @@ public class DataRenderer : MonoBehaviour
 
         vertices.Clear();
 
-        foreach (var keyPair in edges)
-        {
-            foreach (var keyPairChild in edges[keyPair.Key])
-            {
-                Destroy(edges[keyPair.Key][keyPairChild.Key].gameObject);
-            }
-        }
+        // foreach (var keyPair in edges)
+        // {
+        //     foreach (var keyPairChild in edges[keyPair.Key])
+        //     {
+        //         Destroy(edges[keyPair.Key][keyPairChild.Key].gameObject);
+        //     }
+        // }
 
-        edges.Clear();
+        // edges.Clear();
         DOTween.Clear();
         this.eventRenderer.queue.Clear();
     }
@@ -105,10 +106,11 @@ public class DataRenderer : MonoBehaviour
     public void RenderData(bool rerender)
     {
         if (loadedProjects == null) return;
-        SpawnPeople(1L);
         this.eventRenderer.Init(this.loadedProjects[1].eventData);
+        SpawnPeople(1L);
         collabMatrix.fillMatrix(this.loadedProjects[1]);
         SpawnOutlineObjects(1L);
+        timelineRenderer.LoadTimeline(this.loadedProjects[1]);
         SetLoading(false);
         this.eventRenderer.NextQueue();
     }
@@ -230,15 +232,18 @@ public class DataRenderer : MonoBehaviour
         spawnTheta[eventData.projectId] += renderDistanceBetweenObjs / idk;
 
         VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
-        verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController);
+        verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController,this);
         VerticeData d = loadedProjects[eventData.projectId].verticeData[eventData.verticeId];
-        verticeRenderer.SetVerticeData(d, verticeMaterial[d.verticeType]);
+        verticeRenderer.SetVerticeData(d, eventData.projectId, verticeMaterial[d.verticeType]);
         if (!vertices.ContainsKey(eventData.projectId))
         {
             vertices.Add(eventData.projectId, new());
         }
 
         vertices[eventData.projectId].Add(eventData.verticeId, verticeRenderer);
+        
+        CheckAndApplyHighlight(eventData.projectId, eventData.verticeId);
+        verticeRenderer.SetIsLoaded(true);
     }
 
     private void SpawnPeople(long projectId)
@@ -249,16 +254,16 @@ public class DataRenderer : MonoBehaviour
             Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(counter, 10+counter, 0), Quaternion.identity);
 
             VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
-            verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController);
+            verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController, this);
             VerticeData d = loadedProjects[projectId].verticeData[personId];
-            verticeRenderer.SetVerticeData(d, verticeMaterial[d.verticeType]);
+            verticeRenderer.SetVerticeData(d, projectId, verticeMaterial[d.verticeType]);
             if (!vertices.ContainsKey(projectId))
             {
                 vertices.Add(projectId, new());
             }
 
             vertices[projectId].Add(personId, verticeRenderer);
-
+            verticeRenderer.SetIsLoaded(true);
             counter+=2;
         }
     }
@@ -283,6 +288,7 @@ public class DataRenderer : MonoBehaviour
         float y = Mathf.Sin(pos) * pos;
         Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(x, yPos, y), Quaternion.identity);
         Destroy(obj.GetComponent<VerticeRenderer>());
+        Destroy(obj.GetComponent<BoxCollider>());
         MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
         renderer.materials = new[] { outlineMaterial };
         gameObjectsToClean.Add(obj.gameObject);
@@ -290,5 +296,74 @@ public class DataRenderer : MonoBehaviour
         return renderDistanceBetweenObjs / pos;
     }
 
+    public void UnhighlightElements(long projectId)
+    {
+        if (!this.vertices.ContainsKey(projectId))
+            return;
+        foreach (var keyValuePair in this.vertices[projectId])
+        {
+            keyValuePair.Value.SetHighlighted(false);
+        }
+    }
 
+    public void HighlightVertice(long projectId, long verticeId)
+    {
+        foreach (var keyValuePair in this.vertices[projectId])
+        {
+            keyValuePair.Value.SetHidden(true);
+        }
+
+        VerticeRenderer renderer;
+        if(this.vertices[projectId].TryGetValue(verticeId, out renderer))
+        {
+            renderer.SetHighlighted(true);
+        }
+    }
+    
+    public void HighlightVerticeByDate(long projectId, DateTime date)
+    {
+        foreach (var keyValuePair in this.vertices[projectId])
+        {
+            keyValuePair.Value.SetHidden(true);
+        }
+        // this.vertices[projectId][verticeId].SetHighlighted(true);
+        foreach (var l in this.loadedProjects[projectId].eventsByDate[date.Date].Select(x=>x.verticeId).Distinct())
+        {
+            VerticeRenderer renderer;
+            if(this.vertices[projectId].TryGetValue(l, out renderer))
+            {
+                renderer.SetHighlighted(true);
+            }
+        }
+    }
+
+    // TODO optimize
+    public void CheckAndApplyHighlight(long projectId, long verticeId)
+    {
+        if(!loadedProjects.ContainsKey(projectId) || !this.vertices.ContainsKey(projectId) || !this.vertices[projectId].ContainsKey(verticeId))
+            return;
+        // Check for active highlights
+        if (SingletonManager.Instance.dataManager.highlightedDate.HasValue)
+        {
+            if (this.loadedProjects[projectId].rawDatesForVertice[verticeId]
+                .Contains(SingletonManager.Instance.dataManager.highlightedDate.Value))
+            {
+                this.vertices[projectId][verticeId].SetHighlighted(true);
+            }
+            else
+            {
+                this.vertices[projectId][verticeId].SetHidden(true);
+            }
+        } else if (SingletonManager.Instance.dataManager.highlightedVerticeId >= 0)
+        {
+            if (SingletonManager.Instance.dataManager.highlightedVerticeId == verticeId && SingletonManager.Instance.dataManager.highlightedProjectId == projectId)
+            {
+                this.vertices[projectId][verticeId].SetHighlighted(true);
+            }
+            else
+            {
+                this.vertices[projectId][verticeId].SetHidden(true);
+            }
+        }
+    }
 }

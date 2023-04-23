@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using Data;
 using UnityEngine;
@@ -14,6 +15,14 @@ public class DataHolder
     public List<EventData> eventData = new ();
     public Dictionary<long, long> edgeCountForTickets = new();
     public DateTime startDate;
+    public Dictionary<DateTime, long> eventCountByDate = new();
+    
+    // Contains all data for specific dateTime
+    public Dictionary<DateTime, List<EventData>> eventsByDate = new();
+    // Contains all dates for a verticeId
+    public Dictionary<long, List<DateTime>> datesForVertice = new();
+    // Contains all dates for a verticeId - without time only date
+    public Dictionary<long, List<DateTime>> rawDatesForVertice = new();
 
     public DataHolder()
     {
@@ -32,7 +41,9 @@ public class DataHolder
             .ToDictionary(i=>i.id);
     }
 
-    public void CreateEventData()
+    
+    // TODO This function needs a rework. I know that data are only loading for tickets.
+    public void LoadData()
     {
         this.eventData.Clear();
         // Create a map so we can get personId from personString
@@ -44,13 +55,19 @@ public class DataHolder
         // Process all tickets and add their creation to events
         foreach (var data in this.verticeData.Values.Where(e=>e.verticeType == VerticeType.Ticket))
         {
-            eventData.Add(new EventData(projectId,GetPersonIds(data.author),data.created.Value,data.id,EventActionType.CREATE,0));
+            EventData created = new EventData(projectId, GetPersonIds(data.author), data.created.Value, data.id,
+                EventActionType.CREATE, 0);
+            eventData.Add(created);
+            AddEventToDate(created);
 
             // TODO what to do if start is sooner than creation ???
             DateTime start = data.created.Value >= data.start.Value
                 ? data.created.Value.AddMilliseconds(1)
                 : data.start.Value;
-            eventData.Add(new EventData(projectId,GetPersonIds(data.assignee),start,data.id,EventActionType.UPDATE,0));
+            EventData started = new EventData(projectId, GetPersonIds(data.assignee), start, data.id,
+                EventActionType.UPDATE, 0);
+            eventData.Add(started);
+            AddEventToDate(started);
         }
         
         // Get all ticket ids for faster comparision
@@ -83,14 +100,20 @@ public class DataHolder
                             DateTime commitedTime = ticket.created.Value >= vertice.committed.Value
                                 ? ticket.created.Value.AddMilliseconds(5)
                                 : vertice.committed.Value;
-                            eventData.Add(new EventData(projectId,GetPersonIds(vertice.author),commitedTime,data.from,EventActionType.MOVE,data.id));
+                            EventData commited = new EventData(projectId, GetPersonIds(vertice.author), commitedTime,
+                                data.from, EventActionType.MOVE, data.id);
+                            eventData.Add(commited);
+                            AddEventToDate(commited);
                             edgeCountForTickets[data.from]++;
                         }
                         // TODO this happens !?!?!
                         DateTime createdTime = ticket.created.Value >= vertice.created.Value
                             ? ticket.created.Value.AddMilliseconds(3)
                             : vertice.created.Value;
-                        eventData.Add(new EventData(projectId,GetPersonIds(vertice.author),createdTime,data.from,EventActionType.MOVE,data.id));
+                        EventData created = new EventData(projectId, GetPersonIds(vertice.author), createdTime,
+                            data.from, EventActionType.MOVE, data.id);
+                        eventData.Add(created);
+                        AddEventToDate(created);
                         edgeCountForTickets[data.from]++;
                         break;
                     default:
@@ -102,11 +125,54 @@ public class DataHolder
 
         eventData = eventData.OrderBy(x => x.when).ToList();
         startDate = eventData[0].when;
+        
+        datesForVertice = eventsByDate
+            .SelectMany(kvp => kvp.Value.Select(eventData => new { Id = eventData.verticeId, Date = kvp.Key }))
+            .GroupBy(obj => obj.Id)
+            .ToDictionary(g => g.Key, g => g.Select(obj => obj.Date).ToList());
+        rawDatesForVertice = eventsByDate
+            .SelectMany(kvp => kvp.Value.Select(eventData => new { Id = eventData.verticeId, Date = kvp.Key }))
+            .GroupBy(obj => obj.Id)
+            .ToDictionary(g => g.Key, g => g.Select(obj => obj.Date.Date).ToList());
+        
+        
+        // SORT EVENTS BY DATE
+        var keys = eventsByDate.Keys.ToList(); // create a list of keys to iterate over
 
-        // eventData.GroupBy(e => e.when.Date).Select(group => new EventDataDate(group.ToList(), group.Key))
-        //     .OrderBy(e => e.eventDate);
+        for (int i = 0; i < keys.Count; i++)
+        {
+            DateTime key = keys[i];
+
+            // sort the list of EventData objects by the date property
+            List<EventData> sortedList = eventsByDate[key].OrderBy(e => e.when).ToList();
+
+            // replace the unsorted list with the sorted list in the dictionary
+            eventsByDate[key] = sortedList;
+        }
         
         Debug.Log("Event data created");
+    }
+
+    private void AddEventCount(DateTime date)
+    {
+        if (eventCountByDate.ContainsKey(date.Date))
+        {
+            eventCountByDate[date.Date]++;
+        }
+        else
+        {
+            eventCountByDate[date.Date] = 1;
+        }
+    }
+
+    private void AddEventToDate(EventData data)
+    {
+        if (!eventsByDate.ContainsKey(data.when.Date))
+        {
+            eventsByDate[data.when.Date] = new();
+        }
+        eventsByDate[data.when.Date].Add(data);
+        AddEventCount(data.when.Date);
     }
 
     // Get person ids based on names
