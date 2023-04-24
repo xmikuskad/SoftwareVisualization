@@ -87,6 +87,7 @@ public class DataRenderer : MonoBehaviour
         this.spawnTheta.Clear();
         this.loadedProjects.Clear();
         PoolManager.Pools[PoolNames.VERTICE].DespawnAll(); // This removes all vertices from scene :)
+        PoolManager.Pools[PoolNames.VERTICE_OUTLINE].DespawnAll(); // This removes all outline vertices from scene :)
 
         vertices.Clear();
 
@@ -289,7 +290,7 @@ public class DataRenderer : MonoBehaviour
     {
         float x = Mathf.Cos(pos) * pos;
         float y = Mathf.Sin(pos) * pos;
-        Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(x, yPos, y), Quaternion.identity);
+        Transform obj = PoolManager.Pools[PoolNames.VERTICE_OUTLINE].Spawn(verticePrefab, new Vector3(x, yPos, y), Quaternion.identity);
         Destroy(obj.GetComponent<VerticeRenderer>());
         Destroy(obj.GetComponent<BoxCollider>());
         MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
@@ -348,6 +349,7 @@ public class DataRenderer : MonoBehaviour
         // Check for active highlights
         if (SingletonManager.Instance.dataManager.highlightedDate.HasValue)
         {
+            Debug.LogWarning("date");
             if (this.loadedProjects[projectId].rawDatesForVertice[verticeId]
                 .Contains(SingletonManager.Instance.dataManager.highlightedDate.Value))
             {
@@ -360,6 +362,7 @@ public class DataRenderer : MonoBehaviour
         }
         else if (SingletonManager.Instance.dataManager.highlightedVerticeId >= 0)
         {
+            Debug.LogWarning("id");
             if (SingletonManager.Instance.dataManager.highlightedVerticeId == verticeId && SingletonManager.Instance.dataManager.highlightedProjectId == projectId)
             {
                 this.vertices[projectId][verticeId].SetHighlighted(true);
@@ -369,5 +372,14 @@ public class DataRenderer : MonoBehaviour
                 this.vertices[projectId][verticeId].SetHidden(true);
             }
         }
+        else
+        {
+            Debug.LogWarning("Not applying highlight");
+        }
+    }
+
+    public void ApplyMappingChanges()
+    {
+        
     }
 }

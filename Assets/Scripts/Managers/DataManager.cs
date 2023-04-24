@@ -79,11 +79,8 @@ public class DataManager: MonoBehaviour
     public void HightlightVertice(long projectId, VerticeData verticeData)
     {
         this.highlightedProjectId = projectId;
-        if (highlightedDate != null)
-        {
-            this.timelineRenderer.UnhighlightElements();
-            highlightedDate = null;
-        }
+        this.timelineRenderer.UnhighlightElements();
+        highlightedDate = null;
         
         highlightedVerticeData = verticeData;
         highlightedVerticeId = verticeData.id;
@@ -97,6 +94,9 @@ public class DataManager: MonoBehaviour
     public void Unhighlight()
     {
         this.highlightedProjectId = -1;
+        this.highlightedVerticeId = -1;
+        this.highlightedVerticeData = null;
+        this.highlightedDate = null;
         this.timelineRenderer.UnhighlightElements();
         this.dataRenderer.UnhighlightElements(1L);
     }
