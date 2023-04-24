@@ -41,6 +41,25 @@ public class VerticeRenderer : MouseOverRenderer
     protected new void Start()
     {
         base.Start();
+        this.hightlightMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIGHLIGHTED).color;
+        this.hiddenMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIDDEN).color;
+    }
+
+    public void OnSpawned()
+    {
+        SingletonManager.Instance.preferencesManager.MappingChangedEvent += OnMappingChanged;
+    }
+
+    public void OnDespawned()
+    {
+        SingletonManager.Instance.preferencesManager.MappingChangedEvent -= OnMappingChanged;
+    }
+
+    private void OnMappingChanged(Dictionary<long,ColorMapping> colorMappings)
+    {
+        // TODO
+        this.hightlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
+        this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;
     }
 
     public override void OnHoverEnter()
@@ -149,12 +168,14 @@ public class VerticeRenderer : MouseOverRenderer
     {
         this.shouldHover = !isHighlighted;
         this.meshRenderer.material = isHighlighted ? hightlightMaterial : nonHoverMaterial;
+        Debug.LogWarning("Applying highlighted");
     }
 
     public void SetHidden(bool isHidden)
     {
         this.shouldHover = !isHidden;
         this.meshRenderer.material = isHidden ? hiddenMaterial : nonHoverMaterial;
+        Debug.LogWarning("Applying hidden");
     }
 
     public void SetIsLoaded(bool isLoaded)

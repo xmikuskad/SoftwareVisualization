@@ -23,6 +23,7 @@ namespace Renderers
         public Material oddMaterial;
         public Material evenMaterial;
         public Material highlightMaterial;
+        public Material hiddenMaterial;
         public void LoadTimeline(DataHolder dataHolder)
         {
             ResetTimeline();
@@ -119,7 +120,7 @@ namespace Renderers
             rectTransform.pivot = new Vector2(.5f, 0f);
 
             TimelineBar timelineBar = rectTransform.GetComponent<TimelineBar>();
-            timelineBar.SetUp(dateTime, tooltipPrefab, material, highlightMaterial, this);
+            timelineBar.SetUp(dateTime, tooltipPrefab, material, highlightMaterial, hiddenMaterial, this);
             rectTransform.GetComponent<Image>().material = material;
             return timelineBar;
         }
@@ -161,12 +162,22 @@ namespace Renderers
 
         public void HighlightDate(DateTime date)
         {
+            foreach (var obj in barObjects.Values)
+            {
+                obj.SetHidden(true);
+            }
+
             barObjects[date].SetHighlighted(true);
         }
 
 
         public void HighlightDates(List<DateTime> dates)
         {
+            foreach (var obj in barObjects.Values)
+            {
+                obj.SetHidden(true);
+            }
+            
             foreach (var dateTime in dates)
             {
                 barObjects[dateTime].SetHighlighted(true);

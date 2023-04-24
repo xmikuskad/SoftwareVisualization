@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 2290066978398530106}
   - component: {fileID: 2290066978398530105}
   - component: {fileID: 2074793483117922003}
+  - component: {fileID: 1210033560}
+  - component: {fileID: 8162790137229991765}
   m_Layer: 0
   m_Name: SingletonManager
   m_TagString: Untagged
@@ -58,6 +60,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb4376026756f4a47906646335d0aab0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  highlightedProjectId: -1
+  highlightedVerticeId: -1
 --- !u!114 &2074793483117922003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,5 +72,39 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9cb78a12b8ec54b4abe651dd5c281421, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1210033560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2290066978398530104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1a78ad89fe84cf2b7deb8c34c3fbb2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minSpawnAnimTime: 0.0001
+  maxSpawnAnimTime: 0.4
+  minMoveAnimTime: 0.0001
+  maxMoveAnimTime: 0.4
+  minColorChangeAnimTime: 0.0001
+  maxColorChangeAnimTime: 0.4
+  minLineDisappearAnimTime: 0.0001
+  maxLineDisappearAnimTime: 0.2
+  minWaitAnimTime: 0.0001
+  maxWaitAnimTime: 0.2
+--- !u!114 &8162790137229991765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2290066978398530104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5a97431def74263becc8ba837998644, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
