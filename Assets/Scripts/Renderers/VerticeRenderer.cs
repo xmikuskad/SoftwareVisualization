@@ -27,7 +27,7 @@ public class VerticeRenderer : MouseOverRenderer
     public Material hightlightMaterial;
     public Material hiddenMaterial;
 
-    private Vector3 offPosition = new (2000, 20000, 2000);
+    private Vector3 offPosition = new(2000, 20000, 2000);
 
     private SidebarController sidebarScript;
     private DataRenderer dataRenderer;
@@ -45,7 +45,8 @@ public class VerticeRenderer : MouseOverRenderer
 
     public override void OnHoverEnter()
     {
-        if (verticeData == null || !isLoaded) {
+        if (verticeData == null || !isLoaded)
+        {
             return;
         }
         // hoverText.text = verticeData.ToString();
@@ -58,31 +59,31 @@ public class VerticeRenderer : MouseOverRenderer
             hoverText.text = verticeData.ToString();
         }
 
-        if(shouldHover)
+        if (shouldHover)
             meshRenderer.material = hoverMaterial;
-        
+
     }
 
     public override void OnHoverExit()  // This is somehow being called a lot!
     {
-        if(!isLoaded) return;
-        
+        if (!isLoaded) return;
+
         // if(hoverElement) hoverElement.SetActive(false);
         hoverElement.transform.position = offPosition;
-        if(shouldHover)
+        if (shouldHover)
             meshRenderer.material = nonHoverMaterial;
-        
-    }
-    
-    public override void OnClick()
-    {
-        if(!isLoaded) return;
-        // Debug.Log(verticeData.ToString());
-        sidebarScript.slideOut(verticeData);
-        SingletonManager.Instance.dataManager.HightlightVertice(this.projectId,this.verticeData);
+
     }
 
-    public void SetUpReferences(Canvas hoverCanvas,GameObject hoverElement,TMP_Text hoverText, SidebarController sidebarController, DataRenderer dataRenderer)
+    public override void OnClick()
+    {
+        if (!isLoaded) return;
+        // Debug.Log(verticeData.ToString());
+        sidebarScript.slideOut(projectId, verticeData);
+        SingletonManager.Instance.dataManager.HightlightVertice(this.projectId, this.verticeData);
+    }
+
+    public void SetUpReferences(Canvas hoverCanvas, GameObject hoverElement, TMP_Text hoverText, SidebarController sidebarController, DataRenderer dataRenderer)
     {
         this.hoverElement = hoverElement;
         this.hoverCanvas = hoverCanvas;
@@ -101,11 +102,11 @@ public class VerticeRenderer : MouseOverRenderer
         return hoverElement;
     }
 
-    public void SetVerticeData(VerticeData verticeData,long projectId, Material material)
+    public void SetVerticeData(VerticeData verticeData, long projectId, Material material)
     {
         this.verticeData = verticeData;
         this.projectId = projectId;
-        
+
         // We need to duplicate material because otherwise all objects with that material will be changed
         Material newMat = new Material(material);
         meshRenderer.material = newMat;
@@ -114,7 +115,7 @@ public class VerticeRenderer : MouseOverRenderer
 
     public void AddCompletedEdge(long count, long maxTasks)
     {
-        this.completedCount+=count;
+        this.completedCount += count;
         this.taskCount = maxTasks;
         // this.nonHoverMaterial.DOColor(GetColorFromRedYellowGreenGradient((this.completedCount * 1.0f) / (maxTasks * 1.0f) * 100f), SingletonManager.Instance.animationManager.GetColorChangeAnimTime());
         // this.nonHoverMaterial.color = GetColorFromRedYellowGreenGradient((this.completedCount*1.0f) / (maxTasks * 1.0f) * 100f);
@@ -124,7 +125,7 @@ public class VerticeRenderer : MouseOverRenderer
     {
         return this.verticeData;
     }
-    
+
     private Color GetColorFromRedYellowGreenGradient(float percentage)
     {
         // Green colors too similar, taken from https://stackoverflow.com/questions/6394304/algorithm-how-do-i-fade-from-red-to-green-via-yellow-using-rgb-values
@@ -149,16 +150,16 @@ public class VerticeRenderer : MouseOverRenderer
         this.shouldHover = !isHighlighted;
         this.meshRenderer.material = isHighlighted ? hightlightMaterial : nonHoverMaterial;
     }
-    
+
     public void SetHidden(bool isHidden)
     {
         this.shouldHover = !isHidden;
         this.meshRenderer.material = isHidden ? hiddenMaterial : nonHoverMaterial;
     }
-    
+
     public void SetIsLoaded(bool isLoaded)
     {
         this.isLoaded = isLoaded;
     }
-    
+
 }
