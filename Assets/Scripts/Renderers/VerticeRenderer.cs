@@ -55,7 +55,7 @@ public class VerticeRenderer : MouseOverRenderer
         SingletonManager.Instance.preferencesManager.MappingChangedEvent -= OnMappingChanged;
     }
 
-    private void OnMappingChanged(Dictionary<long,ColorMapping> colorMappings)
+    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
     {
         // TODO
         this.hightlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
