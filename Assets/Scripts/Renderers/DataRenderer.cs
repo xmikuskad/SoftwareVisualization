@@ -56,6 +56,8 @@ public class DataRenderer : MonoBehaviour
     public SidebarController sidebarController;
     public TimelineRenderer timelineRenderer;
 
+    public ContributionsCalendar contributionsCalendar;
+
     private void Awake()
     {
         verticeMaterial = verticeMaterialsList.ToDictionary(key => key.verticeType, value => value.material);
@@ -110,6 +112,7 @@ public class DataRenderer : MonoBehaviour
         this.eventRenderer.Init(this.loadedProjects[1].eventData);
         SpawnPeople(1L);
         collabMatrix.fillMatrix(this.loadedProjects[1]);
+        contributionsCalendar.fillContributionsCalendar(this.loadedProjects[1]);
         SpawnOutlineObjects(1L);
         timelineRenderer.LoadTimeline(this.loadedProjects[1]);
         SetLoading(false);
