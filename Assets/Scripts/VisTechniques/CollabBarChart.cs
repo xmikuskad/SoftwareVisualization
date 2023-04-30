@@ -43,10 +43,11 @@ public class CollabBarChart : MonoBehaviour
         foreach (long authorId in dataHolder.ticketToChangeListPerAuthor[ticketId].Keys.OrderBy(i => i))
         {
             int currChangeCount = dataHolder.ticketToChangeListPerAuthor[ticketId][authorId].Count;
-            Vector3 pos = defaultLabelElement.transform.position;
-            pos.x = pos.x + (260 / ((personCount - 1 < 1 ? 1 : personCount - 1))) * index;
-            if (personCount <= 3) pos.x = getPosX(personCount, index, pos.x);
-            TMP_Text newLabel = Instantiate(defaultLabelElement, pos, Quaternion.identity, labelsHolder.transform);
+
+            Vector3 pos1 = defaultLabelElement.transform.position;
+            if (personCount <= 3) pos1.x = getPosX(personCount, index, pos1.x);
+            else pos1.x = pos1.x + (260 / ((personCount - 1 < 1 ? 1 : personCount - 1))) * index;
+            TMP_Text newLabel = Instantiate(defaultLabelElement, pos1, Quaternion.identity, labelsHolder.transform);
             newLabel.gameObject.SetActive(true);
             if (!dataHolder.verticeData.ContainsKey(authorId)) newLabel.text = "??";
             else newLabel.text = dataHolder.verticeData[authorId].name.ToString();
@@ -54,19 +55,18 @@ public class CollabBarChart : MonoBehaviour
             Vector2 size = defaultBarElement.rectTransform.sizeDelta;
             size.y = (size.y / maxChangeCount) * currChangeCount;
             size.x = (personCount > 3) ? (300 / personCount) : (200 / personCount);
-            pos = defaultBarElement.transform.position;
-            pos.x = getPosX(personCount, index, pos.x);
-
-            pos.y = pos.y - (250 - size.y) / 2;
-            Image newBar = Instantiate(defaultBarElement, pos, Quaternion.identity, barsHolder.transform);
+            Vector3 pos2 = defaultBarElement.transform.position;
+            pos2.x = getPosX(personCount, index, pos2.x);
+            pos2.y = pos2.y - (250 - size.y) / 2;
+            Image newBar = Instantiate(defaultBarElement, pos2, Quaternion.identity, barsHolder.transform);
             newBar.gameObject.SetActive(true);
             newBar.rectTransform.sizeDelta = size;
 
-            pos = defaultCountElement.transform.position;
-            pos.x = pos.x + (260 / (personCount - 1 < 1 ? 1 : personCount - 1)) * index;
-            if (personCount <= 3) pos.x = getPosX(personCount, index, pos.x);
-            pos.y = pos.y - (250 - size.y);
-            TMP_Text newCount = Instantiate(defaultCountElement, pos, Quaternion.identity, labelsHolder.transform);
+            Vector3 pos3 = defaultCountElement.transform.position;
+            if (personCount <= 3) pos3.x = getPosX(personCount, index, pos3.x);
+            else pos3.x = pos3.x + (260 / (personCount - 1 < 1 ? 1 : personCount - 1)) * index;
+            pos3.y = pos3.y - (250 - size.y);
+            TMP_Text newCount = Instantiate(defaultCountElement, pos3, Quaternion.identity, labelsHolder.transform);
             newCount.text = currChangeCount.ToString();
             newCount.gameObject.SetActive(true);
 
@@ -76,9 +76,9 @@ public class CollabBarChart : MonoBehaviour
 
     private float getPosX(int personCount, int index, float pos)
     {
-        if (personCount == 1) return 185 - 360;
-        else if (personCount == 2) return -75 + index * 150 + 185 - 360;
-        else if (personCount == 3) return -90 + index * 90 + 185 - 360;
+        if (personCount == 1) return pos + 130;
+        else if (personCount == 2) return pos + -75 + index * 150 + 130;
+        else if (personCount == 3) return pos + -90 + index * 90 + 130;
         else return pos + (260 / (personCount - 1)) * index;
     }
 
