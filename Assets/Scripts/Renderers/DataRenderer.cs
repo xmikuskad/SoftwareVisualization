@@ -112,7 +112,7 @@ public class DataRenderer : MonoBehaviour
         this.eventRenderer.Init(this.loadedProjects[1].eventData);
         SpawnPeople(1L);
         collabMatrix.fillMatrix(this.loadedProjects[1]);
-        contributionsCalendar.fillContributionsCalendar(this.loadedProjects[1]);
+        contributionsCalendar.fillContributionsCalendar(this.loadedProjects[1], this.loadedProjects[1].startDate.Year);
         SpawnOutlineObjects(1L);
         timelineRenderer.LoadTimeline(this.loadedProjects[1]);
         SetLoading(false);
@@ -383,6 +383,6 @@ public class DataRenderer : MonoBehaviour
 
     public void ApplyMappingChanges()
     {
-        
+
     }
 }

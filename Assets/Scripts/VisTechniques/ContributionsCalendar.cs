@@ -20,41 +20,75 @@ public class ContributionsCalendar : MonoBehaviour
 
     public TMP_Text defaultTileElementTooltip;
 
+    public TMP_Dropdown yearDropdown;
+
     // Start is called before the first frame update
 
     private void Start()
     {
+        yearDropdown.onValueChanged.AddListener(onYearChange);
+        yearDropdown.value = 1;
         SingletonManager.Instance.preferencesManager.MappingChangedEvent += OnMappingChanged;
     }
+
+    public void onYearChange(int index)
+    {
+        string selectedOption = yearDropdown.options[index].text;
+        Debug.Log("Selected option: " + selectedOption);
+        fillContributionsCalendar(dataHolder, int.Parse(yearDropdown.options[index].text));
+    }
+
     public void showContributionsCalendar()
     {
         contributionsCalendar.gameObject.SetActive(!contributionsCalendar.gameObject.activeSelf);
     }
 
     // Update is called once per frame
-    public void fillContributionsCalendar(DataHolder dataHolder)
+    public void fillContributionsCalendar(DataHolder dataHolder, int year)
     {
+        removeCurrentTiles();
+
         this.dataHolder = dataHolder;
 
-        int year = 2020; // Specify the year here
+        // year = dataHolder.startDate.Year; // Specify the year here
 
         DateTime startDate = new DateTime(year, 1, 1); // Start date of the year
         DateTime endDate = startDate.AddYears(1).AddDays(-1); // End date of the year
 
         int index = 0;
 
+        Dictionary<DateTime, long> originalCounts = dataHolder.eventCountByDate;
+        if (originalCounts.Count == 0) return;
+        Dictionary<DateTime, long> noTimeCounts = new Dictionary<DateTime, long>();
+
+        // Find max/min bar value
+        long minValue = long.MaxValue;
+        long maxValue = 0;
+        foreach (var value in originalCounts.Values)
+        {
+            if (value > maxValue)
+                maxValue = value;
+            if (value < minValue)
+                minValue = value;
+        }
+
+        List<DateTime> keyList = new List<DateTime>(originalCounts.Keys);
+        foreach (DateTime t in keyList) noTimeCounts[t.Date] = originalCounts[t];
+
         for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
         {
-            string dateTooltip = date.ToString("dd/MM");
+            string dateTooltip = date.ToString("dd/MM/yyyy");
+            if (noTimeCounts.ContainsKey(date.Date)) dateTooltip += " - " + noTimeCounts[date].ToString() + " contributions";
+            else dateTooltip += " - 0 contributions";
             CultureInfo ci = CultureInfo.CurrentCulture;
             System.Globalization.Calendar cal = ci.Calendar;
             Vector3 pos = defaultTileElement.transform.position;
             pos.y = pos.y - (int)date.DayOfWeek * 30.0f;
-            defaultTileElementTooltip.text = date.ToString("dd/MM");
+            defaultTileElementTooltip.text = date.ToString("dd/MM/yyyy");
             pos.x = pos.x + 30.0f * ((int)cal.GetWeekOfYear(date, ci.DateTimeFormat.CalendarWeekRule, ci.DateTimeFormat.FirstDayOfWeek) - 1);
             GameObject newDateElement = Instantiate(defaultTileElement, pos, Quaternion.identity, tileElementHolder.transform);
             newDateElement.GetComponentInChildren<Image>().color =
-                GradientUtility.CreateGradient(UnityEngine.Random.Range(0.0f, 1.0f),
+                GradientUtility.CreateGradient((noTimeCounts.ContainsKey(date.Date) ? ((noTimeCounts[date] * 1.0f - minValue * 1.0f) / (maxValue * 1.0f - minValue * 1.0f)) * 1.0f : 0.0f),
                     SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.TILEMAPHIGHLIGHT).color);
             newDateElement.GetComponentInChildren<Button>().onClick.AddListener(() => defaultTileElementTooltip.text = dateTooltip);
             newDateElement.gameObject.SetActive(true);
@@ -72,6 +106,6 @@ public class ContributionsCalendar : MonoBehaviour
 
     private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
     {
-        if (dataHolder != null) fillContributionsCalendar(dataHolder);
+        if (dataHolder != null) fillContributionsCalendar(dataHolder, dataHolder.startDate.Year);
     }
 }
