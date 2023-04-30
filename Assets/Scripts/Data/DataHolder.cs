@@ -28,6 +28,9 @@ public class DataHolder
 
     // For ticket id returns dict of ids of authors and list of related changes by that author
     public Dictionary<long, Dictionary<long, List<VerticeData>>> ticketToChangeListPerAuthor = new();
+    
+    // TESTING
+    public Dictionary<long, VerticeWrapper> verticeWrappers = new();
 
     public DataHolder()
     {
@@ -61,14 +64,15 @@ public class DataHolder
         // Process all tickets and add their creation to events
         foreach (var data in this.verticeData.Values.Where(e => e.verticeType == VerticeType.Ticket))
         {
-            EventData created = new EventData(projectId, GetPersonIds(data.author), data.created.Value, data.id,
+            DateTime createdTime = data.created.HasValue ? data.created.Value : data.begin.Value;
+            EventData created = new EventData(projectId, GetPersonIds(data.author), createdTime, data.id,
                 EventActionType.CREATE, 0);
             eventData.Add(created);
             AddEventToDate(created);
 
             // TODO what to do if start is sooner than creation ???
-            DateTime start = data.created.Value >= data.start.Value
-                ? data.created.Value.AddMilliseconds(1)
+            DateTime start = createdTime >= data.start.Value
+                ? createdTime.AddMilliseconds(1)
                 : data.start.Value;
             EventData started = new EventData(projectId, GetPersonIds(data.assignee), start, data.id,
                 EventActionType.UPDATE, 0);
@@ -99,12 +103,15 @@ public class DataHolder
                         {
                             edgeCountForTickets[data.from] = 0;
                         }
+                        
+                        DateTime createdTimeForTicket = ticket.created.HasValue ? ticket.created.Value : ticket.begin.Value;
+                        DateTime createdTimeForVertice = vertice.created.HasValue ? vertice.created.Value : vertice.begin.Value;
 
                         if (vertice.committed != null)
                         {
                             // TODO this happens !?!?!
-                            DateTime commitedTime = ticket.created.Value >= vertice.committed.Value
-                                ? ticket.created.Value.AddMilliseconds(5)
+                            DateTime commitedTime = createdTimeForTicket >= vertice.committed.Value
+                                ? createdTimeForTicket.AddMilliseconds(5)
                                 : vertice.committed.Value;
                             EventData commited = new EventData(projectId, GetPersonIds(vertice.author), commitedTime,
                                 data.from, EventActionType.MOVE, data.id);
@@ -113,9 +120,9 @@ public class DataHolder
                             edgeCountForTickets[data.from]++;
                         }
                         // TODO this happens !?!?!
-                        DateTime createdTime = ticket.created.Value >= vertice.created.Value
-                            ? ticket.created.Value.AddMilliseconds(3)
-                            : vertice.created.Value;
+                        DateTime createdTime = createdTimeForTicket >= createdTimeForVertice
+                            ? createdTimeForTicket.AddMilliseconds(3)
+                            : createdTimeForVertice;
                         EventData created = new EventData(projectId, GetPersonIds(vertice.author), createdTime,
                             data.from, EventActionType.MOVE, data.id);
                         eventData.Add(created);
@@ -158,6 +165,8 @@ public class DataHolder
 
         fillTicketToChangeListPerAuthor();
 
+        LoadVerticeWrappers();
+        
         Debug.Log("Event data created");
     }
 
@@ -221,7 +230,66 @@ public class DataHolder
 
     public int GetTicketCount()
     {
-        return verticeData
-            .Where(e => e.Value.verticeType == VerticeType.Ticket).Count();
+        return verticeData.Count(e => e.Value.verticeType == VerticeType.Ticket);
+    }
+
+    // TODO FINISH
+    private void LoadVerticeWrappers()
+    {
+        
+        foreach (var (key, value) in verticeData)
+        {
+            verticeWrappers[key] = new VerticeWrapper();
+            verticeWrappers[key].verticeData = value;
+        }
+        
+        foreach (var (key, value) in edgeData)
+        {
+            verticeWrappers[value.from].AddData(verticeData[value.from],value);
+        }
+        
+        foreach (var val in verticeWrappers.Values)
+        {
+            // if(val.verticeData.verticeType != VerticeType.Change)
+            //     continue;
+            // if(!val.relatedEdges.Values.SelectMany(x=>x).Where(x=> String.Equals("created by",x.relation)).Any())
+            // {
+            //     Debug.LogWarning("Change doesnt have creation by person; "+ val.verticeData.id);
+            // }
+            
+            val.GetAuthor();
+        }
+        
+        
+
+        // TODO testing
+        // Dictionary<long, List<VerticeData>> dict = new();
+        // foreach (var (key, value) in edgeData)
+        // {
+        //     if (verticeData[value.from].verticeType == VerticeType.Commit)
+        //     {
+        //         if (!dict.ContainsKey(value.from))
+        //         {
+        //             dict[value.from] = new();
+        //         }
+        //         dict[value.from].Add(verticeData[value.to]);
+        //         // Debug.LogWarning(verticeData[value.from].verticeType +" --- "+verticeData[value.to].verticeType);    
+        //     }
+        //     
+        //     // Debug.LogWarning("["+key+", "+value.type+"]"+verticeData[value.from].verticeType +" --- "+verticeData[value.to].verticeType);
+        //     // if(verticeData[value.from].verticeType == VerticeType.Change || verticeData[value.from].verticeType == VerticeType.Person)
+        //     //     continue;
+        //     // Debug.Lo
+        //     // Debug.LogWarning((verticeData[value.from].verticeType == VerticeType.Change || verticeData[value.from].verticeType == VerticeType.Person) ? "Change/Person" : verticeData[value.from].verticeType);
+        // }
+        //
+        // foreach (var (key, value) in dict)
+        // {
+        //     // if(value.Where(x=>x.verticeType == VerticeType.Ticket).Count() > 1)
+        //         // Debug.LogWarning("CHANGE "+key+" :"+String.Join(",",value.Select(x=>x.verticeType).ToList()));
+        //         // Debug.LogWarning("CHANGE :"+String.Join(",",value.Select(x=>x.verticeType).ToList()));
+        //
+        // }
+
     }
 }

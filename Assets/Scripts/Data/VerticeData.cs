@@ -56,6 +56,14 @@ public class VerticeData
     public string[] resolutionClass { get; set; }
     public string[] resolutionSuperClass { get; set; }
     
+    public DateTime? begin { get; set; }
+
+    // This is used to instantiate a "fake" person for tasks we dont have authorship for
+    public VerticeData(long id)
+    {
+        this.id = id;
+    }
+    
     public VerticeData(RawVerticeData rawVerticeData)
     {
         // System.Console.WriteLine(rawVerticeData.attributes["Created"]?.ToString());
