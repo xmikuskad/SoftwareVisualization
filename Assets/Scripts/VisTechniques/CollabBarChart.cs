@@ -56,15 +56,11 @@ public class CollabBarChart : MonoBehaviour
             size.x = (personCount > 3) ? (300 / personCount) : (200 / personCount);
             pos = defaultBarElement.transform.position;
             pos.x = getPosX(personCount, index, pos.x);
-            // if (personCount == 1) pos.x = 185;
-            // else if (personCount == 2) pos.x = -75 + index * 150 + 185;
-            // else if (personCount == 3) pos.x = -90 + index * 90 + 185;
-            // else pos.x = pos.x + (260 / (personCount - 1)) * index;
+
             pos.y = pos.y - (250 - size.y) / 2;
             Image newBar = Instantiate(defaultBarElement, pos, Quaternion.identity, barsHolder.transform);
             newBar.gameObject.SetActive(true);
             newBar.rectTransform.sizeDelta = size;
-            Debug.Log("personCount = " + personCount.ToString());
 
             pos = defaultCountElement.transform.position;
             pos.x = pos.x + (260 / (personCount - 1 < 1 ? 1 : personCount - 1)) * index;
