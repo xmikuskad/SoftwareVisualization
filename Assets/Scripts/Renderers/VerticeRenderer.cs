@@ -168,15 +168,13 @@ public class VerticeRenderer : MouseOverRenderer
     {
         this.shouldHover = !isHighlighted;
         this.meshRenderer.material = isHighlighted ? hightlightMaterial : nonHoverMaterial;
-        Debug.LogWarning("Applying highlighted");
     }
 
     public void SetHidden(bool isHidden)
     {
         this.shouldHover = !isHidden;
         this.meshRenderer.material = isHidden ? hiddenMaterial : nonHoverMaterial;
-        Debug.LogWarning("Applying hidden");
-    }
+        ;    }
 
     public void SetIsLoaded(bool isLoaded)
     {

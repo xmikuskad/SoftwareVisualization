@@ -29,6 +29,9 @@ public class DataRenderer : MonoBehaviour
 
     private List<GameObject> gameObjectsToClean = new();    // Storing object which needs to be cleaned for later
 
+    private Dictionary<long, Pair<float, float>> projectSizesZ = new(); //Keeping min and max Z sizes for a project
+    private Dictionary<long, Pair<float, float>> projectSizesX = new(); //Keeping min and max X sizes for a project
+
     [Header("Properties")] public List<VerticeMaterial> verticeMaterialsList;
     public List<EdgeMaterial> edgeMaterialsList;
 
@@ -90,14 +93,9 @@ public class DataRenderer : MonoBehaviour
         PoolManager.Pools[PoolNames.VERTICE_OUTLINE].DespawnAll(); // This removes all outline vertices from scene :)
 
         vertices.Clear();
-
-        // foreach (var keyPair in edges)
-        // {
-        //     foreach (var keyPairChild in edges[keyPair.Key])
-        //     {
-        //         Destroy(edges[keyPair.Key][keyPairChild.Key].gameObject);
-        //     }
-        // }
+        
+        projectSizesX.Clear();
+        projectSizesZ.Clear();
 
         // edges.Clear();
         DOTween.Clear();
@@ -111,6 +109,7 @@ public class DataRenderer : MonoBehaviour
         SpawnPeople(1L);
         collabMatrix.fillMatrix(this.loadedProjects[1]);
         SpawnOutlineObjects(1L);
+        SpawnOtherVertices(1L);
         timelineRenderer.LoadTimeline(this.loadedProjects[1]);
         SetLoading(false);
         this.eventRenderer.NextQueue();
@@ -129,11 +128,6 @@ public class DataRenderer : MonoBehaviour
         SingletonManager.Instance.pauseManager.SetInteractionPaused(status);
         loadingBar.SetActive(status);
         loadBtn.SetActive(!status);
-    }
-
-    public void ProcessEvents(List<EventData> data)
-    {
-
     }
 
     public void ProcessEvent(EventData data)
@@ -279,23 +273,40 @@ public class DataRenderer : MonoBehaviour
         {
             if (spawnTopOutlinesForSpiral)
             {
-                SpawnOutlineObject(pos, 0); // TODO do we want the top one too?
+                SpawnOutlineObject(pos, 0, projectId); // TODO do we want the top one too?
             }
 
-            pos += SpawnOutlineObject(pos, -distanceOnComplete);
+            pos += SpawnOutlineObject(pos, -distanceOnComplete, projectId);
         }
     }
 
-    private float SpawnOutlineObject(float pos, float yPos)
+    private float SpawnOutlineObject(float pos, float yPos, long projectId)
     {
         float x = Mathf.Cos(pos) * pos;
-        float y = Mathf.Sin(pos) * pos;
-        Transform obj = PoolManager.Pools[PoolNames.VERTICE_OUTLINE].Spawn(verticePrefab, new Vector3(x, yPos, y), Quaternion.identity);
+        float z = Mathf.Sin(pos) * pos;
+        Transform obj = PoolManager.Pools[PoolNames.VERTICE_OUTLINE].Spawn(verticePrefab, new Vector3(x, yPos, z), Quaternion.identity);
         Destroy(obj.GetComponent<VerticeRenderer>());
         Destroy(obj.GetComponent<BoxCollider>());
         MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
         renderer.materials = new[] { outlineMaterial };
         gameObjectsToClean.Add(obj.gameObject);
+        
+        // keeping track of max/min Z and X axes
+        if (!projectSizesZ.ContainsKey(projectId))
+        {
+            projectSizesZ[projectId] = new Pair<float, float>(x, z);
+            projectSizesX[projectId] = new Pair<float, float>(x, z);
+        }
+        else
+        {
+            Pair<float, float> zAxe = projectSizesZ[projectId];
+            if (zAxe.First > z) zAxe.First = z;
+            if (zAxe.Second < z) zAxe.Second = z;
+            
+            Pair<float, float> xAxe = projectSizesX[projectId];
+            if (xAxe.First > x) xAxe.First = x;
+            if (xAxe.Second < x) xAxe.Second = x;
+        }
 
         return renderDistanceBetweenObjs / pos;
     }
@@ -349,7 +360,6 @@ public class DataRenderer : MonoBehaviour
         // Check for active highlights
         if (SingletonManager.Instance.dataManager.highlightedDate.HasValue)
         {
-            Debug.LogWarning("date");
             if (this.loadedProjects[projectId].rawDatesForVertice[verticeId]
                 .Contains(SingletonManager.Instance.dataManager.highlightedDate.Value))
             {
@@ -362,7 +372,6 @@ public class DataRenderer : MonoBehaviour
         }
         else if (SingletonManager.Instance.dataManager.highlightedVerticeId >= 0)
         {
-            Debug.LogWarning("id");
             if (SingletonManager.Instance.dataManager.highlightedVerticeId == verticeId && SingletonManager.Instance.dataManager.highlightedProjectId == projectId)
             {
                 this.vertices[projectId][verticeId].SetHighlighted(true);
@@ -372,13 +381,9 @@ public class DataRenderer : MonoBehaviour
                 this.vertices[projectId][verticeId].SetHidden(true);
             }
         }
-        else
-        {
-            Debug.LogWarning("Not applying highlight");
-        }
     }
 
-    public void ApplyMappingChanges()
+    public void SpawnOtherVertices(long projectId)
     {
         
     }
