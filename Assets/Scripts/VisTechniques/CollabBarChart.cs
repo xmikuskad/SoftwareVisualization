@@ -45,6 +45,7 @@ public class CollabBarChart : MonoBehaviour
             int currChangeCount = dataHolder.ticketToChangeListPerAuthor[ticketId][authorId].Count;
             Vector3 pos = defaultLabelElement.transform.position;
             pos.x = pos.x + (260 / ((personCount - 1 < 1 ? 1 : personCount - 1))) * index;
+            if (personCount <= 3) pos.x = getPosX(personCount, index, pos.x);
             TMP_Text newLabel = Instantiate(defaultLabelElement, pos, Quaternion.identity, labelsHolder.transform);
             newLabel.gameObject.SetActive(true);
             if (!dataHolder.verticeData.ContainsKey(authorId)) newLabel.text = "??";
@@ -52,15 +53,18 @@ public class CollabBarChart : MonoBehaviour
 
             Vector2 size = defaultBarElement.rectTransform.sizeDelta;
             size.y = (size.y / maxChangeCount) * currChangeCount;
+            size.x = (personCount > 3) ? (300 / personCount) : (200 / personCount);
             pos = defaultBarElement.transform.position;
-            pos.x = pos.x + (260 / (personCount - 1)) * index;
+            pos.x = getPosX(personCount, index, pos.x);
+
             pos.y = pos.y - (250 - size.y) / 2;
             Image newBar = Instantiate(defaultBarElement, pos, Quaternion.identity, barsHolder.transform);
             newBar.gameObject.SetActive(true);
             newBar.rectTransform.sizeDelta = size;
 
             pos = defaultCountElement.transform.position;
-            pos.x = pos.x + (260 / (personCount - 1)) * index;
+            pos.x = pos.x + (260 / (personCount - 1 < 1 ? 1 : personCount - 1)) * index;
+            if (personCount <= 3) pos.x = getPosX(personCount, index, pos.x);
             pos.y = pos.y - (250 - size.y);
             TMP_Text newCount = Instantiate(defaultCountElement, pos, Quaternion.identity, labelsHolder.transform);
             newCount.text = currChangeCount.ToString();
@@ -68,6 +72,14 @@ public class CollabBarChart : MonoBehaviour
 
             index += 1;
         }
+    }
+
+    private float getPosX(int personCount, int index, float pos)
+    {
+        if (personCount == 1) return 185 - 360;
+        else if (personCount == 2) return -75 + index * 150 + 185 - 360;
+        else if (personCount == 3) return -90 + index * 90 + 185 - 360;
+        else return pos + (260 / (personCount - 1)) * index;
     }
 
     public void clearBarChart()
