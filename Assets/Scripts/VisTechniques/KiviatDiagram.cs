@@ -5,6 +5,7 @@ using TMPro;
 using Unity.UI;
 using UnityEngine.UI;
 using System;
+using E2C;
 
 public class KiviatDiagram : MonoBehaviour
 {
@@ -25,6 +26,10 @@ public class KiviatDiagram : MonoBehaviour
     private List<VerticeData> shownPersons = new List<VerticeData>();
 
     private Dictionary<long, Dictionary<String, float>> personIdToMetricIdToValue = new Dictionary<long, Dictionary<String, float>>();
+
+    public E2Chart e2chart;
+
+    private E2ChartData e2ChartData;
 
 
     // Start is called before the first frame update
