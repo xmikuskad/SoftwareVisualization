@@ -1,8 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
-using Unity.UI;
 using UnityEngine.UI;
 using System;
 using E2C;

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Helpers;
+using System.Linq;
 using UnityEngine;
 
 namespace Data
@@ -13,6 +13,9 @@ namespace Data
         
         private Dictionary<long, VerticeData> relatedVerticesById = new();
         private Dictionary<long, EdgeData> relatedEdgesById= new();
+
+        private List<DateTime> dates = new();
+        public long updateCount = 1;
 
         public void AddData(VerticeData vertice, EdgeData edge)
         {
@@ -50,20 +53,94 @@ namespace Data
             }
         }
 
+        public void SetDates(List<DateTime> dateTimes)
+        {
+            this.dates = dateTimes;
+        }
+
         // Change, RepoFile, Wiki can have null author!
-        public void GetAuthor()
+        public long GetAuthorId()
         {
             if (!relatedEdges.ContainsKey(EdgeType.Authorship))
             {
                 Debug.Log(this.verticeData.verticeType+" - Authorship not found");
-                return;
+                return -1L;
             }
             if (relatedEdges[EdgeType.Authorship].Count > 1)
             {
                 Debug.Log(this.verticeData.verticeType+" - Multiple authorship found: "+relatedEdges[EdgeType.Authorship].Count);
-                return;
+                return -1L;
             }
             Debug.Log("Author OK");
+
+            return relatedEdges[EdgeType.Authorship][0].id;
+        }
+        
+        // Returns DateTime.MinValue on fail.
+        public DateTime GetTime()
+        {
+            if (this.verticeData.verticeType != VerticeType.Change)
+            {
+                Debug.LogError("Trying to get time from vertice which doesnt have time!");
+            }
+            
+            return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
+            
+            //
+            // if (!this.relatedVertices.ContainsKey(VerticeType.Change) || this.verticeData.verticeType == VerticeType.Person)
+            // {
+            //     return DateTime.MinValue;
+            // }
+            //
+            // // Find change vertice
+            // VerticeData changeVertice = this.verticeData.verticeType == VerticeType.Change
+            //     ? this.verticeData
+            //     : this.relatedVertices[VerticeType.Change][0];
+            //
+            // // Return commited time for commit
+            // if (this.verticeData.verticeType == VerticeType.Commit)
+            // {
+            //     return verticeData.committed ?? verticeData.created ?? verticeData.begin ?? DateTime.MinValue; 
+            // }
+            //
+            // // Return created/begin for others
+            // return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
+        }
+
+        public DateTime GetTimeWithoutHours()
+        {
+            return GetTime().Date;
+        }
+        
+        public bool IsConnectedWithVertices(HashSet<long> verticeId)
+        {
+            return relatedEdgesById.Values.Count(x => verticeId.Contains(x.to) || verticeId.Contains(this.verticeData.id)) > 0;
+        }
+
+        public List<VerticeData> GetRelatedVertices()
+        {
+            return relatedVerticesById.Values.ToList();
+        }
+        
+        public Dictionary<VerticeType,List<VerticeData>> GetRelatedVerticesDict()
+        {
+            return relatedVertices;
+        }
+
+        public bool ContainsDate(DateTime date)
+        {
+            return this.dates.Contains(date);
+        }
+        
+        public bool ContainsDate(List<DateTime> dates)
+        {
+            foreach (var dateTime in dates)
+            {
+                if (this.dates.Contains(dateTime))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

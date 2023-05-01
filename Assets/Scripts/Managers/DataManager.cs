@@ -1,8 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
+using Data;
+using Helpers;
 using Renderers;
 using UnityEngine;
 
@@ -16,12 +16,20 @@ public class DataManager: MonoBehaviour
 
     // Filters
     private FilterHolder filterHolder;
+
+    // Events
+    public event Action ResetEvent;
+    public event Action<Pair<long,List<DateTime>>> DatesSelectedEvent;
+    public event Action<Pair<long,List<DateTime>>> DatesRangeSelectedEvent;
+    public event Action<Pair<long,List<VerticeWrapper>>> VerticesSelectedEvent;
+    
+    public event Action<long> VerticesCompareEvent;
+    public event Action<long> VerticesCompareEndEvent;
     
     // Other
-    public long highlightedProjectId = -1;
-    public DateTime? highlightedDate = null;
-    public long highlightedVerticeId = -1; // Unity has problem comparing GameObject so we need this too
-    [CanBeNull] public VerticeData highlightedVerticeData = null;
+    public List<DateTime> selectedDates = new();
+    public List<VerticeWrapper> selectedVertices = new();
+    public long selectedProjectId = -1;
     
     [Header("References")]
     private DataRenderer dataRenderer;
@@ -31,6 +39,7 @@ public class DataManager: MonoBehaviour
     {
         dataRenderer = FindObjectOfType<DataRenderer>();
         timelineRenderer = FindObjectOfType<TimelineRenderer>();
+        ResetEvent += OnResetEvent;
     }
 
     public void LoadData(DataHolder holder)
@@ -41,7 +50,7 @@ public class DataManager: MonoBehaviour
         holder.projectId = projectIdCounter;
         holder.LoadData();
         unchangedDataHolders.Add(projectIdCounter,holder);
-        dataRenderer.AddData(holder, false);
+        dataRenderer.AddData(holder, false, true);
     }
 
     public void SetFilter(FilterHolder h)
@@ -52,58 +61,136 @@ public class DataManager: MonoBehaviour
     
     public void ApplyFilter()
     {
-        filteredDataHolders.Clear();
-        filteredDataHolders = unchangedDataHolders
-            .Select(h => new DataHolder(h.Value, filterHolder))
-            .ToDictionary(i => i.projectId);
-        
-        dataRenderer.ResetData();
-        dataRenderer.AddData(filteredDataHolders.Values.ToList(), true);
+        // filteredDataHolders.Clear();
+        // filteredDataHolders = unchangedDataHolders
+        //     .Select(h => new DataHolder(h.Value, filterHolder))
+        //     .ToDictionary(i => i.projectId);
+        //
+        // dataRenderer.ResetData();
+        // dataRenderer.AddData(filteredDataHolders.Values.ToList(), true);
     }
 
-    public void HightlightDate(long projectId, DateTime date)
+    public void ProcessVerticeClick(long projectId, VerticeWrapper verticeWrapper)
     {
-        this.highlightedProjectId = projectId;
-        if (highlightedVerticeId >= 0)
+        if (this.selectedProjectId != projectId)
         {
-            this.dataRenderer.UnhighlightElements(projectId);
-            highlightedVerticeData = null;
-            highlightedVerticeId = -1;
+            this.ResetEvent?.Invoke();
+        }
+
+        this.selectedProjectId = projectId;
+
+        bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
+
+        // Adding single items
+        if (ctrlPressed)
+        {
+            // Clicking already selected, removing them
+            if (this.selectedVertices.Contains(verticeWrapper))
+            {
+                this.selectedVertices.Remove(verticeWrapper);
+                if (this.selectedVertices.Count == 0)
+                    ResetEvent?.Invoke();
+                else
+                    VerticesSelectedEvent?.Invoke(
+                        new Pair<long, List<VerticeWrapper>>(this.selectedProjectId, this.selectedVertices));
+            }
+            // Clicking new, adding and changing filter
+            else
+            {
+                this.selectedVertices.Add(verticeWrapper);
+                VerticesSelectedEvent?.Invoke(
+                    new Pair<long, List<VerticeWrapper>>(this.selectedProjectId, this.selectedVertices));
+            }
+        }
+        else
+        {
+            this.selectedVertices = new List<VerticeWrapper>() { verticeWrapper };
+            VerticesSelectedEvent?.Invoke(
+                new Pair<long, List<VerticeWrapper>>(this.selectedProjectId, this.selectedVertices));
+
+        }
+    }
+
+    public void OnResetEvent()
+    {
+        this.selectedDates.Clear();
+        this.selectedVertices.Clear();
+        this.selectedProjectId = -1;
+    }
+
+    public void ProcessDateClick(long projectId, DateTime date)
+    {
+        if (this.selectedProjectId != projectId)
+        {
+            this.ResetEvent?.Invoke();
+        }
+
+        this.selectedProjectId = projectId;
+
+        bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
+        bool shiftPressed = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
+
+        // Trying to select date Range
+        if (ctrlPressed && shiftPressed)
+        {
+            if (this.selectedDates.Count == 0 || this.selectedDates.Contains(date))
+            {
+                ProcessDateClickAdd(date);
+                return;
+            }
+
+            List<DateTime> tmp = new List<DateTime>() { this.selectedDates.Min(), date };
+            this.ResetEvent?.Invoke();
+            this.selectedDates.Clear();
+            // this.selectedDates.AddRange(unchangedDataHolders[projectId].verticesByDate.Keys.Where(x=>x>=tmp[0] && x<=tmp[1]));
+
+            DatesRangeSelectedEvent?.Invoke(new Pair<long, List<DateTime>>(projectId,tmp.OrderBy(x=>x).ToList()));
+        }
+        else if (!ctrlPressed && !shiftPressed)
+        {
+            this.selectedDates = new List<DateTime>() { date };
+            DatesSelectedEvent?.Invoke(new Pair<long, List<DateTime>>(this.selectedProjectId, this.selectedDates));
+
+        }
+        // Adding single items
+        else if (ctrlPressed && !shiftPressed)
+        {
+            ProcessDateClickAdd(date);
+        }
+    }
+
+    private void ProcessDateClickAdd(DateTime date)
+    {
+        // Clicking already selected, removing them
+        if (this.selectedDates.Contains(date))
+        {
+            this.selectedDates.Remove(date);
+            if (this.selectedDates.Count == 0)
+                ResetEvent?.Invoke();
+            else
+                DatesSelectedEvent?.Invoke(new Pair<long, List<DateTime>>(this.selectedProjectId, this.selectedDates));
+        }
+        // Clicking new, adding and changing filter
+        else
+        {
+            this.selectedDates.Add(date);
+            DatesSelectedEvent?.Invoke(new Pair<long, List<DateTime>>(this.selectedProjectId, this.selectedDates));
         }
         
-        highlightedDate = date;
-        this.timelineRenderer.HighlightDate(date);
-        this.dataRenderer.HighlightVerticeByDate(projectId,date);
+    }
+
+    public void InvokeResetEvent()
+    {
+        ResetEvent?.Invoke();
+    }
+
+    public void InvokeCompareEvent(long projectId)
+    {
+        VerticesCompareEvent?.Invoke(projectId);
     }
     
-    public void HightlightVertice(long projectId, VerticeData verticeData)
+    public void InvokeCompareEndEvent(long projectId)
     {
-        this.highlightedProjectId = projectId;
-        this.timelineRenderer.UnhighlightElements();
-        highlightedDate = null;
-        
-        highlightedVerticeData = verticeData;
-        highlightedVerticeId = verticeData.id;
-        this.dataRenderer.HighlightVertice(projectId,verticeData.id);
-        List<DateTime> data;
-        if(this.unchangedDataHolders[projectId].rawDatesForVertice.TryGetValue(verticeData.id, out data)) {
-            this.timelineRenderer.HighlightDates(this.unchangedDataHolders[projectId].rawDatesForVertice[verticeData.id]);
-        }
+        VerticesCompareEndEvent?.Invoke(projectId);
     }
-
-    public void Unhighlight()
-    {
-        this.highlightedProjectId = -1;
-        this.highlightedVerticeId = -1;
-        this.highlightedVerticeData = null;
-        this.highlightedDate = null;
-        this.timelineRenderer.UnhighlightElements();
-        this.dataRenderer.UnhighlightElements(1L);
-    }
-
-    public bool IsActiveHighlight()
-    {
-        return highlightedDate.HasValue || highlightedVerticeId < 0 ;
-    }
-
 }

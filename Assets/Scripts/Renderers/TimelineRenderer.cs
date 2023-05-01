@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Helpers;
 using TMPro;
 using UI;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
 
 namespace Renderers
 {
@@ -14,20 +13,26 @@ namespace Renderers
     {
         private List<MonthGroup> groupByMonth;
         private Dictionary<DateTime, TimelineBar> barObjects = new();
+        private Dictionary<DateTime, Button> btnObjects = new();
+        public Pair<DateTime, DateTime> datePair;
 
         [Header("References")] public RectTransform graphContainer;
         public RectTransform textPrefab;
         public RectTransform barPrefab;
+        public RectTransform btnPrefab;
         public TMP_Text tooltipPrefab;
 
         public Material oddMaterial;
         public Material evenMaterial;
         public Material highlightMaterial;
         public Material hiddenMaterial;
+
+        public DataRenderer dataRenderer;
         public void LoadTimeline(DataHolder dataHolder)
         {
             ResetTimeline();
-            Dictionary<DateTime, long> counts = dataHolder.eventCountByDate;
+            Dictionary<DateTime, long> counts = dataHolder.verticesByDate
+                .ToDictionary(kvp => kvp.Key, kvp => (long)kvp.Value.Count);
             if (counts.Count == 0)
             {
                 return;
@@ -59,20 +64,24 @@ namespace Renderers
                     lastMonth = date.Month;
                 }
                 float xPosition = barWidth + index * barWidth;
-                float yPosition = (counts[date] / (maxValue * 1f)) * containerHeight;
-                TimelineBar timelineBar = CreateBar(new Vector2(xPosition, yPosition), barWidth * .9f, date, activeMaterial);
+                float yPosition = (counts[date] / (maxValue * 1f)) * containerHeight+10f;
+                TimelineBar timelineBar = CreateBar(new Vector2(xPosition, yPosition), barWidth * .9f, date, activeMaterial,dataHolder.projectId);
                 this.barObjects[date] = timelineBar;
-                // RectTransform labelX = Instantiate(textPrefab);
-                // labelX.SetParent(graphContainer, false);
-                // labelX.sizeDelta = new Vector2(barWidth*0.9f, 50f);
-                // labelX.gameObject.SetActive(true);
-                // labelX.anchoredPosition = new Vector2(xPosition, -30f);
-                // labelX.anchorMin = new Vector2(0, 0);
-                // labelX.anchorMax = new Vector2(0, 0);
-                // labelX.pivot = new Vector2(.5f, 0f);
-                // labelX.GetComponent<TMP_Text>().text =date.ToString("dd");
-                // // labelX.GetComponent<TMP_Text>().text =date.ToString("dd/MM/yy");
-
+                
+                // RectTransform btn = Instantiate(btnPrefab, graphContainer);
+                // btn.sizeDelta = new Vector2(barWidth * 0.9f, 20f);
+                RectTransform btn = Instantiate(btnPrefab);
+                btn.SetParent(graphContainer, false);
+                btn.sizeDelta = new Vector2(barWidth*0.6f, barWidth*0.6f);
+                btn.anchoredPosition = new Vector2(xPosition, -25f);
+                btn.anchorMin = new Vector2(0, 0);
+                btn.anchorMax = new Vector2(0, 0);
+                btn.pivot = new Vector2(.5f, 0f);
+                var dateTmp = date;
+                var projectIdTmp = dataHolder.projectId;
+                Button button =  btn.GetComponent<Button>();
+                button.onClick.AddListener(()=>OnBtnClick(dateTmp,projectIdTmp));
+                this.btnObjects[date] = button;
                 index++;
             }
 
@@ -95,7 +104,7 @@ namespace Renderers
                 labelX.SetParent(graphContainer, false);
                 labelX.sizeDelta = new Vector2(barWidth * group.count, 30f);
                 labelX.gameObject.SetActive(true);
-                labelX.anchoredPosition = new Vector2(offset + (barWidth * group.count / 2f), -30f);
+                labelX.anchoredPosition = new Vector2(offset + (barWidth * group.count / 2f), -60f);
                 labelX.anchorMin = new Vector2(0, 0);
                 labelX.anchorMax = new Vector2(0, 0);
                 labelX.pivot = new Vector2(.5f, 0f);
@@ -106,7 +115,59 @@ namespace Renderers
             }
         }
 
-        private TimelineBar CreateBar(Vector2 graphPosition, float barWidth, DateTime dateTime, Material material)
+        private void OnBtnClick(DateTime date, long  projectIdTmp)
+        {
+            bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
+            if (ctrlPressed && datePair.Left != DateTime.MinValue.Date)
+            {
+                datePair.Right = date;
+                SingletonManager.Instance.dataManager.InvokeCompareEvent(projectIdTmp);
+                dataRenderer.RenderComparisionForDate(date, projectIdTmp);
+                ColorTimelineBtnRange(datePair.Left,datePair.Right);
+            }
+            else
+            {
+                datePair.Left = date;
+                CheckForCompare(projectIdTmp);
+                dataRenderer.RenderUntilDateWithReset(date, projectIdTmp);
+                ColorTimelineBtn(date);
+            }
+        }
+
+        public void SetCurrentDate(DateTime date, long projectId)
+        {
+            datePair.Left = date;
+            CheckForCompare(projectId);
+            ColorTimelineBtn(date);
+        }
+
+        private void CheckForCompare(long projectId)
+        {
+            if (datePair.Right != DateTime.MinValue.Date)
+            {
+                datePair.Right = DateTime.MinValue.Date;
+                SingletonManager.Instance.dataManager.InvokeCompareEndEvent(projectId);
+            }
+        }
+
+        public void ColorTimelineBtn(DateTime date)
+        {
+            foreach (var (key, value) in btnObjects)
+            {
+                value.GetComponent<Image>().color = Color.white;
+            }
+            btnObjects[date].GetComponent<Image>().color = Color.red;
+        }
+        
+        public void ColorTimelineBtnRange(DateTime from, DateTime to)
+        {
+            foreach (var (key, value) in btnObjects)
+            {
+                value.GetComponent<Image>().color = (key >= from && key <= to) ? Color.red : Color.white;
+            }
+        }
+
+        private TimelineBar CreateBar(Vector2 graphPosition, float barWidth, DateTime dateTime, Material material, long projectId)
         {
             // GameObject gameObject = new GameObject("bar", typeof(Image));
             // gameObject.transform.SetParent(graphContainer, false);
@@ -120,17 +181,19 @@ namespace Renderers
             rectTransform.pivot = new Vector2(.5f, 0f);
 
             TimelineBar timelineBar = rectTransform.GetComponent<TimelineBar>();
-            timelineBar.SetUp(dateTime, tooltipPrefab, material, highlightMaterial, hiddenMaterial, this);
+            timelineBar.SetUp(dateTime, tooltipPrefab, material, highlightMaterial, hiddenMaterial, this, projectId);
             rectTransform.GetComponent<Image>().material = material;
             return timelineBar;
         }
 
         public void ResetTimeline()
         {
+            datePair = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
             foreach (Transform child in graphContainer.transform)
             {
                 Destroy(child.gameObject);
             }
+
             barObjects.Clear();
         }
 
@@ -140,13 +203,13 @@ namespace Renderers
             return dt.ToString("MMM") + " " + group.year; // combine month abbreviation and year
         }
 
-        public void UnhighlightElements()
-        {
-            foreach (var bar in this.barObjects.Values)
-            {
-                bar.SetHighlighted(false);
-            }
-        }
+        // public void UnhighlightElements()
+        // {
+        //     foreach (var bar in this.barObjects.Values)
+        //     {
+        //         bar.SetHighlighted(false);
+        //     }
+        // }
 
         public void ShowHideTimeline()
         {
@@ -155,34 +218,21 @@ namespace Renderers
 
         public void SelectDate(DateTime date)
         {
-            UnhighlightElements();
-            SingletonManager.Instance.dataManager.HightlightDate(1L, date);
-            // TODO call data renderer to filter
+            SingletonManager.Instance.dataManager.ProcessDateClick(1L,date);
         }
 
-        public void HighlightDate(DateTime date)
-        {
-            foreach (var obj in barObjects.Values)
-            {
-                obj.SetHidden(true);
-            }
-
-            barObjects[date].SetHighlighted(true);
-        }
-
-
-        public void HighlightDates(List<DateTime> dates)
-        {
-            foreach (var obj in barObjects.Values)
-            {
-                obj.SetHidden(true);
-            }
-            
-            foreach (var dateTime in dates)
-            {
-                barObjects[dateTime].SetHighlighted(true);
-            }
-        }
+        // public void HighlightDates(List<DateTime> dates)
+        // {
+        //     foreach (var obj in barObjects.Values)
+        //     {
+        //         obj.SetHidden(true);
+        //     }
+        //     
+        //     foreach (var dateTime in dates)
+        //     {
+        //         barObjects[dateTime].SetHighlighted(true);
+        //     }
+        // }
     }
 
     class MonthGroup

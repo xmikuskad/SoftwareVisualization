@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Data;
+using Helpers;
 using Renderers;
 using TMPro;
 using UnityEngine;
@@ -12,6 +14,7 @@ namespace UI
     {
         public TMP_Text tooltipObject;
         public DateTime date;
+        public long projectId;
         public Material originalMaterial;
         public Material highlightMaterial;
         public Material hiddenMaterial;
@@ -27,8 +30,21 @@ namespace UI
         private void Start()
         {
             SingletonManager.Instance.preferencesManager.MappingChangedEvent += OnMappingChanged;
+            SingletonManager.Instance.dataManager.ResetEvent += OnResetEvent;
+            SingletonManager.Instance.dataManager.DatesSelectedEvent += OnDatesSelected;
+            SingletonManager.Instance.dataManager.DatesRangeSelectedEvent += OnDatesRangeSelectedSelected;
+            SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
             this.highlightMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIGHLIGHTED).color;
             this.hiddenMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIDDEN).color;
+        }
+
+        private void OnDestroy()
+        {
+            SingletonManager.Instance.preferencesManager.MappingChangedEvent -= OnMappingChanged;
+            SingletonManager.Instance.dataManager.ResetEvent -= OnResetEvent;
+            SingletonManager.Instance.dataManager.DatesSelectedEvent -= OnDatesSelected;
+            SingletonManager.Instance.dataManager.DatesRangeSelectedEvent -= OnDatesRangeSelectedSelected;
+            SingletonManager.Instance.dataManager.VerticesSelectedEvent -= OnVerticeSelected;
         }
 
         private void OnMappingChanged(Dictionary<long,ColorMapping> colorMappings)
@@ -36,6 +52,67 @@ namespace UI
             // TODO
             this.highlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
             this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;
+        }
+
+        private void OnResetEvent()
+        {
+            this.image.material = originalMaterial;
+        }
+
+        private void OnDatesSelected(Pair<long, List<DateTime>> pair)
+        {
+            if (pair.Left != projectId)
+            {
+                this.image.material = originalMaterial;
+                return;
+            }
+
+            if (pair.Right.Contains(date))
+            {
+                SetHighlighted(true);
+            }
+            else
+            {
+                SetHidden(true);
+            }
+        }
+
+        private void OnDatesRangeSelectedSelected(Pair<long, List<DateTime>> pair)
+        {
+            if (pair.Left != projectId)
+            {
+                this.image.material = originalMaterial;
+                return;
+            }
+
+            if (date >= pair.Right[0] && date <= pair.Right[1])
+            {
+                SetHighlighted(true);
+            }
+            else
+            {
+                SetHidden(true);
+            }
+        }
+        
+        private void OnVerticeSelected(Pair<long, List<VerticeWrapper>> pair)
+        {
+            if (pair.Left != projectId)
+            {
+                SetHighlighted(false);
+                return;
+            }
+
+            foreach (var verticeWrapper in pair.Right)
+            {
+                if (verticeWrapper.ContainsDate(this.date))
+                {
+                    SetHighlighted(true);
+                    return;
+                }
+            }
+            
+            SetHidden(true);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -58,7 +135,7 @@ namespace UI
             }
         }
 
-        public void SetUp(DateTime date, TMP_Text tooltipObject, Material originalMaterial, Material highlightMaterial, Material hiddenMaterial, TimelineRenderer timelineRenderer)
+        public void SetUp(DateTime date, TMP_Text tooltipObject, Material originalMaterial, Material highlightMaterial, Material hiddenMaterial, TimelineRenderer timelineRenderer, long projectId)
         {
             this.date = date;
             this.tooltipObject = tooltipObject;
@@ -66,6 +143,7 @@ namespace UI
             this.highlightMaterial = new Material(highlightMaterial);
             this.hiddenMaterial = new Material(hiddenMaterial);
             this.timelineRenderer = timelineRenderer;
+            this.projectId = projectId;
         }
 
         public void OnPointerUp(PointerEventData eventData)
