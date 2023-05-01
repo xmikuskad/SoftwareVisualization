@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UIWidgets;
 using UnityEngine;
 using TMPro;
@@ -45,7 +43,7 @@ public class SidebarController : MonoBehaviour
             else
             {
                 this.slideIn();
-                SingletonManager.Instance.dataManager.Unhighlight();
+                SingletonManager.Instance.dataManager.InvokeResetEvent();
             }
         }
     }

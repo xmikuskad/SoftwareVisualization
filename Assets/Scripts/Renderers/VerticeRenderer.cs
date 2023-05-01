@@ -1,16 +1,17 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using DG.Tweening;
+using System.Linq;
+using Data;
+using Helpers;
 using TMPro;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class VerticeRenderer : MouseOverRenderer
 {
 
+    public bool isGhost = false;
     private long projectId;
-    private VerticeData verticeData;
+    public VerticeWrapper verticeWrapper;
     private MeshRenderer meshRenderer;
 
     private long completedCount = 0;
@@ -41,18 +42,99 @@ public class VerticeRenderer : MouseOverRenderer
     protected new void Start()
     {
         base.Start();
-        this.hightlightMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIGHLIGHTED).color;
-        this.hiddenMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIDDEN).color;
+        this.hightlightMaterial.color = SingletonManager.Instance.preferencesManager
+            .GetColorMapping(ColorMapping.HIGHLIGHTED).color;
+        this.hiddenMaterial.color =
+            SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIDDEN).color;
+    }
+
+    private void OnResetEvent()
+    {
+        this.meshRenderer.material = nonHoverMaterial;
+    }
+
+    private void OnVerticeSelected(Pair<long, List<VerticeWrapper>> pair)
+    {
+        if (this.projectId != pair.Left)
+        {
+            this.meshRenderer.material = nonHoverMaterial;
+            return;
+        }
+
+        if (this.verticeWrapper.IsConnectedWithVertices(pair.Right.Select(x=>x.verticeData.id).ToHashSet()))
+        {
+            SetHighlighted(true);
+        }
+        else
+        {
+            SetHidden(true);
+        }
+    }
+    
+    private void OnDatesSelected(Pair<long, List<DateTime>> pair)
+    {
+        if (this.projectId != pair.Left)
+        {
+            this.meshRenderer.material = nonHoverMaterial;
+            return;
+        }
+        
+        if (this.verticeWrapper.ContainsDate(pair.Right))
+        {
+            SetHighlighted(true);
+        }
+        else
+        {
+            SetHidden(true);
+        }
     }
 
     public void OnSpawned()
     {
         SingletonManager.Instance.preferencesManager.MappingChangedEvent += OnMappingChanged;
+        SingletonManager.Instance.dataManager.ResetEvent += OnResetEvent;
+        SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
+        SingletonManager.Instance.dataManager.DatesSelectedEvent += OnDatesSelected;
+        SingletonManager.Instance.dataManager.VerticesCompareEvent += OnVerticeCompare;
+        SingletonManager.Instance.dataManager.VerticesCompareEndEvent += OnVerticeCompareEnd;
     }
 
     public void OnDespawned()
     {
         SingletonManager.Instance.preferencesManager.MappingChangedEvent -= OnMappingChanged;
+        SingletonManager.Instance.dataManager.ResetEvent -= OnResetEvent;
+        SingletonManager.Instance.dataManager.VerticesSelectedEvent -= OnVerticeSelected;
+        SingletonManager.Instance.dataManager.DatesSelectedEvent -= OnDatesSelected;
+        SingletonManager.Instance.dataManager.VerticesCompareEvent -= OnVerticeCompare;
+        SingletonManager.Instance.dataManager.VerticesCompareEndEvent -= OnVerticeCompareEnd;
+    }
+
+    
+    private void OnVerticeCompareEnd(long projectId)
+    {
+        if (this.projectId != projectId)
+        {
+            OnResetEvent();
+            return;
+        }
+
+        Vector3 pos = this.transform.position;
+        pos.z += 0.25f;
+        this.transform.position = pos;
+        this.transform.localScale = new Vector3(1, 1, 1f);
+    }
+    private void OnVerticeCompare(long projectId)
+    {
+        if (this.projectId != projectId)
+        {
+            OnResetEvent();
+            return;
+        }
+
+        Vector3 pos = this.transform.position;
+        pos.z -= 0.25f;
+        this.transform.position = pos;
+        this.transform.localScale = new Vector3(1, 1, 0.5f);
     }
 
     private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
@@ -60,22 +142,67 @@ public class VerticeRenderer : MouseOverRenderer
         // TODO
         this.hightlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
         this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;
+
+        switch (this.verticeWrapper.verticeData.verticeType)
+        {
+            case VerticeType.Person:
+                this.nonHoverMaterial.color = colorMappings[ColorMapping.PERSON.id].color;
+                break;
+            case VerticeType.Ticket:
+                this.nonHoverMaterial.color = colorMappings[ColorMapping.TICKET.id].color;
+                break;
+            case VerticeType.File:
+                this.nonHoverMaterial.color = colorMappings[ColorMapping.FILE.id].color;
+                break;
+            case VerticeType.Wiki:
+                this.nonHoverMaterial.color = colorMappings[ColorMapping.WIKI.id].color;
+                break;
+            case VerticeType.Commit:
+                this.nonHoverMaterial.color = colorMappings[ColorMapping.COMMIT.id].color;
+                break;
+            case VerticeType.RepoFile:
+                this.nonHoverMaterial.color = colorMappings[ColorMapping.REPOFILE.id].color;
+                break;
+            default:
+                break;
+        }
+    }
+
+    private Color32 GetColor()
+    {
+        switch (this.verticeWrapper.verticeData.verticeType)
+        {
+            case VerticeType.Person:
+                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.PERSON).color;
+            case VerticeType.Ticket:
+                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.TICKET).color;;
+            case VerticeType.File:
+                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.FILE).color;
+            case VerticeType.Wiki:
+                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.WIKI).color;
+            case VerticeType.Commit:
+                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.COMMIT).color;
+            case VerticeType.RepoFile:
+                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.REPOFILE).color;
+            default:
+                return new Color32(0, 0, 0, 0);
+        }
     }
 
     public override void OnHoverEnter()
     {
-        if (verticeData == null || !isLoaded)
+        if (verticeWrapper == null || !isLoaded)
         {
             return;
         }
-        // hoverText.text = verticeData.ToString();
-        if (verticeData.verticeType == VerticeType.Ticket)
+
+        if (verticeWrapper.verticeData.verticeType == VerticeType.Ticket)
         {
             hoverText.text = completedCount + " / " + taskCount;
         }
         else
         {
-            hoverText.text = verticeData.ToString();
+            hoverText.text = verticeWrapper.verticeData.ToString();
         }
 
         if (shouldHover)
@@ -83,7 +210,7 @@ public class VerticeRenderer : MouseOverRenderer
 
     }
 
-    public override void OnHoverExit()  // This is somehow being called a lot!
+    public override void OnHoverExit() // This is somehow being called a lot!
     {
         if (!isLoaded) return;
 
@@ -97,12 +224,12 @@ public class VerticeRenderer : MouseOverRenderer
     public override void OnClick()
     {
         if (!isLoaded) return;
-        // Debug.Log(verticeData.ToString());
-        sidebarScript.slideOut(projectId, verticeData);
-        SingletonManager.Instance.dataManager.HightlightVertice(this.projectId, this.verticeData);
+        sidebarScript.slideOut(projectId, verticeWrapper.verticeData);
+        SingletonManager.Instance.dataManager.ProcessVerticeClick(this.projectId, this.verticeWrapper);
     }
 
-    public void SetUpReferences(Canvas hoverCanvas, GameObject hoverElement, TMP_Text hoverText, SidebarController sidebarController, DataRenderer dataRenderer)
+    public void SetUpReferences(Canvas hoverCanvas, GameObject hoverElement, TMP_Text hoverText,
+        SidebarController sidebarController, DataRenderer dataRenderer)
     {
         this.hoverElement = hoverElement;
         this.hoverCanvas = hoverCanvas;
@@ -121,13 +248,14 @@ public class VerticeRenderer : MouseOverRenderer
         return hoverElement;
     }
 
-    public void SetVerticeData(VerticeData verticeData, long projectId, Material material)
+    public void SetVerticeData(VerticeWrapper verticeWrapper, long projectId, Material material)
     {
-        this.verticeData = verticeData;
+        this.verticeWrapper = verticeWrapper;
         this.projectId = projectId;
 
         // We need to duplicate material because otherwise all objects with that material will be changed
         Material newMat = new Material(material);
+        newMat.color = GetColor();
         meshRenderer.material = newMat;
         this.nonHoverMaterial = newMat;
     }
@@ -136,32 +264,6 @@ public class VerticeRenderer : MouseOverRenderer
     {
         this.completedCount += count;
         this.taskCount = maxTasks;
-        // this.nonHoverMaterial.DOColor(GetColorFromRedYellowGreenGradient((this.completedCount * 1.0f) / (maxTasks * 1.0f) * 100f), SingletonManager.Instance.animationManager.GetColorChangeAnimTime());
-        // this.nonHoverMaterial.color = GetColorFromRedYellowGreenGradient((this.completedCount*1.0f) / (maxTasks * 1.0f) * 100f);
-    }
-
-    public VerticeData GetVerticeData()
-    {
-        return this.verticeData;
-    }
-
-    private Color GetColorFromRedYellowGreenGradient(float percentage)
-    {
-        // Green colors too similar, taken from https://stackoverflow.com/questions/6394304/algorithm-how-do-i-fade-from-red-to-green-via-yellow-using-rgb-values
-        // float red = (percentage > 50f ? 1f - 2f * (percentage - 50f) / 100.0f : 1.0f);
-        // float green = (percentage > 50f ? 1.0f : 2f * percentage / 100.0f);
-        // float blue = 0.0f;
-        // Color result = new Color(red, green, blue);
-        // return result;
-
-        if (percentage > 99.9f)
-        {
-            return new Color(0f, 0f, 0f);
-            // return new Color(0f, 1f, 0f);
-        }
-
-        return new Color((percentage > 50f ? 1f - 2f * (percentage - 50f) / 100.0f : 1.0f), (percentage > 50f ? 1.0f : 2f * percentage / 100.0f), 0f);
-        // return new Color((percentage > 50f ? 1f - 2f * (percentage - 50f) / 100.0f : 1.0f), (percentage > 50f ? 0.6f : 2f * percentage / 100.0f), 0f);
     }
 
     public void SetHighlighted(bool isHighlighted)
@@ -174,7 +276,7 @@ public class VerticeRenderer : MouseOverRenderer
     {
         this.shouldHover = !isHidden;
         this.meshRenderer.material = isHidden ? hiddenMaterial : nonHoverMaterial;
-        ;    }
+    }
 
     public void SetIsLoaded(bool isLoaded)
     {

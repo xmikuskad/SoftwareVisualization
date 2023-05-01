@@ -14,7 +14,7 @@ namespace UI
 
         private long selectedMapping = -1;
 
-        [Header("References")] public Dialog dialog;
+        [Header("References")] public GameObject dialog;
         public GameObject colorListItem;
         public GameObject colorListItemHolder;
         public ColorPicker colorPicker;
@@ -35,14 +35,15 @@ namespace UI
                 go.GetComponentInChildren<Button>().onClick.AddListener(() =>SelectMapping(tmp));
             }
             
-            
-            dialog.Show();
+            // This actually needs to be duplicated!!
+            dialog.SetActive(true);
+            dialog.SetActive(true);
         }
 
         public void SaveDialog()
         {
             SingletonManager.Instance.preferencesManager.SetColorMappings(tempColorMappings.Values.ToList());
-            dialog.Hide();
+            dialog.SetActive(false);
         }
         
         // Called from ColorPicker

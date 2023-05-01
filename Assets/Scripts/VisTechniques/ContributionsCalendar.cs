@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using TMPro;
-using UIWidgets;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -56,7 +54,8 @@ public class ContributionsCalendar : MonoBehaviour
 
         int index = 0;
 
-        Dictionary<DateTime, long> originalCounts = dataHolder.eventCountByDate;
+        Dictionary<DateTime, long> originalCounts = dataHolder.verticesByDate
+            .ToDictionary(kvp => kvp.Key, kvp => (long)kvp.Value.Count);
         if (originalCounts.Count == 0) return;
         Dictionary<DateTime, long> noTimeCounts = new Dictionary<DateTime, long>();
 

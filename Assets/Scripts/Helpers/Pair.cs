@@ -2,13 +2,13 @@
 {
     public class Pair<T1, T2>
     {
-        public T1 First { get; set; }
-        public T2 Second { get; set; }
+        public T1 Left { get; set; }
+        public T2 Right { get; set; }
 
-        public Pair(T1 first, T2 second)
+        public Pair(T1 left, T2 right)
         {
-            this.First = first;
-            this.Second = second;
+            this.Left = left;
+            this.Right = right;
         }
     }
 }

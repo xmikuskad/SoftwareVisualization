@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Data;
 using DG.Tweening;
 using Helpers;
@@ -9,39 +7,35 @@ using PathologicalGames;
 using Renderers;
 using TMPro;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class DataRenderer : MonoBehaviour
 {
     public Dictionary<long, DataHolder> loadedProjects = new();
+    public Dictionary<long, int> dateIndexTracker = new(); // Tracks next date to render
 
     //Used to keep track of next spawn position
     public Dictionary<long, float> spawnTheta = new(); // <ProjectId,Theta> 
+    public Dictionary<long, Vector3> commitPosTracker = new();
+    public Dictionary<long, Vector3> wikiPosTracker = new();
+    public Dictionary<long, Vector3> filePosTracker = new();
+    public Dictionary<long, Vector3> repoPosTracker = new();
 
     // Instantiated objects
     private Dictionary<long, Dictionary<long, VerticeRenderer>> vertices = new();
-    // private Dictionary<long, Dictionary<long, EdgeRenderer>> edges = new();
-
-    private Dictionary<VerticeType, Material> verticeMaterial = new();
-    private Dictionary<EdgeType, Material> edgeMaterial = new();
-
-    private List<Pair<bool, LineRenderer>> lineRenderers = new();
-
-    private List<GameObject> gameObjectsToClean = new();    // Storing object which needs to be cleaned for later
 
     private Dictionary<long, Pair<float, float>> projectSizesZ = new(); //Keeping min and max Z sizes for a project
     private Dictionary<long, Pair<float, float>> projectSizesX = new(); //Keeping min and max X sizes for a project
 
-    [Header("Properties")] public List<VerticeMaterial> verticeMaterialsList;
-    public List<EdgeMaterial> edgeMaterialsList;
+    [Header("Properties")]
 
     public float renderDistanceBetweenObjs = 3;
     public float distanceOnComplete = 4f;
     public bool spawnTopOutlinesForSpiral = false;
+    public long spaceBetweenWallObjs = 2;
 
-    [Header("References")] public EventRenderer eventRenderer;
+    [Header("References")]
     public GameObject verticePrefab;
-    public GameObject edgePrefab;
+    public Material verticeMaterial;
 
     public Canvas hoverCanvas;
     public GameObject hoverElement;
@@ -65,8 +59,12 @@ public class DataRenderer : MonoBehaviour
 
     private void Awake()
     {
-        verticeMaterial = verticeMaterialsList.ToDictionary(key => key.verticeType, value => value.material);
-        edgeMaterial = edgeMaterialsList.ToDictionary(key => key.edgeType, value => value.material);
+        SingletonManager.Instance.dataManager.DatesRangeSelectedEvent += OnDatesRangeSelectedSelected;
+    }
+    
+    private void OnDatesRangeSelectedSelected(Pair<long, List<DateTime>> pair)
+    {
+        // TODO rerender twice
     }
 
     public void AddData(List<DataHolder> dataHolder, bool rerender)
@@ -78,15 +76,16 @@ public class DataRenderer : MonoBehaviour
             spawnTheta[holder.projectId] = renderDistanceBetweenObjs;
         }
 
-        RenderData(rerender);
+        RenderData(rerender,true);
     }
 
-    public void AddData(DataHolder dataHolder, bool rerender)
+    public void AddData(DataHolder dataHolder, bool rerender, bool renderFirst)
     {
         SetLoading(true);
         this.loadedProjects.Add(dataHolder.projectId, dataHolder);
+        this.dateIndexTracker[dataHolder.projectId] = -1;
         spawnTheta[dataHolder.projectId] = renderDistanceBetweenObjs;
-        RenderData(rerender);
+        RenderData(rerender,renderFirst);
     }
 
     public void ResetData()
@@ -97,35 +96,37 @@ public class DataRenderer : MonoBehaviour
         PoolManager.Pools[PoolNames.VERTICE_OUTLINE].DespawnAll(); // This removes all outline vertices from scene :)
 
         vertices.Clear();
+        this.dateIndexTracker.Clear();
+        commitPosTracker.Clear();
+        wikiPosTracker.Clear();
+        filePosTracker.Clear();
+        repoPosTracker.Clear();
         
         projectSizesX.Clear();
         projectSizesZ.Clear();
 
-        // edges.Clear();
         DOTween.Clear();
-        this.eventRenderer.queue.Clear();
     }
 
-    public void RenderData(bool rerender)
+    public void RenderData(bool rerender, bool renderFirst)
     {
         if (loadedProjects == null) return;
-        this.eventRenderer.Init(this.loadedProjects[1].eventData);
         SpawnPeople(1L);
+        SpawnOutlineObjects(1L);
         collabMatrix.fillMatrix(this.loadedProjects[1]);
         contributionsCalendar.fillContributionsCalendar(this.loadedProjects[1], this.loadedProjects[1].startDate.Year);
-        SpawnOutlineObjects(1L);
-        SpawnOtherVertices(1L);
         timelineRenderer.LoadTimeline(this.loadedProjects[1]);
         kiviatDiagram.initiateKiviat(this.loadedProjects[1]);
         SetLoading(false);
-        this.eventRenderer.NextQueue();
+        if(renderFirst)
+            RenderNext(1L);
     }
 
-    public void RerenderProject(long projectId)
+    public void RerenderProject(long projectId, bool renderFirst)
     {
         DataHolder holder = this.loadedProjects[projectId];
         ResetData();
-        AddData(holder, false);
+        AddData(holder, false, renderFirst);
     }
 
     // Manages loading screen
@@ -136,115 +137,231 @@ public class DataRenderer : MonoBehaviour
         loadBtn.SetActive(!status);
     }
 
-    public void ProcessEvent(EventData data)
+    private void RenderDate(DateTime dateTime, long projectId)
     {
-        // currentDateText.DOText(data.when + " (Day "+(data.when.Subtract(loadedProjects[data.projectId].startDate).Days+1)+")",SingletonManager.Instance.animationManager.GetSpawnAnimTime(),false);
-        currentDateText.text = data.when + " (Day " + (data.when.Subtract(loadedProjects[data.projectId].startDate).Days + 1) + ")";
-        Sequence sequence = DOTween.Sequence();
-
-        if (data.actionType == EventActionType.CREATE)
+        currentDateText.text = dateTime + " (Day " + (dateTime.Subtract(loadedProjects[projectId].startDate).Days + 1) + ")";
+        foreach (var verticeWrapper in this.loadedProjects[projectId].changesByDate[dateTime])
         {
-            // Instantiate
-            SpawnTicket(data);
-            VerticeRenderer ver = vertices[data.projectId][data.verticeId];
-            sequence.Append(
-                ver.transform.DOScale(new Vector3(1, 1, 1),
-                    SingletonManager.Instance.animationManager.GetSpawnAnimTime()));
-            ProcessPerson(data.projectId, data.personIds, sequence, ver.transform.position, ver.transform.position);
-        }
-        else if (data.actionType == EventActionType.MOVE)
-        {
-            VerticeRenderer ver = vertices[data.projectId][data.verticeId];
-            float distanceToMove =
-                distanceOnComplete / loadedProjects[data.projectId].edgeCountForTickets[data.verticeId];
-            ver.AddCompletedEdge(1L, loadedProjects[data.projectId].edgeCountForTickets[data.verticeId]);
-            Vector3 newPos = ver.transform.position - new Vector3(0, distanceToMove, 0);
-            ProcessPerson(data.projectId, data.personIds, sequence, ver.transform.position, newPos);
-            sequence.Append(
-                ver.transform.DOMoveY(ver.transform.position.y - distanceToMove,
-                    SingletonManager.Instance.animationManager.GetMoveAnimTime()));
-        }
-        else if (data.actionType == EventActionType.UPDATE)
-        {
-            // throw new NotImplementedException();
-            // eventRenderer.NextQueue();
-        }
-
-        sequence.AppendInterval(SingletonManager.Instance.animationManager.GetWaitTime());
-        sequence.OnComplete(() =>
-        {
-            foreach (var lineRenderer in this.lineRenderers)
-            {
-                lineRenderer.First = false;
-                lineRenderer.Second.enabled = false;
-            }
-
-            eventRenderer.NextQueue();
-        });
-        sequence.Play();
-    }
-
-    private void ProcessPerson(long projectId, List<long> personIds, Sequence sequence, Vector3 oldPos, Vector3 newPos)
-    {
-        foreach (var personId in personIds)
-        {
-            Pair<bool, LineRenderer> renderer = this.lineRenderers.FirstOrDefault(x => !x.First);
-            if (renderer == null)
-            {
-                LineRenderer ren = PoolManager.Pools[PoolNames.VERTICE_PERSON_LINE].Spawn(lineRenderer.gameObject).GetComponent<LineRenderer>();
-                // LineRenderer ren = Instantiate(lineRenderer);
-                renderer = new Pair<bool, LineRenderer>(false, ren);
-                this.lineRenderers.Add(renderer);
-            }
-
-            renderer.First = true; // Set as used;
-            renderer.Second.startWidth = 0.2f;
-            renderer.Second.endWidth = 0.2f;
-            renderer.Second.positionCount = 2;
-            renderer.Second.useWorldSpace = true;
-            renderer.Second.enabled = true;
-            renderer.Second.SetPosition(0,
-                vertices[projectId][personId].transform
-                    .position); //x,y and z position of the starting point of the line
-            renderer.Second.SetPosition(1, oldPos); //x,y and z position of the end point of the line
-
-            // TODO maybe increase scale with number of changes?
-            // sequence.Append(vertices[projectId][personId].transform.DOScaleX(vertices[projectId][personId].transform.localScale.x+0.05f,SingletonManager.Instance.animationManager.GetMoveAnimTime()) );
-
-            sequence.Append(DOTween.To(() => oldPos, x =>
-            {
-                oldPos = x;
-                renderer.Second.SetPosition(1, x);
-            }, newPos, SingletonManager.Instance.animationManager.GetMoveAnimTime()));
-
-
+            Dictionary<VerticeType,List<VerticeData>> dict = verticeWrapper.GetRelatedVerticesDict();
+            // We can skip person, we already spawned them
+            if(dateTime != DateTime.MinValue.Date && dict.ContainsKey(VerticeType.Ticket))
+                SpawnByType(dict[VerticeType.Ticket],projectId);
+            
+            //TODO commits
+            // if(dict.ContainsKey(VerticeType.Commit))
+            //     SpawnByType(dict[VerticeType.Commit],projectId);            
+            if(dict.ContainsKey(VerticeType.Wiki))
+                SpawnByType(dict[VerticeType.Wiki],projectId);
+            if(dict.ContainsKey(VerticeType.RepoFile))
+                SpawnByType(dict[VerticeType.RepoFile],projectId);
+            if(dict.ContainsKey(VerticeType.File))
+                SpawnByType(dict[VerticeType.File],projectId);
         }
     }
 
-    // Used algo for spiral spawn https://stackoverflow.com/questions/13894715/draw-equidistant-points-on-a-spiral
-    private void SpawnTicket(EventData eventData)
+    public void RenderComparisionForDate(DateTime dateTime, long projectId)
     {
-        float idk = spawnTheta[eventData.projectId];
-        float x = Mathf.Cos(idk) * idk;
-        float y = Mathf.Sin(idk) * idk;
-        Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(x, 0, y), Quaternion.identity);
+        // TODO comparisions??
+    }
 
-        obj.transform.localScale = new Vector3(0, 0, 0);
-        spawnTheta[eventData.projectId] += renderDistanceBetweenObjs / idk;
-
-        VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
-        verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController, this);
-        VerticeData d = loadedProjects[eventData.projectId].verticeData[eventData.verticeId];
-        verticeRenderer.SetVerticeData(d, eventData.projectId, verticeMaterial[d.verticeType]);
-        if (!vertices.ContainsKey(eventData.projectId))
+    public void RenderUntilDateWithReset(DateTime dateTime, long projectId)
+    {
+        RerenderProject(projectId, false);
+        RenderUntilDate(dateTime,projectId);
+    }
+    public void RenderUntilDate(DateTime dateTime, long projectId)
+    {
+        this.dateIndexTracker[projectId] = this.loadedProjects[projectId].orderedDates.IndexOf(dateTime);
+        for (var i = 0; i < this.loadedProjects[projectId].orderedDates.Count; i++)
         {
-            vertices.Add(eventData.projectId, new());
+            DateTime date = this.loadedProjects[projectId].orderedDates[i];
+            if(date > dateTime) return;
+            RenderDate(date,projectId);
+        }
+    }
+
+    public void RenderNext(long projectId)
+    {
+        if (dateIndexTracker[projectId] <= -2) return;
+        dateIndexTracker[projectId] += 1;
+        if (this.loadedProjects[projectId].orderedDates.Count <= dateIndexTracker[projectId])
+        {
+            dateIndexTracker[projectId] = -2;
+            return;
+        }
+        
+        if (timelineRenderer.datePair.Right != DateTime.MinValue.Date)
+        {
+            RenderUntilDateWithReset(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]],projectId);
+        }
+        else
+        {
+            RenderDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]], projectId);
+            if (this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]] == DateTime.MinValue.Date)
+            {
+                RenderNext(projectId);
+                return;
+            }
+            timelineRenderer.SetCurrentDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]], projectId);
         }
 
-        vertices[eventData.projectId].Add(eventData.verticeId, verticeRenderer);
+    }
 
-        CheckAndApplyHighlight(eventData.projectId, eventData.verticeId);
-        verticeRenderer.SetIsLoaded(true);
+    public void RenderPrevious(long projectId)
+    {
+        if (dateIndexTracker[projectId] <= 1) return;
+        dateIndexTracker[projectId] -= 1;
+        RenderUntilDateWithReset(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]],projectId);
+        timelineRenderer.SetCurrentDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]], projectId);
+    }
+    
+    public void RenderNextBtn()
+    {
+        RenderNext(1L);
+    }
+    
+    public void RenderPreviousBtn()
+    {
+        RenderPrevious(1L);
+    }
+
+    private void SpawnByType(List<VerticeData> verticeDatas, long projectId)
+    {
+        foreach (var verticeData in verticeDatas)
+        {
+            switch (verticeData.verticeType)
+            {
+                case VerticeType.Ticket:
+                    if (!vertices[projectId].ContainsKey(verticeData.id))
+                    {
+                        float idk = spawnTheta[projectId];
+                        float x = Mathf.Cos(idk) * idk;
+                        float y = Mathf.Sin(idk) * idk;
+                        Transform obj = SpawnGeneralVertice(projectId, new Vector3(x, 0, y), verticeData.id);
+                        spawnTheta[projectId] += renderDistanceBetweenObjs / idk;
+                    }
+                    else
+                    {
+                        VerticeRenderer ver = vertices[projectId][verticeData.id];
+                        float distanceToMove = distanceOnComplete / ver.verticeWrapper.updateCount;
+                        ver.AddCompletedEdge(1L, ver.verticeWrapper.updateCount);
+                        Vector3 newPos = ver.transform.position - new Vector3(0, distanceToMove, 0);
+                        ver.transform.position = newPos;
+                    }
+
+                    break;
+                // TODO
+                // case VerticeType.Commit:
+                //     if (!vertices[projectId].ContainsKey(verticeData.id))
+                //     {
+                //         float idk = spawnTheta[projectId];
+                //         float x = Mathf.Cos(idk) * idk;
+                //         float y = Mathf.Sin(idk) * idk;
+                //         Transform obj = SpawnGeneralVertice(projectId, new Vector3(x, 0, y), verticeData.id);
+                //         spawnTheta[projectId] += renderDistanceBetweenObjs / idk;
+                //     }
+                //     else
+                //     {
+                //         VerticeRenderer ver = vertices[projectId][verticeData.id];
+                //         float distanceToMove = distanceOnComplete / ver.verticeWrapper.updateCount;
+                //         ver.AddCompletedEdge(1L, ver.verticeWrapper.updateCount);
+                //         Vector3 newPos = ver.transform.position - new Vector3(0, distanceToMove, 0);
+                //         ver.transform.position = newPos;
+                //     }
+                //
+                //     break;
+                case VerticeType.Wiki:
+                    if (!vertices[projectId].ContainsKey(verticeData.id))
+                    {
+                        if (wikiPosTracker.ContainsKey(projectId))
+                        {
+                            if (wikiPosTracker[projectId].z > projectSizesZ[projectId].Right)
+                            {
+                                Vector3 pos = wikiPosTracker[projectId];
+                                pos.y -= spaceBetweenWallObjs;
+                                pos.z = projectSizesZ[projectId].Left;
+                                wikiPosTracker[projectId] = pos;
+                            }
+                            else
+                            {
+                                Vector3 pos = wikiPosTracker[projectId];
+                                pos.z += spaceBetweenWallObjs;
+                                wikiPosTracker[projectId] = pos;
+                            }
+                        }
+                        else
+                        {
+                            wikiPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left-(2*spaceBetweenWallObjs), 0,
+                                projectSizesZ[projectId].Left);
+                        }
+                        Transform obj = SpawnGeneralVertice(projectId, wikiPosTracker[projectId], verticeData.id);
+                    }
+
+                    break;
+                
+                case VerticeType.RepoFile:
+                    if (!vertices[projectId].ContainsKey(verticeData.id))
+                    {
+                        if (repoPosTracker.ContainsKey(projectId))
+                        {
+                            if (repoPosTracker[projectId].x > projectSizesX[projectId].Right)
+                            {
+                                Vector3 pos = repoPosTracker[projectId];
+                                pos.y -= spaceBetweenWallObjs;
+                                pos.x = projectSizesX[projectId].Left;
+                                repoPosTracker[projectId] = pos;
+                            }
+                            else
+                            {
+                                Vector3 pos = repoPosTracker[projectId];
+                                pos.x += spaceBetweenWallObjs;
+                                repoPosTracker[projectId] = pos;
+                            }
+                        }
+                        else
+                        {
+                            repoPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left, 0,
+                                projectSizesZ[projectId].Right+(2*spaceBetweenWallObjs));
+                        }
+                        Transform obj = SpawnGeneralVertice(projectId, repoPosTracker[projectId], verticeData.id);
+                    }
+
+                    break;
+                case VerticeType.File:
+                    if (!vertices[projectId].ContainsKey(verticeData.id))
+                    {
+                        if (filePosTracker.ContainsKey(projectId))
+                        {
+                            if (filePosTracker[projectId].z > projectSizesZ[projectId].Right)
+                            {
+                                Vector3 pos = filePosTracker[projectId];
+                                pos.y -= spaceBetweenWallObjs;
+                                pos.z = projectSizesZ[projectId].Left;
+                                filePosTracker[projectId] = pos;
+                            }
+                            else
+                            {
+                                Vector3 pos = filePosTracker[projectId];
+                                pos.z += spaceBetweenWallObjs;
+                                filePosTracker[projectId] = pos;
+                            }
+                        }
+                        else
+                        {
+                            filePosTracker[projectId] = new Vector3(projectSizesX[projectId].Right+(2*spaceBetweenWallObjs), 0,
+                                projectSizesZ[projectId].Left);
+                        }
+                        Transform obj = SpawnGeneralVertice(projectId, filePosTracker[projectId], verticeData.id);
+                    }
+
+                    break;
+                case VerticeType.Change:
+                case VerticeType.Person:
+                    break;
+                default:
+                    break;
+            }    
+        }
     }
 
     private void SpawnPeople(long projectId)
@@ -252,24 +369,28 @@ public class DataRenderer : MonoBehaviour
         long counter = 1;
         foreach (long personId in this.loadedProjects[projectId].personIds.Values)
         {
-
             if (!this.loadedProjects[projectId].verticeData.ContainsKey(personId)) continue;
-
-            Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, new Vector3(counter, 10 + counter, 0), Quaternion.identity);
-
-            VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
-            verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController, this);
-            VerticeData d = loadedProjects[projectId].verticeData[personId];
-            verticeRenderer.SetVerticeData(d, projectId, verticeMaterial[d.verticeType]);
-            if (!vertices.ContainsKey(projectId))
-            {
-                vertices.Add(projectId, new());
-            }
-
-            vertices[projectId].Add(personId, verticeRenderer);
-            verticeRenderer.SetIsLoaded(true);
+            SpawnGeneralVertice(projectId, new Vector3(counter, 10 + counter, 0), personId);
             counter += 2;
         }
+    }
+
+    private Transform SpawnGeneralVertice(long projectId, Vector3 spawnPos, long verticeId)
+    {
+        Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, spawnPos, Quaternion.identity);
+
+        VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
+        verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController, this);
+        VerticeWrapper d = loadedProjects[projectId].verticeWrappers[verticeId];
+        verticeRenderer.SetVerticeData(d, projectId, verticeMaterial);
+        if (!vertices.ContainsKey(projectId))
+        {
+            vertices[projectId] = new();
+        }
+        vertices[projectId][verticeId]= verticeRenderer;
+        CheckAndApplyHighlight(projectId, verticeId);
+        verticeRenderer.SetIsLoaded(true);
+        return obj;
     }
 
     private void SpawnOutlineObjects(long projectId)
@@ -291,11 +412,14 @@ public class DataRenderer : MonoBehaviour
         float x = Mathf.Cos(pos) * pos;
         float z = Mathf.Sin(pos) * pos;
         Transform obj = PoolManager.Pools[PoolNames.VERTICE_OUTLINE].Spawn(verticePrefab, new Vector3(x, yPos, z), Quaternion.identity);
+        if(obj.TryGetComponent<VerticeRenderer>(out VerticeRenderer vr))
+        {
+            vr.OnDespawned();
+        };
         Destroy(obj.GetComponent<VerticeRenderer>());
         Destroy(obj.GetComponent<BoxCollider>());
         MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
         renderer.materials = new[] { outlineMaterial };
-        gameObjectsToClean.Add(obj.gameObject);
         
         // keeping track of max/min Z and X axes
         if (!projectSizesZ.ContainsKey(projectId))
@@ -306,68 +430,25 @@ public class DataRenderer : MonoBehaviour
         else
         {
             Pair<float, float> zAxe = projectSizesZ[projectId];
-            if (zAxe.First > z) zAxe.First = z;
-            if (zAxe.Second < z) zAxe.Second = z;
+            if (zAxe.Left > z) zAxe.Left = z;
+            if (zAxe.Right < z) zAxe.Right = z;
             
             Pair<float, float> xAxe = projectSizesX[projectId];
-            if (xAxe.First > x) xAxe.First = x;
-            if (xAxe.Second < x) xAxe.Second = x;
+            if (xAxe.Left > x) xAxe.Left = x;
+            if (xAxe.Right < x) xAxe.Right = x;
         }
 
         return renderDistanceBetweenObjs / pos;
     }
 
-    public void UnhighlightElements(long projectId)
-    {
-        if (!this.vertices.ContainsKey(projectId))
-            return;
-        foreach (var keyValuePair in this.vertices[projectId])
-        {
-            keyValuePair.Value.SetHighlighted(false);
-        }
-    }
-
-    public void HighlightVertice(long projectId, long verticeId)
-    {
-        foreach (var keyValuePair in this.vertices[projectId])
-        {
-            keyValuePair.Value.SetHidden(true);
-        }
-
-        VerticeRenderer renderer;
-        if (this.vertices[projectId].TryGetValue(verticeId, out renderer))
-        {
-            renderer.SetHighlighted(true);
-        }
-    }
-
-    public void HighlightVerticeByDate(long projectId, DateTime date)
-    {
-        foreach (var keyValuePair in this.vertices[projectId])
-        {
-            keyValuePair.Value.SetHidden(true);
-        }
-        // this.vertices[projectId][verticeId].SetHighlighted(true);
-        foreach (var l in this.loadedProjects[projectId].eventsByDate[date.Date].Select(x => x.verticeId).Distinct())
-        {
-            VerticeRenderer renderer;
-            if (this.vertices[projectId].TryGetValue(l, out renderer))
-            {
-                renderer.SetHighlighted(true);
-            }
-        }
-    }
-
-    // TODO optimize
     public void CheckAndApplyHighlight(long projectId, long verticeId)
     {
         if (!loadedProjects.ContainsKey(projectId) || !this.vertices.ContainsKey(projectId) || !this.vertices[projectId].ContainsKey(verticeId))
             return;
         // Check for active highlights
-        if (SingletonManager.Instance.dataManager.highlightedDate.HasValue)
+        if (SingletonManager.Instance.dataManager.selectedDates.Count > 0)
         {
-            if (this.loadedProjects[projectId].rawDatesForVertice[verticeId]
-                .Contains(SingletonManager.Instance.dataManager.highlightedDate.Value))
+            if (this.loadedProjects[projectId].verticeWrappers[verticeId].ContainsDate(SingletonManager.Instance.dataManager.selectedDates))
             {
                 this.vertices[projectId][verticeId].SetHighlighted(true);
             }
@@ -376,9 +457,9 @@ public class DataRenderer : MonoBehaviour
                 this.vertices[projectId][verticeId].SetHidden(true);
             }
         }
-        else if (SingletonManager.Instance.dataManager.highlightedVerticeId >= 0)
+        else if (SingletonManager.Instance.dataManager.selectedVertices.Count > 0)
         {
-            if (SingletonManager.Instance.dataManager.highlightedVerticeId == verticeId && SingletonManager.Instance.dataManager.highlightedProjectId == projectId)
+            if (SingletonManager.Instance.dataManager.selectedVertices.Contains(this.loadedProjects[projectId].verticeWrappers[verticeId]))
             {
                 this.vertices[projectId][verticeId].SetHighlighted(true);
             }
@@ -387,10 +468,5 @@ public class DataRenderer : MonoBehaviour
                 this.vertices[projectId][verticeId].SetHidden(true);
             }
         }
-    }
-
-    public void SpawnOtherVertices(long projectId)
-    {
-
     }
 }

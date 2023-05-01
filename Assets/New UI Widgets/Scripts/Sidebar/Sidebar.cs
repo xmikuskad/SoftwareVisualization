@@ -1916,19 +1916,20 @@
         /// <returns>Layout padding.</returns>
         protected float GetLayoutPadding()
         {
-            switch (Direction)
-            {
-                case SidebarAxis.LeftToRight:
-                    return LayoutUtilities.GetPaddingLeft(ContentLayout);
-                case SidebarAxis.RightToLeft:
-                    return LayoutUtilities.GetPaddingRight(ContentLayout);
-                case SidebarAxis.TopToBottom:
-                    return LayoutUtilities.GetPaddingTop(ContentLayout);
-                case SidebarAxis.BottomToTop:
-                    return LayoutUtilities.GetPaddingBottom(ContentLayout);
-                default:
-                    throw new NotSupportedException(string.Format("Unknown sidebar axis: {0}", EnumHelper<SidebarAxis>.ToString(Direction)));
-            }
+            return 0f;
+            // switch (Direction)
+            // {
+            //     case SidebarAxis.LeftToRight:
+            //         return LayoutUtilities.GetPaddingLeft(ContentLayout);
+            //     case SidebarAxis.RightToLeft:
+            //         return LayoutUtilities.GetPaddingRight(ContentLayout);
+            //     case SidebarAxis.TopToBottom:
+            //         return LayoutUtilities.GetPaddingTop(ContentLayout);
+            //     case SidebarAxis.BottomToTop:
+            //         return LayoutUtilities.GetPaddingBottom(ContentLayout);
+            //     default:
+            //         throw new NotSupportedException(string.Format("Unknown sidebar axis: {0}", EnumHelper<SidebarAxis>.ToString(Direction)));
+            // }
         }
 
         /// <summary>

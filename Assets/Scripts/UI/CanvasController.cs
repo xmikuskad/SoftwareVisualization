@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,7 +18,7 @@ public class CanvasController : MonoBehaviour
 
     public void RestartAnimation()
     {
-        dataRenderer.RerenderProject(1L);
+        dataRenderer.RerenderProject(1L, true);
         SingletonManager.Instance.pauseManager.SetAnimationPaused(false);
         pauseImg.sprite = pauseIcon;
     }
