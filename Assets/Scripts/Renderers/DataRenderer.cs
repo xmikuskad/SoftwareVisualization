@@ -61,6 +61,8 @@ public class DataRenderer : MonoBehaviour
 
     public ContributionsCalendar contributionsCalendar;
 
+    public KiviatDiagram kiviatDiagram;
+
     private void Awake()
     {
         verticeMaterial = verticeMaterialsList.ToDictionary(key => key.verticeType, value => value.material);
@@ -114,6 +116,7 @@ public class DataRenderer : MonoBehaviour
         SpawnOutlineObjects(1L);
         SpawnOtherVertices(1L);
         timelineRenderer.LoadTimeline(this.loadedProjects[1]);
+        kiviatDiagram.initiateKiviat(this.loadedProjects[1]);
         SetLoading(false);
         this.eventRenderer.NextQueue();
     }

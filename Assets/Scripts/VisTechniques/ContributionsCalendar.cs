@@ -34,7 +34,6 @@ public class ContributionsCalendar : MonoBehaviour
     public void onYearChange(int index)
     {
         string selectedOption = yearDropdown.options[index].text;
-        Debug.Log("Selected option: " + selectedOption);
         fillContributionsCalendar(dataHolder, int.Parse(yearDropdown.options[index].text));
     }
 
