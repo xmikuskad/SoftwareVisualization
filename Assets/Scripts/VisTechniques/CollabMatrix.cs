@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Data;
 using TMPro;
 using UIWidgets;
 using UnityEngine;
@@ -64,14 +65,14 @@ public class CollabMatrix : MonoBehaviour
             TMP_Text newText = Instantiate(matrixDefaultTextElement, pos, Quaternion.identity, matrixArea.transform);
             newText.text = collaborant.name;
             if (collaborant.name == "unknown") newText.text = "??";
-            newText.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeData[helpIndex2]));
+            newText.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2],dataHolder.projectId));
 
             pos = matrixDefaultTextElement.transform.position;
             pos.y = pos.y + yOffset * helpIndex + yOffset;
             TMP_Text newText2 = Instantiate(matrixDefaultTextElement, pos, Quaternion.identity, matrixArea.transform);
             newText2.text = collaborant.name;
             if (collaborant.name == "unknown") newText2.text = "??";
-            newText2.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeData[helpIndex2]));
+            newText2.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2],dataHolder.projectId));
 
             helpIndex++;
         }
@@ -144,17 +145,17 @@ public class CollabMatrix : MonoBehaviour
                 newText.text = matrixValues[i, j].ToString();
                 newText.fontSize = 30 - collaborants2.Count;
                 if (i == j) continue;
-                List<VerticeData> relatedTickets = new List<VerticeData>();
+                List<VerticeWrapper> relatedTickets = new List<VerticeWrapper>();
                 int k = i;
                 int l = j;
                 foreach (KeyValuePair<long, List<string>> ticketCon in ticketContributorsStrs)
                 {
                     if (ticketCon.Value.Contains(collaborants[k]) && ticketCon.Value.Contains(collaborants[l]))
                     {
-                        relatedTickets.Add(dataHolder.verticeData[ticketCon.Key]);
+                        relatedTickets.Add(dataHolder.verticeWrappers[ticketCon.Key]);
                     }
                 }
-                newText.GetComponent<Button>().onClick.AddListener(() => onClickTicketList(relatedTickets, collaborants[k], collaborants[l]));
+                newText.GetComponent<Button>().onClick.AddListener(() => onClickTicketList(relatedTickets, collaborants[k], collaborants[l], dataHolder.projectId));
             }
         }
     }
@@ -165,27 +166,31 @@ public class CollabMatrix : MonoBehaviour
         ticketListViewHolder.SetActive(false);
     }
 
-    public void onClickPerson(VerticeData clickedPerson)
+    public void onClickPerson(VerticeWrapper verticeWrapper, long projectId)
     {
-        sidebarController.slideOutPersonSidebar(dataHolder.projectId, clickedPerson);
+        sidebarController.slideOutPersonSidebar(dataHolder.projectId, verticeWrapper.verticeData);
+        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<VerticeWrapper>(){verticeWrapper}, projectId);
     }
 
-    public void onClickTicketList(List<VerticeData> relatedTickets, string a, string b)
+    public void onClickTicketList(List<VerticeWrapper> relatedTickets, string a, string b, long projectId)
     {
-        ticketListViewHeader.text = "Collaborations " + a + " - " + b;
+        ticketListViewHeader.text = "Collaborations " + (a.Equals("unknown") ? "??" : a) + " - " + (b.Equals("unknown") ? "??" : b);
         ticketListView.Clear();
-        foreach (VerticeData relatedTicket in relatedTickets)
+        foreach (VerticeWrapper relatedTicket in relatedTickets)
         {
-            ticketListView.Add(relatedTicket.id + " " + relatedTicket.name);
+            ticketListView.Add(relatedTicket.verticeData.id + " " + relatedTicket.verticeData.name);
         }
         ticketListView.ItemsEvents.PointerClick.RemoveAllListeners();
-        ticketListView.ItemsEvents.PointerClick.AddListener((x, y, z) => onClickTicket(relatedTickets, x));
+        ticketListView.ItemsEvents.PointerClick.AddListener((x, y, z) => onClickTicket(relatedTickets, x, projectId));
         ticketListViewHolder.SetActive(true);
+        
+        SingletonManager.Instance.dataManager.InvokeVerticeSelect(relatedTickets, projectId);
     }
 
-    public void onClickTicket(List<VerticeData> ticketsInList, int indexOfClicked)
+    public void onClickTicket(List<VerticeWrapper> ticketsInList, int indexOfClicked, long projectId)
     {
-        sidebarController.slideOutTicketSidebar(dataHolder.projectId, ticketsInList[indexOfClicked]);
+        sidebarController.slideOutTicketSidebar(dataHolder.projectId, ticketsInList[indexOfClicked].verticeData);
+        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<VerticeWrapper>(){ticketsInList[indexOfClicked]}, projectId);
     }
 
     public void writeDebugClicked()

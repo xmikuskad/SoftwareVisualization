@@ -193,4 +193,9 @@ public class DataManager: MonoBehaviour
     {
         VerticesCompareEndEvent?.Invoke(projectId);
     }
+
+    public void InvokeVerticeSelect(List<VerticeWrapper> verticeWrapper, long projectId)
+    {
+        VerticesSelectedEvent?.Invoke(new Pair<long, List<VerticeWrapper>>(projectId,verticeWrapper));
+    }
 }
