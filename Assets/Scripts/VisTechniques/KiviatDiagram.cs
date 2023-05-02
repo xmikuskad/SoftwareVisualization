@@ -12,10 +12,6 @@ public class KiviatDiagram : MonoBehaviour
 
     public GameObject kiwiatDiagramArea;
 
-    public GameObject diagramLineHolder;
-
-    public LineRenderer defaultLineRenderer;
-
     public GameObject kiviatDiagramMain;
 
     private Dictionary<long, VerticeData> allPersons = new Dictionary<long, VerticeData>();
@@ -81,40 +77,14 @@ public class KiviatDiagram : MonoBehaviour
     // Update is called once per frame
     public void generateKiwiat(DataHolder dataHolder)
     {
-        removeCurrentKiwiat();
+        // removeCurrentKiwiat();
 
-        // Generate labels
-        Vector3 pos = kiviatDiagramMain.transform.position;
-        LineRenderer lineRenderer = Instantiate(defaultLineRenderer, pos, Quaternion.identity, diagramLineHolder.transform);
-        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-        lineRenderer.startColor = new Color32(255, 0, 0, 255);
-        lineRenderer.endColor = new Color32(255, 0, 255, 255);
-        lineRenderer.startWidth = 0.9f;
-        lineRenderer.endWidth = 0.9f;
-        lineRenderer.gameObject.SetActive(true);
-        lineRenderer.useWorldSpace = false;
-
-        List<Vector3> points = new List<Vector3>();
-        for (int i = 0; i < 6; i++)
-        {
-            float angle = (2 * Mathf.PI / 6) * i;
-            Vector3 point = new Vector3(50 * Mathf.Cos(angle), 50 * Mathf.Sin(angle), 0f);
-            points.Add(point);
-        }
-        points.Add(points[0]);
-
-        lineRenderer.positionCount = points.Count;
-        lineRenderer.SetPositions(points.ToArray());
-
-        // generateWeb();
-
-        // generateValues();
     }
 
     public void removeCurrentKiwiat()
     {
 
-        foreach (Transform child in diagramLineHolder.transform)
+        foreach (Transform child in kiwiatDiagramArea.transform)
         {
             GameObject.Destroy(child.gameObject);
         }
