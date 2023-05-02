@@ -1,18 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Helpers;
 
 public class FilterHolder
 {
     public HashSet<EdgeType> allowedEdges;
     public HashSet<VerticeType> allowedVertices;
-    public DateTime? fromDate;
-    public DateTime? toDate;
 
-    public FilterHolder(HashSet<EdgeType> allowedEdges, HashSet<VerticeType> allowedVertices, DateTime? fromDate, DateTime? toDate)
+    public FilterHolder(HashSet<EdgeType> allowedEdges, HashSet<VerticeType> allowedVertices)
     {
         this.allowedEdges = allowedEdges;
         this.allowedVertices = allowedVertices;
-        this.fromDate = fromDate;
-        this.toDate = toDate;
+    }
+
+    public FilterHolder()
+    {
+        this.allowedEdges = new HashSet<EdgeType>(Enum.GetValues(typeof(EdgeType)).Cast<EdgeType>());
+        this.allowedVertices = new HashSet<VerticeType>(Enum.GetValues(typeof(VerticeType)).Cast<VerticeType>());
+
     }
 }

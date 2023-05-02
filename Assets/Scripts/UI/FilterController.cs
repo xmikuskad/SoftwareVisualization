@@ -40,10 +40,9 @@ public class FilterController : MonoBehaviour
 
     public void SaveFilter()
     {
-        SingletonManager.Instance.dataManager.SetFilter(new FilterHolder(
+        SingletonManager.Instance.dataManager.InvokeDataFilterEvent(new FilterHolder(
             edgeFilter.Where(i=>i.Value.isOn).Select(pair=>pair.Key).ToHashSet(),
-            verticeFilter.Where(i=>i.Value.isOn).Select(pair=>pair.Key).ToHashSet(),
-            null,null));
+            verticeFilter.Where(i=>i.Value.isOn).Select(pair=>pair.Key).ToHashSet()));
         CloseDialog();
     }
 
@@ -55,6 +54,8 @@ public class FilterController : MonoBehaviour
     
     public void OpenDialog()
     {
+        // This has to be 2 times
+        dialogObj.SetActive(true);
         dialogObj.SetActive(true);
         SingletonManager.Instance.pauseManager.SetEverythingPaused(true);
     }

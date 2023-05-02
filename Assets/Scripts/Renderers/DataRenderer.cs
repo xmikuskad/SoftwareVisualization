@@ -27,12 +27,14 @@ public class DataRenderer : MonoBehaviour
     private Dictionary<long, Pair<float, float>> projectSizesZ = new(); //Keeping min and max Z sizes for a project
     private Dictionary<long, Pair<float, float>> projectSizesX = new(); //Keeping min and max X sizes for a project
 
+    public Pair<DateTime, DateTime> dateFilter = new(DateTime.MinValue.Date,DateTime.MinValue.Date);
     [Header("Properties")]
 
     public float renderDistanceBetweenObjs = 3;
     public float distanceOnComplete = 4f;
     public bool spawnTopOutlinesForSpiral = false;
     public long spaceBetweenWallObjs = 2;
+    public long distanceFromMiddleGraph = 5;
 
     [Header("References")]
     public GameObject verticePrefab;
@@ -58,15 +60,23 @@ public class DataRenderer : MonoBehaviour
 
     public KiviatDiagram kiviatDiagram;
 
-    private void Awake()
+    private FilterHolder filterHolder;
+
+    private void Start()
     {
-        SingletonManager.Instance.dataManager.DatesRangeSelectedEvent += OnDatesRangeSelectedSelected;
+        // SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter; TODO fix
+        filterHolder = new();
     }
-    
-    private void OnDatesRangeSelectedSelected(Pair<long, List<DateTime>> pair)
+
+    private void OnDataFilter(FilterHolder f)
     {
-        // TODO rerender twice
-    }
+        long projectId = 1L;
+        DateTime date = dateFilter.Right != DateTime.MinValue.Date
+            ? dateFilter.Right
+            : this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]];
+        RerenderProject(projectId, false);
+        RenderUntilDate(date,1L);
+    } 
 
     public void AddData(List<DataHolder> dataHolder, bool rerender)
     {
@@ -89,7 +99,7 @@ public class DataRenderer : MonoBehaviour
         RenderData(rerender,renderFirst);
     }
 
-    public void ResetData()
+    public void ResetData(bool resetAll)
     {
         this.spawnTheta.Clear();
         this.loadedProjects.Clear();
@@ -105,6 +115,9 @@ public class DataRenderer : MonoBehaviour
         
         projectSizesX.Clear();
         projectSizesZ.Clear();
+
+        if (resetAll)
+            this.dateFilter = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
 
         DOTween.Clear();
     }
@@ -132,7 +145,7 @@ public class DataRenderer : MonoBehaviour
     public void RerenderProject(long projectId, bool renderFirst)
     {
         DataHolder holder = this.loadedProjects[projectId];
-        ResetData();
+        ResetData(renderFirst);
         AddData(holder, false, renderFirst);
     }
 
@@ -146,33 +159,22 @@ public class DataRenderer : MonoBehaviour
 
     private void RenderDate(DateTime dateTime, long projectId)
     {
-        currentDateText.text = dateTime + " (Day " + (dateTime.Subtract(loadedProjects[projectId].startDate).Days + 1) + ")";
+        currentDateText.text = dateTime.ToString("dd/MM/yyyy") + " (Day " + (dateTime.Subtract(loadedProjects[projectId].startDate).Days + 1) + ")";
         foreach (var verticeWrapper in this.loadedProjects[projectId].changesByDate[dateTime])
         {
-            Dictionary<VerticeType,List<VerticeData>> dict = new ();
-            dict = verticeWrapper.GetRelatedVerticesDict();
-            // if (dateTime != DateTime.MinValue.Date || verticeWrapper.verticeData.verticeType == VerticeType.Change)
-            // {
-            //     dict = verticeWrapper.GetRelatedVerticesDict();
-            // }
-            // else
-            // {
-            //     dict[verticeWrapper.verticeData.verticeType] = new List<VerticeData>() { verticeWrapper.verticeData };
-            // }
+            Dictionary<VerticeType,List<VerticeData>> dict = verticeWrapper.GetRelatedVerticesDict();
 
             // We can skip person, we already spawned them
             if(dict.ContainsKey(VerticeType.Ticket))
                 SpawnByType(dict[VerticeType.Ticket],projectId);
-            
-            //TODO commits
-            // if(dict.ContainsKey(VerticeType.Commit))
-            //     SpawnByType(dict[VerticeType.Commit],projectId);            
             if(dict.ContainsKey(VerticeType.Wiki))
                 SpawnByType(dict[VerticeType.Wiki],projectId);
             if(dict.ContainsKey(VerticeType.RepoFile))
                 SpawnByType(dict[VerticeType.RepoFile],projectId);
             if(dict.ContainsKey(VerticeType.File))
                 SpawnByType(dict[VerticeType.File],projectId);
+            if(dict.ContainsKey(VerticeType.Commit))
+                SpawnByType(dict[VerticeType.Commit],projectId);
         }
     }
 
@@ -186,47 +188,42 @@ public class DataRenderer : MonoBehaviour
         RerenderProject(projectId, false);
         RenderUntilDate(dateTime,projectId);
     }
+
     public void RenderUntilDate(DateTime dateTime, long projectId)
     {
         this.dateIndexTracker[projectId] = this.loadedProjects[projectId].orderedDates.IndexOf(dateTime);
         for (var i = 0; i < this.loadedProjects[projectId].orderedDates.Count; i++)
         {
             DateTime date = this.loadedProjects[projectId].orderedDates[i];
-            if(date > dateTime) return;
-            RenderDate(date,projectId);
+            if (dateFilter.Left != DateTime.MinValue.Date && dateFilter.Right != DateTime.MaxValue)
+            {
+                if (date > dateTime) return;
+                RenderDate(date, projectId);
+            }
         }
     }
 
     public void RenderNext(long projectId)
     {
-        if (dateIndexTracker[projectId] <= -2) return;
+        if (dateIndexTracker[projectId] <= -2 ||
+            this.loadedProjects[projectId].orderedDates.Count <= dateIndexTracker[projectId]) return;
         dateIndexTracker[projectId] += 1;
-        if (this.loadedProjects[projectId].orderedDates.Count <= dateIndexTracker[projectId])
+
+        RenderDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]], projectId);
+        if (this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]] == DateTime.MinValue.Date)
         {
-            dateIndexTracker[projectId] = -2;
+            RenderNext(projectId);
             return;
         }
-        
-        if (timelineRenderer.datePair.Right != DateTime.MinValue.Date)
-        {
-            RenderUntilDateWithReset(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]],projectId);
-        }
-        else
-        {
-            RenderDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]], projectId);
-            if (this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]] == DateTime.MinValue.Date)
-            {
-                RenderNext(projectId);
-                return;
-            }
-            timelineRenderer.SetCurrentDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]], projectId);
-        }
+
+        timelineRenderer.SetCurrentDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]],
+            projectId);
 
     }
 
     public void RenderPrevious(long projectId)
     {
-        if (dateIndexTracker[projectId] <= 1) return;
+        if (dateIndexTracker[projectId] <= 0) return;
         dateIndexTracker[projectId] -= 1;
         RenderUntilDateWithReset(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]],projectId);
         timelineRenderer.SetCurrentDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]], projectId);
@@ -242,10 +239,17 @@ public class DataRenderer : MonoBehaviour
         RenderPrevious(1L);
     }
 
+    public bool HasActiveDateFilter()
+    {
+        return this.dateFilter.Left != DateTime.MinValue.Date && this.dateFilter.Right != DateTime.MinValue.Date;
+    }
+
     private void SpawnByType(List<VerticeData> verticeDatas, long projectId)
     {
         foreach (var verticeData in verticeDatas)
         {
+            if (!filterHolder.allowedVertices.Contains(verticeData.verticeType))
+                continue;
             switch (verticeData.verticeType)
             {
                 case VerticeType.Ticket:
@@ -267,26 +271,34 @@ public class DataRenderer : MonoBehaviour
                     }
 
                     break;
-                // TODO
-                // case VerticeType.Commit:
-                //     if (!vertices[projectId].ContainsKey(verticeData.id))
-                //     {
-                //         float idk = spawnTheta[projectId];
-                //         float x = Mathf.Cos(idk) * idk;
-                //         float y = Mathf.Sin(idk) * idk;
-                //         Transform obj = SpawnGeneralVertice(projectId, new Vector3(x, 0, y), verticeData.id);
-                //         spawnTheta[projectId] += renderDistanceBetweenObjs / idk;
-                //     }
-                //     else
-                //     {
-                //         VerticeRenderer ver = vertices[projectId][verticeData.id];
-                //         float distanceToMove = distanceOnComplete / ver.verticeWrapper.updateCount;
-                //         ver.AddCompletedEdge(1L, ver.verticeWrapper.updateCount);
-                //         Vector3 newPos = ver.transform.position - new Vector3(0, distanceToMove, 0);
-                //         ver.transform.position = newPos;
-                //     }
-                //
-                //     break;
+                case VerticeType.Commit:
+                    if (!vertices[projectId].ContainsKey(verticeData.id))
+                    {
+                        if (commitPosTracker.ContainsKey(projectId))
+                        {
+                            if (commitPosTracker[projectId].x > projectSizesX[projectId].Right)
+                            {
+                                Vector3 pos = commitPosTracker[projectId];
+                                pos.z -= spaceBetweenWallObjs;
+                                pos.x = projectSizesX[projectId].Left;
+                                commitPosTracker[projectId] = pos;
+                            }
+                            else
+                            {
+                                Vector3 pos = commitPosTracker[projectId];
+                                pos.x += spaceBetweenWallObjs;
+                                commitPosTracker[projectId] = pos;
+                            }
+                        }
+                        else
+                        {
+                            commitPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left, -(distanceFromMiddleGraph + distanceOnComplete),
+                                projectSizesZ[projectId].Right);
+                        }
+                        Transform obj = SpawnGeneralVertice(projectId, commitPosTracker[projectId], verticeData.id);
+                    }
+                    
+                    break;
                 case VerticeType.Wiki:
                     if (!vertices[projectId].ContainsKey(verticeData.id))
                     {
@@ -308,7 +320,7 @@ public class DataRenderer : MonoBehaviour
                         }
                         else
                         {
-                            wikiPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left-(2*spaceBetweenWallObjs), 0,
+                            wikiPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left-(distanceFromMiddleGraph), 0,
                                 projectSizesZ[projectId].Left);
                         }
                         Transform obj = SpawnGeneralVertice(projectId, wikiPosTracker[projectId], verticeData.id);
@@ -324,7 +336,7 @@ public class DataRenderer : MonoBehaviour
                             if (repoPosTracker[projectId].x > projectSizesX[projectId].Right)
                             {
                                 Vector3 pos = repoPosTracker[projectId];
-                                pos.y -= spaceBetweenWallObjs;
+                                pos.y += spaceBetweenWallObjs;
                                 pos.x = projectSizesX[projectId].Left;
                                 repoPosTracker[projectId] = pos;
                             }
@@ -337,8 +349,8 @@ public class DataRenderer : MonoBehaviour
                         }
                         else
                         {
-                            repoPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left, 0,
-                                projectSizesZ[projectId].Right+(2*spaceBetweenWallObjs));
+                            repoPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left, -(distanceOnComplete),
+                                projectSizesZ[projectId].Right+(distanceFromMiddleGraph));
                         }
                         Transform obj = SpawnGeneralVertice(projectId, repoPosTracker[projectId], verticeData.id);
                     }
@@ -365,7 +377,7 @@ public class DataRenderer : MonoBehaviour
                         }
                         else
                         {
-                            filePosTracker[projectId] = new Vector3(projectSizesX[projectId].Right+(2*spaceBetweenWallObjs), 0,
+                            filePosTracker[projectId] = new Vector3(projectSizesX[projectId].Right+(distanceFromMiddleGraph), 0,
                                 projectSizesZ[projectId].Left);
                         }
                         Transform obj = SpawnGeneralVertice(projectId, filePosTracker[projectId], verticeData.id);
@@ -381,21 +393,18 @@ public class DataRenderer : MonoBehaviour
         }
     }
 
+
     private void SpawnPeople(long projectId)
     {
-        long counter = 1;
-        // foreach (long personId in this.loadedProjects[projectId].personIds.Values)
-        // {
-        //     if (!this.loadedProjects[projectId].verticeData.ContainsKey(personId)) continue;
-        //     SpawnGeneralVertice(projectId, new Vector3(counter, 10 + counter, 0), personId);
-        //     counter += 2;
-        // }
-        
+        if (!filterHolder.allowedVertices.Contains(VerticeType.Person))
+            return;
+        float counter = spaceBetweenWallObjs;
+
         foreach (var (key, value) in this.loadedProjects[projectId].verticeWrappers.Where(x=>x.Value.verticeData.verticeType == VerticeType.Person))
         {
             if (!this.loadedProjects[projectId].verticeData.ContainsKey(key)) continue;
-            SpawnGeneralVertice(projectId, new Vector3(counter, 10 + counter, 0), key);
-            counter += 2;
+            SpawnGeneralVertice(projectId, new Vector3(counter, distanceFromMiddleGraph + counter, 0), key);
+            counter += spaceBetweenWallObjs;
         }
     }
 
@@ -435,16 +444,21 @@ public class DataRenderer : MonoBehaviour
     {
         float x = Mathf.Cos(pos) * pos;
         float z = Mathf.Sin(pos) * pos;
-        Transform obj = PoolManager.Pools[PoolNames.VERTICE_OUTLINE].Spawn(verticePrefab, new Vector3(x, yPos, z), Quaternion.identity);
-        if(obj.TryGetComponent<VerticeRenderer>(out VerticeRenderer vr))
+
+        if (filterHolder.allowedVertices.Contains(VerticeType.Ticket))
         {
-            vr.OnDespawned();
-        };
-        Destroy(obj.GetComponent<VerticeRenderer>());
-        Destroy(obj.GetComponent<BoxCollider>());
-        MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
-        renderer.materials = new[] { outlineMaterial };
-        
+            Transform obj = PoolManager.Pools[PoolNames.VERTICE_OUTLINE]
+                .Spawn(verticePrefab, new Vector3(x, yPos, z), Quaternion.identity);
+            if (obj.TryGetComponent<VerticeRenderer>(out VerticeRenderer vr))
+            {
+                vr.OnDespawned();
+            }
+            Destroy(obj.GetComponent<VerticeRenderer>());
+            Destroy(obj.GetComponent<BoxCollider>());
+            MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
+            renderer.materials = new[] { outlineMaterial };
+        }
+
         // keeping track of max/min Z and X axes
         if (!projectSizesZ.ContainsKey(projectId))
         {

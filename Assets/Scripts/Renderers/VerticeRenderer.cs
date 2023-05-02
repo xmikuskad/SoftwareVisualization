@@ -63,7 +63,7 @@ public class VerticeRenderer : MouseOverRenderer
 
         if (this.verticeWrapper.IsConnectedWithVertices(pair.Right.Select(x=>x.verticeData.id).ToHashSet()))
         {
-            SetHighlighted(true);
+            SetHighlighted(pair.Right.Select(x=>x.verticeData.id).ToHashSet().Contains(this.verticeWrapper.verticeData.id) ? true : false);
         }
         else
         {
@@ -81,7 +81,7 @@ public class VerticeRenderer : MouseOverRenderer
         
         if (this.verticeWrapper.ContainsDate(pair.Right))
         {
-            SetHighlighted(true);
+            SetHighlighted(false);
         }
         else
         {
@@ -97,6 +97,7 @@ public class VerticeRenderer : MouseOverRenderer
         SingletonManager.Instance.dataManager.DatesSelectedEvent += OnDatesSelected;
         SingletonManager.Instance.dataManager.VerticesCompareEvent += OnVerticeCompare;
         SingletonManager.Instance.dataManager.VerticesCompareEndEvent += OnVerticeCompareEnd;
+        SingletonManager.Instance.dataManager.DatesRangeSelectedEvent += OnDateRangeSelected;
     }
 
     public void OnDespawned()
@@ -107,6 +108,25 @@ public class VerticeRenderer : MouseOverRenderer
         SingletonManager.Instance.dataManager.DatesSelectedEvent -= OnDatesSelected;
         SingletonManager.Instance.dataManager.VerticesCompareEvent -= OnVerticeCompare;
         SingletonManager.Instance.dataManager.VerticesCompareEndEvent -= OnVerticeCompareEnd;
+        SingletonManager.Instance.dataManager.DatesRangeSelectedEvent -= OnDateRangeSelected;
+    }
+    
+    private void OnDateRangeSelected(Pair<long, List<DateTime>> pair)
+    {
+        if (this.projectId != pair.Left)
+        {
+            this.meshRenderer.material = nonHoverMaterial;
+            return;
+        }
+        
+        if (this.verticeWrapper.IsDateBetween(pair.Right[0],pair.Right[1]))
+        {
+            SetHighlighted(false);
+        }
+        else
+        {
+            SetHidden(true);
+        }
     }
 
     

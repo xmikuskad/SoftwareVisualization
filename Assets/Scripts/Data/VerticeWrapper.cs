@@ -142,5 +142,16 @@ namespace Data
 
             return false;
         }
+
+        public bool IsDateBetween(DateTime from, DateTime to)
+        {
+            foreach (var dateTime in dates)
+            {
+                if (this.dates.Any(x => x>=from && x<=to))
+                    return true;
+            }
+
+            return false;
+        }
     }
 }
