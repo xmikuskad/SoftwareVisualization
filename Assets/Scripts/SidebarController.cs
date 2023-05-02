@@ -2,6 +2,10 @@ using UIWidgets;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using Helpers;
+using System.Collections.Generic;
+using Data;
+using System.Linq;
 
 public class SidebarController : MonoBehaviour
 {
@@ -27,6 +31,14 @@ public class SidebarController : MonoBehaviour
 
     public CollabBarChart collabBarChart;
 
+    private List<VerticeWrapper> verticesCurrentlyInSidebar = new List<VerticeWrapper>();
+
+
+    private void Start()
+    {
+        SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
+        SingletonManager.Instance.dataManager.ResetEvent += OnAllVerticesDeselected;
+    }
     void Update()
     {
         // TODO this should be moved somewhere ?
@@ -46,6 +58,41 @@ public class SidebarController : MonoBehaviour
                 SingletonManager.Instance.dataManager.InvokeResetEvent();
             }
         }
+    }
+
+
+    private void OnAllVerticesDeselected()
+    {
+        // Debug.Log("nothing selected");
+        slideIn();
+    }
+    private void OnVerticeSelected(Pair<long, List<VerticeWrapper>> pair)
+    {
+        // Debug.Log("currently " + pair.Right.Count.ToString() + " onClicked vertices");
+
+        // foreach (VerticeWrapper verticeWrapper in pair.Right)
+        // {
+        //     if (!verticesCurrentlyInSidebar.Contains(verticeWrapper))
+        //     {
+        //         verticesCurrentlyInSidebar.Add(verticeWrapper);
+        //         addVerticeToSidebarPages(verticeWrapper);
+        //     }
+        // }
+
+        // if (verticesCurrentlyInSidebar.Count == 0)
+        // {
+        //     addVerticesToSidebarPages(pair.Right);
+        // }
+
+        List<VerticeWrapper> newClickedVertices = pair.Right.Except(verticesCurrentlyInSidebar).ToList();
+        foreach (VerticeWrapper diff in newClickedVertices)
+            if (pair.Right.Contains(diff) && !verticesCurrentlyInSidebar.Contains(diff))
+                addVerticeToSidebarPages(diff);
+
+        List<VerticeWrapper> unclickedVertices = verticesCurrentlyInSidebar.Except(pair.Right).ToList();
+        foreach (VerticeWrapper diff in newClickedVertices)
+            if (!pair.Right.Contains(diff) && verticesCurrentlyInSidebar.Contains(diff))
+                removeVerticeFromSidebarPages(diff);
     }
 
     // Open
@@ -103,4 +150,22 @@ public class SidebarController : MonoBehaviour
         collabMatrix.SetActive(true);
     }
 
+    public void addVerticesToSidebarPages(List<VerticeWrapper> verticeWrappers)
+    {
+        verticesCurrentlyInSidebar.AddRange(verticeWrappers);
+        // Debug.Log("adding vertice " + verticeWrappers[0].verticeData.id.ToString() + " to sidebar pages");
+    }
+
+    public void addVerticeToSidebarPages(VerticeWrapper verticeWrapper)
+    {
+        verticesCurrentlyInSidebar.Add(verticeWrapper);
+        slideOut(1, verticeWrapper.verticeData);
+        // Debug.Log("adding vertice " + verticeWrapper.verticeData.id.ToString() + " to sidebar pages");
+    }
+
+    public void removeVerticeFromSidebarPages(VerticeWrapper verticeWrapper)
+    {
+        verticesCurrentlyInSidebar.Remove(verticeWrapper);
+        // Debug.Log("removing vertice " + verticeWrapper.verticeData.id.ToString() + " from sidebar pages");
+    }
 }
