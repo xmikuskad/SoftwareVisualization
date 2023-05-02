@@ -78,7 +78,6 @@ public class KiviatDiagram : MonoBehaviour
     public void generateKiwiat(DataHolder dataHolder)
     {
         // removeCurrentKiwiat();
-
     }
 
     public void removeCurrentKiwiat()

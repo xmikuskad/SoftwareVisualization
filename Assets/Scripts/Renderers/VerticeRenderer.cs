@@ -61,7 +61,7 @@ public class VerticeRenderer : MouseOverRenderer
             return;
         }
 
-        if (this.verticeWrapper.IsConnectedWithVertices(pair.Right.Select(x=>x.verticeData.id).ToHashSet()))
+        if (this.verticeWrapper.IsConnectedWithVertices(pair.Right.Select(x => x.verticeData.id).ToHashSet()))
         {
             SetHighlighted(pair.Right.Select(x=>x.verticeData.id).ToHashSet().Contains(this.verticeWrapper.verticeData.id) ? true : false);
         }
@@ -70,7 +70,7 @@ public class VerticeRenderer : MouseOverRenderer
             SetHidden(true);
         }
     }
-    
+
     private void OnDatesSelected(Pair<long, List<DateTime>> pair)
     {
         if (this.projectId != pair.Left)
@@ -78,7 +78,7 @@ public class VerticeRenderer : MouseOverRenderer
             this.meshRenderer.material = nonHoverMaterial;
             return;
         }
-        
+
         if (this.verticeWrapper.ContainsDate(pair.Right))
         {
             SetHighlighted(false);
@@ -129,7 +129,7 @@ public class VerticeRenderer : MouseOverRenderer
         }
     }
 
-    
+
     private void OnVerticeCompareEnd(long projectId)
     {
         if (this.projectId != projectId)
@@ -195,7 +195,7 @@ public class VerticeRenderer : MouseOverRenderer
             case VerticeType.Person:
                 return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.PERSON).color;
             case VerticeType.Ticket:
-                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.TICKET).color;;
+                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.TICKET).color; ;
             case VerticeType.File:
                 return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.FILE).color;
             case VerticeType.Wiki:
@@ -244,7 +244,7 @@ public class VerticeRenderer : MouseOverRenderer
     public override void OnClick()
     {
         if (!isLoaded) return;
-        sidebarScript.slideOut(projectId, verticeWrapper.verticeData);
+        // sidebarScript.slideOut(projectId, verticeWrapper.verticeData);
         SingletonManager.Instance.dataManager.ProcessVerticeClick(this.projectId, this.verticeWrapper);
     }
 
