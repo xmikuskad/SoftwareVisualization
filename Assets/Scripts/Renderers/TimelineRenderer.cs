@@ -14,7 +14,6 @@ namespace Renderers
         private List<MonthGroup> groupByMonth;
         private Dictionary<DateTime, TimelineBar> barObjects = new();
         private Dictionary<DateTime, Button> btnObjects = new();
-        public Pair<DateTime, DateTime> datePair;
 
         [Header("References")] public RectTransform graphContainer;
         public RectTransform textPrefab;
@@ -68,12 +67,10 @@ namespace Renderers
                 TimelineBar timelineBar = CreateBar(new Vector2(xPosition, yPosition), barWidth * .9f, date, activeMaterial,dataHolder.projectId);
                 this.barObjects[date] = timelineBar;
                 
-                // RectTransform btn = Instantiate(btnPrefab, graphContainer);
-                // btn.sizeDelta = new Vector2(barWidth * 0.9f, 20f);
                 RectTransform btn = Instantiate(btnPrefab);
                 btn.SetParent(graphContainer, false);
                 btn.sizeDelta = new Vector2(barWidth*0.6f, barWidth*0.6f);
-                btn.anchoredPosition = new Vector2(xPosition, -25f);
+                btn.anchoredPosition = new Vector2(xPosition, -barWidth);
                 btn.anchorMin = new Vector2(0, 0);
                 btn.anchorMax = new Vector2(0, 0);
                 btn.pivot = new Vector2(.5f, 0f);
@@ -102,9 +99,9 @@ namespace Renderers
             {
                 RectTransform labelX = Instantiate(textPrefab);
                 labelX.SetParent(graphContainer, false);
-                labelX.sizeDelta = new Vector2(barWidth * group.count, 30f);
+                labelX.sizeDelta = new Vector2(barWidth * group.count, barWidth*2);
                 labelX.gameObject.SetActive(true);
-                labelX.anchoredPosition = new Vector2(offset + (barWidth * group.count / 2f), -60f);
+                labelX.anchoredPosition = new Vector2(offset + (barWidth * group.count / 2f), -(barWidth*3));
                 labelX.anchorMin = new Vector2(0, 0);
                 labelX.anchorMax = new Vector2(0, 0);
                 labelX.pivot = new Vector2(.5f, 0f);
@@ -118,16 +115,23 @@ namespace Renderers
         private void OnBtnClick(DateTime date, long  projectIdTmp)
         {
             bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
-            if (ctrlPressed && datePair.Left != DateTime.MinValue.Date)
+            if (ctrlPressed && dataRenderer.dateFilter.Left != DateTime.MinValue.Date)
             {
-                datePair.Right = date;
-                SingletonManager.Instance.dataManager.InvokeCompareEvent(projectIdTmp);
+                dataRenderer.dateFilter.Right = date;
+                if (dataRenderer.dateFilter.Right < dataRenderer.dateFilter.Left)
+                {
+                    var tmp = dataRenderer.dateFilter.Left;
+                    dataRenderer.dateFilter.Left = date;
+                    dataRenderer.dateFilter.Right = tmp;
+                }
+                
                 dataRenderer.RenderComparisionForDate(date, projectIdTmp);
-                ColorTimelineBtnRange(datePair.Left,datePair.Right);
+                SingletonManager.Instance.dataManager.InvokeCompareEvent(projectIdTmp);
+                ColorTimelineBtnRange(dataRenderer.dateFilter);
             }
             else
             {
-                datePair.Left = date;
+                dataRenderer.dateFilter.Left = date;
                 CheckForCompare(projectIdTmp);
                 dataRenderer.RenderUntilDateWithReset(date, projectIdTmp);
                 ColorTimelineBtn(date);
@@ -136,16 +140,15 @@ namespace Renderers
 
         public void SetCurrentDate(DateTime date, long projectId)
         {
-            datePair.Left = date;
             CheckForCompare(projectId);
             ColorTimelineBtn(date);
         }
 
         private void CheckForCompare(long projectId)
         {
-            if (datePair.Right != DateTime.MinValue.Date)
+            if (dataRenderer.HasActiveDateFilter())
             {
-                datePair.Right = DateTime.MinValue.Date;
+                dataRenderer.dateFilter.Right = DateTime.MinValue.Date;
                 SingletonManager.Instance.dataManager.InvokeCompareEndEvent(projectId);
             }
         }
@@ -159,11 +162,11 @@ namespace Renderers
             btnObjects[date].GetComponent<Image>().color = Color.red;
         }
         
-        public void ColorTimelineBtnRange(DateTime from, DateTime to)
+        public void ColorTimelineBtnRange(Pair<DateTime,DateTime> pair)
         {
             foreach (var (key, value) in btnObjects)
             {
-                value.GetComponent<Image>().color = (key >= from && key <= to) ? Color.red : Color.white;
+                value.GetComponent<Image>().color = (key >= pair.Left && key <= pair.Right) ? Color.red : Color.white;
             }
         }
 
@@ -188,7 +191,6 @@ namespace Renderers
 
         public void ResetTimeline()
         {
-            datePair = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
             foreach (Transform child in graphContainer.transform)
             {
                 Destroy(child.gameObject);

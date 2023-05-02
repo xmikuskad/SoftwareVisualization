@@ -179,4 +179,9 @@ public class DataHolder
 
 
     }
+
+    public void UpdateUsageForFilter(DateTime from, DateTime to)
+    {
+        // TODO
+    }
 }

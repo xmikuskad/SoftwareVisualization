@@ -25,6 +25,7 @@ public class DataManager: MonoBehaviour
     
     public event Action<long> VerticesCompareEvent;
     public event Action<long> VerticesCompareEndEvent;
+    public event Action<FilterHolder> DataFilterEvent;
     
     // Other
     public List<DateTime> selectedDates = new();
@@ -53,21 +54,9 @@ public class DataManager: MonoBehaviour
         dataRenderer.AddData(holder, false, true);
     }
 
-    public void SetFilter(FilterHolder h)
+    public void InvokeDataFilterEvent(FilterHolder f)
     {
-        this.filterHolder = h;
-        ApplyFilter();
-    }
-    
-    public void ApplyFilter()
-    {
-        // filteredDataHolders.Clear();
-        // filteredDataHolders = unchangedDataHolders
-        //     .Select(h => new DataHolder(h.Value, filterHolder))
-        //     .ToDictionary(i => i.projectId);
-        //
-        // dataRenderer.ResetData();
-        // dataRenderer.AddData(filteredDataHolders.Values.ToList(), true);
+        DataFilterEvent?.Invoke(f);
     }
 
     public void ProcessVerticeClick(long projectId, VerticeWrapper verticeWrapper)
@@ -89,7 +78,9 @@ public class DataManager: MonoBehaviour
             {
                 this.selectedVertices.Remove(verticeWrapper);
                 if (this.selectedVertices.Count == 0)
+                {
                     ResetEvent?.Invoke();
+                }
                 else
                     VerticesSelectedEvent?.Invoke(
                         new Pair<long, List<VerticeWrapper>>(this.selectedProjectId, this.selectedVertices));
