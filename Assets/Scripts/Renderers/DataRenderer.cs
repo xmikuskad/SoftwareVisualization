@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Data;
 using DG.Tweening;
 using Helpers;
@@ -113,6 +114,7 @@ public class DataRenderer : MonoBehaviour
         if (loadedProjects == null) return;
         SpawnPeople(1L);
         SpawnOutlineObjects(1L);
+        SpawnStartObjects(1L);
         collabMatrix.fillMatrix(this.loadedProjects[1]);
         contributionsCalendar.fillContributionsCalendar(this.loadedProjects[1], this.loadedProjects[1].startDate.Year);
         timelineRenderer.LoadTimeline(this.loadedProjects[1]);
@@ -120,6 +122,11 @@ public class DataRenderer : MonoBehaviour
         SetLoading(false);
         if(renderFirst)
             RenderNext(1L);
+    }
+
+    private void SpawnStartObjects(long projectId)
+    {
+        SpawnByType(this.loadedProjects[projectId].spawnAtStart.Select(x=>x.verticeData).ToList(),projectId);
     }
 
     public void RerenderProject(long projectId, bool renderFirst)
@@ -142,9 +149,19 @@ public class DataRenderer : MonoBehaviour
         currentDateText.text = dateTime + " (Day " + (dateTime.Subtract(loadedProjects[projectId].startDate).Days + 1) + ")";
         foreach (var verticeWrapper in this.loadedProjects[projectId].changesByDate[dateTime])
         {
-            Dictionary<VerticeType,List<VerticeData>> dict = verticeWrapper.GetRelatedVerticesDict();
+            Dictionary<VerticeType,List<VerticeData>> dict = new ();
+            dict = verticeWrapper.GetRelatedVerticesDict();
+            // if (dateTime != DateTime.MinValue.Date || verticeWrapper.verticeData.verticeType == VerticeType.Change)
+            // {
+            //     dict = verticeWrapper.GetRelatedVerticesDict();
+            // }
+            // else
+            // {
+            //     dict[verticeWrapper.verticeData.verticeType] = new List<VerticeData>() { verticeWrapper.verticeData };
+            // }
+
             // We can skip person, we already spawned them
-            if(dateTime != DateTime.MinValue.Date && dict.ContainsKey(VerticeType.Ticket))
+            if(dict.ContainsKey(VerticeType.Ticket))
                 SpawnByType(dict[VerticeType.Ticket],projectId);
             
             //TODO commits
@@ -367,10 +384,17 @@ public class DataRenderer : MonoBehaviour
     private void SpawnPeople(long projectId)
     {
         long counter = 1;
-        foreach (long personId in this.loadedProjects[projectId].personIds.Values)
+        // foreach (long personId in this.loadedProjects[projectId].personIds.Values)
+        // {
+        //     if (!this.loadedProjects[projectId].verticeData.ContainsKey(personId)) continue;
+        //     SpawnGeneralVertice(projectId, new Vector3(counter, 10 + counter, 0), personId);
+        //     counter += 2;
+        // }
+        
+        foreach (var (key, value) in this.loadedProjects[projectId].verticeWrappers.Where(x=>x.Value.verticeData.verticeType == VerticeType.Person))
         {
-            if (!this.loadedProjects[projectId].verticeData.ContainsKey(personId)) continue;
-            SpawnGeneralVertice(projectId, new Vector3(counter, 10 + counter, 0), personId);
+            if (!this.loadedProjects[projectId].verticeData.ContainsKey(key)) continue;
+            SpawnGeneralVertice(projectId, new Vector3(counter, 10 + counter, 0), key);
             counter += 2;
         }
     }

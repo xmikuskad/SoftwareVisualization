@@ -73,7 +73,7 @@ namespace Data
             }
             Debug.Log("Author OK");
 
-            return relatedEdges[EdgeType.Authorship][0].id;
+            return relatedEdges[EdgeType.Authorship][0].to;
         }
         
         // Returns DateTime.MinValue on fail.
@@ -114,7 +114,7 @@ namespace Data
         
         public bool IsConnectedWithVertices(HashSet<long> verticeId)
         {
-            return relatedEdgesById.Values.Count(x => verticeId.Contains(x.to) || verticeId.Contains(this.verticeData.id)) > 0;
+            return relatedEdgesById.Values.Where(x => verticeId.Contains(x.to)).ToList().Count() > 0 || verticeId.Contains(this.verticeData.id);
         }
 
         public List<VerticeData> GetRelatedVertices()

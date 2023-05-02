@@ -32,6 +32,8 @@ public class DataHolder
     // WARNING: This uses key DateTime.MinValue
     public List<DateTime> orderedDates = new();
 
+    public List<VerticeWrapper> spawnAtStart = new();
+
     // TODO This function needs a rework. I know that data are only loading for tickets.
     public void LoadData()
     {
@@ -43,10 +45,9 @@ public class DataHolder
 
         personIds["_unknown"] = -1;
 
-        fillTicketToChangeListPerAuthor();
-
         LoadVerticeWrappers();
 
+        fillTicketToChangeListPerAuthor();
         Debug.Log("Data holder load finished created");
     }
 
@@ -63,17 +64,28 @@ public class DataHolder
             if (verticeData[edge.from].verticeType != VerticeType.Ticket) continue;
             if (verticeData[edge.to].verticeType != VerticeType.Change) continue;
             VerticeData ticket = verticeData[edge.from];
-            VerticeData change = verticeData[edge.to];
-            string changeAuthorInitials = "_unknown";
-            if (!(change.author == null || change.author[0] == null)) changeAuthorInitials = change.author[0];
-            long changeAuthorId = personIds[changeAuthorInitials];
-            // Debug.Log("found a ticket id " + ticket.id.ToString() + ", change id " + change.id.ToString() + ", author " + changeAuthorInitials + " with id " + changeAuthorId.ToString());
+            VerticeWrapper change = verticeWrappers[edge.to];
+            long changeAuthorId = change.GetAuthorId();
             if (!ticketToChangeListPerAuthor[ticket.id].ContainsKey(changeAuthorId))
             {
                 ticketToChangeListPerAuthor[ticket.id][changeAuthorId] = new();
             }
-
-            ticketToChangeListPerAuthor[ticket.id][changeAuthorId].Add(change);
+            if(!ticketToChangeListPerAuthor[ticket.id][changeAuthorId].Contains(change.verticeData))
+                ticketToChangeListPerAuthor[ticket.id][changeAuthorId].Add(change.verticeData);
+        }
+        
+        foreach (var (key, value) in ticketToChangeListPerAuthor)
+        {
+         
+            Debug.LogWarning("Ticket "+key+": "+string.Join(", ",
+                value
+                    .SelectMany(kv => kv.Value) // Flatten the values of the dictionary into a single IEnumerable<VerticeData>
+                    .GroupBy(v => v.id) // Group the VerticeData objects by the Id property
+                        .Select(g => g.First()) // Select the first VerticeData object from each group
+                        .ToList().Select(x=>x.id))
+            + " ||| "+string.Join(", ",value
+                .SelectMany(kv => kv.Value).ToList().Select(x=>x.id)));  
+            
         }
     }
 
@@ -117,6 +129,12 @@ public class DataHolder
             if(!changesByDate[v.GetTimeWithoutHours()].Contains(v))
                 changesByDate[v.GetTimeWithoutHours()].Add(v);
             
+            if (!usageHistogram.ContainsKey(v.verticeData.id))
+            {
+                usageHistogram[v.verticeData.id] = 0;
+            }
+            usageHistogram[v.verticeData.id]+=1;
+            
             foreach (var related in v.GetRelatedVertices())
             {
                 if (!verticesByDate.ContainsKey(v.GetTimeWithoutHours()))
@@ -137,19 +155,17 @@ public class DataHolder
                 {
                     usageHistogram[related.id] = 0;
                 }
-                usageHistogram[related.id]+=1;
+
+                usageHistogram[related.id] += 1;
             }
+            // Debug.Log("Change "+v.verticeData.id +": Tickets:"+string.Join(", ",
+            //     v.GetRelatedVertices().Where(x=>x.verticeType == VerticeType.Ticket).Select(x=>x.id)));
         }
 
         HashSet<long> usedVertices = usageHistogram.Keys.ToHashSet();
         foreach (var l in verticeWrappers.Keys.Where(x=>!usedVertices.Contains(x)))
         {
-            if (!changesByDate.ContainsKey(DateTime.MinValue.Date))
-            {
-                changesByDate[DateTime.MinValue.Date] = new();
-            }
-            if(!changesByDate[DateTime.MinValue.Date].Contains(verticeWrappers[l]))
-                changesByDate[DateTime.MinValue.Date].Add(verticeWrappers[l]);
+            spawnAtStart.Add(verticeWrappers[l]);
         }
 
         this.orderedDates = changesByDate.Keys.Distinct().OrderBy(x => x).ToList();
