@@ -5,19 +5,19 @@ using Helpers;
 
 public class FilterHolder
 {
-    public HashSet<EdgeType> allowedEdges;
-    public HashSet<VerticeType> allowedVertices;
+    public HashSet<EdgeType> disabledEdges;
+    public HashSet<VerticeType> disabledVertices;
 
-    public FilterHolder(HashSet<EdgeType> allowedEdges, HashSet<VerticeType> allowedVertices)
+    public FilterHolder(HashSet<EdgeType> disabledEdges, HashSet<VerticeType> disabledVertices)
     {
-        this.allowedEdges = allowedEdges;
-        this.allowedVertices = allowedVertices;
+        this.disabledEdges = disabledEdges;
+        this.disabledVertices = disabledVertices;
     }
 
     public FilterHolder()
     {
-        this.allowedEdges = new HashSet<EdgeType>(Enum.GetValues(typeof(EdgeType)).Cast<EdgeType>());
-        this.allowedVertices = new HashSet<VerticeType>(Enum.GetValues(typeof(VerticeType)).Cast<VerticeType>());
+        this.disabledEdges = new ();
+        this.disabledVertices = new ();
 
     }
 }

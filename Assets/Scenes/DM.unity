@@ -641,8 +641,6 @@ MonoBehaviour:
   defaultPersonToggleElement: {fileID: 1786628823}
   personToggleElementHolder: {fileID: 1779561636}
   kiwiatDiagramArea: {fileID: 8026513}
-  diagramLineHolder: {fileID: 1734118053}
-  defaultLineRenderer: {fileID: 494939504}
   kiviatDiagramMain: {fileID: 1878237018}
   e2chart: {fileID: 0}
 --- !u!1 &32772612
@@ -28291,6 +28289,7 @@ GameObject:
   - component: {fileID: 1848961902}
   - component: {fileID: 1848961901}
   - component: {fileID: 1848961900}
+  - component: {fileID: 1848961903}
   m_Layer: 5
   m_Name: HoverText
   m_TagString: Untagged
@@ -28415,6 +28414,27 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 700, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!223 &1848961903
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1848961899}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!1 &1859891027
 GameObject:
   m_ObjectHideFlags: 0

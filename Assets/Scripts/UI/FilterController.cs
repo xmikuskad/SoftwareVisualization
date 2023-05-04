@@ -30,6 +30,7 @@ public class FilterController : MonoBehaviour
         
         foreach (VerticeType type in (VerticeType[]) Enum.GetValues(typeof(VerticeType)))
         {
+            if(type == VerticeType.Change) continue;
             GameObject verticeCheckbox = Instantiate(checkboxPrefab, Vector3.zero, Quaternion.identity, verticeSpawn.transform);
             verticeCheckbox.GetComponentInChildren<TMP_Text>().text = type.ToString();
             Toggle t = verticeCheckbox.GetComponent<Toggle>();
@@ -41,8 +42,8 @@ public class FilterController : MonoBehaviour
     public void SaveFilter()
     {
         SingletonManager.Instance.dataManager.InvokeDataFilterEvent(new FilterHolder(
-            edgeFilter.Where(i=>i.Value.isOn).Select(pair=>pair.Key).ToHashSet(),
-            verticeFilter.Where(i=>i.Value.isOn).Select(pair=>pair.Key).ToHashSet()));
+            edgeFilter.Where(i=>!i.Value.isOn).Select(pair=>pair.Key).ToHashSet(),
+            verticeFilter.Where(i=>!i.Value.isOn).Select(pair=>pair.Key).ToHashSet()));
         CloseDialog();
     }
 

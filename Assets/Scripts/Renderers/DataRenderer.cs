@@ -64,12 +64,13 @@ public class DataRenderer : MonoBehaviour
 
     private void Start()
     {
-        // SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter; TODO fix
+        SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter; //TODO fix
         filterHolder = new();
     }
 
     private void OnDataFilter(FilterHolder f)
     {
+        this.filterHolder = f;
         long projectId = 1L;
         DateTime date = dateFilter.Right != DateTime.MinValue.Date
             ? dateFilter.Right
@@ -106,7 +107,7 @@ public class DataRenderer : MonoBehaviour
         PoolManager.Pools[PoolNames.VERTICE].DespawnAll(); // This removes all vertices from scene :)
         PoolManager.Pools[PoolNames.VERTICE_OUTLINE].DespawnAll(); // This removes all outline vertices from scene :)
 
-        vertices.Clear();
+        vertices = new();
         this.dateIndexTracker.Clear();
         commitPosTracker.Clear();
         wikiPosTracker.Clear();
@@ -248,7 +249,7 @@ public class DataRenderer : MonoBehaviour
     {
         foreach (var verticeData in verticeDatas)
         {
-            if (!filterHolder.allowedVertices.Contains(verticeData.verticeType))
+            if (filterHolder.disabledVertices.Contains(verticeData.verticeType))
                 continue;
             switch (verticeData.verticeType)
             {
@@ -396,7 +397,7 @@ public class DataRenderer : MonoBehaviour
 
     private void SpawnPeople(long projectId)
     {
-        if (!filterHolder.allowedVertices.Contains(VerticeType.Person))
+        if (filterHolder.disabledVertices.Contains(VerticeType.Person))
             return;
         float counter = spaceBetweenWallObjs;
 
@@ -445,7 +446,7 @@ public class DataRenderer : MonoBehaviour
         float x = Mathf.Cos(pos) * pos;
         float z = Mathf.Sin(pos) * pos;
 
-        if (filterHolder.allowedVertices.Contains(VerticeType.Ticket))
+        if (!filterHolder.disabledVertices.Contains(VerticeType.Ticket))
         {
             Transform obj = PoolManager.Pools[PoolNames.VERTICE_OUTLINE]
                 .Spawn(verticePrefab, new Vector3(x, yPos, z), Quaternion.identity);
