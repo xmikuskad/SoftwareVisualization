@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using E2C;
+using Data;
 
 public class KiviatDiagram : MonoBehaviour
 {
@@ -15,10 +16,6 @@ public class KiviatDiagram : MonoBehaviour
     public GameObject kiviatDiagramMain;
 
     private Dictionary<long, VerticeData> allPersons = new Dictionary<long, VerticeData>();
-
-    private List<VerticeData> shownPersons = new List<VerticeData>();
-
-    private Dictionary<long, Dictionary<String, float>> personIdToMetricIdToValue = new Dictionary<long, Dictionary<String, float>>();
 
     public E2Chart e2chart;
 
@@ -33,75 +30,55 @@ public class KiviatDiagram : MonoBehaviour
 
     public void initiateKiviat(DataHolder dataHolder)
     {
-        foreach (VerticeData vertice in dataHolder.verticeData.Values)
-            if (vertice.verticeType == VerticeType.Person)
-            {
-                allPersons[vertice.id] = vertice;
-                shownPersons.Add(vertice);
-            }
+        e2chart.chartData.series.Clear();
+        Dictionary<long, List<float>> metrics = computeMetrics(dataHolder);
+        foreach (KeyValuePair<long, List<float>> personIdToMetrics in metrics)
+        {
+            E2ChartData.Series newSeries = new E2ChartData.Series();
+            newSeries.name = dataHolder.verticeWrappers[personIdToMetrics.Key].verticeData.name;
+            newSeries.show = true;
+            newSeries.dataY = personIdToMetrics.Value;
+            e2chart.chartData.series.Add(newSeries);
+            Debug.Log("ADDING " + dataHolder.verticeWrappers[personIdToMetrics.Key].verticeData.name);
+        }
 
-        int y_index = 0;
-        int offset = 30;
-        if (allPersons.Count > 8) offset = 25;
+        e2chart.UpdateChart();
+    }
+
+    public Dictionary<long, List<float>> computeMetrics(DataHolder dataHolder)
+    {
+        foreach (VerticeData vertice in dataHolder.verticeData.Values) if (vertice.verticeType == VerticeType.Person) allPersons[vertice.id] = vertice;
+
+        Dictionary<long, List<float>> metrics = new Dictionary<long, List<float>>();
         foreach (KeyValuePair<long, VerticeData> person in allPersons)
         {
-            if (person.Key < 0) continue;
-            Vector3 pos = defaultPersonToggleElement.transform.position;
-            pos.y = pos.y - offset * y_index;
-            GameObject newPersonToggleElement = Instantiate(defaultPersonToggleElement, pos, Quaternion.identity, personToggleElementHolder.transform);
-            newPersonToggleElement.GetComponentInChildren<Text>().text = person.Value.name;
-            VerticeData person2 = person.Value;
-            newPersonToggleElement.GetComponentInChildren<Toggle>().onValueChanged.AddListener((bool value) => selectionChanged(value, person2, y_index));
-            newPersonToggleElement.gameObject.SetActive(true);
-            y_index++;
-        }
+            // changes commits repos files wikis
+            List<float> metricz = new List<float>();
+            Dictionary<VerticeType, List<VerticeData>> personRelatedVerticesDict = dataHolder.verticeWrappers[person.Value.id].GetRelatedVerticesDict();
 
-        personIdToMetricIdToValue = computeMetrics(dataHolder);
-        generateKiwiat(dataHolder);
-    }
+            if (personRelatedVerticesDict.ContainsKey(VerticeType.Change)) metricz.Add((float)Math.Sqrt(personRelatedVerticesDict[VerticeType.Change].Count));
+            else metricz.Add(0.0f);
+            if (personRelatedVerticesDict.ContainsKey(VerticeType.Commit)) metricz.Add((float)Math.Sqrt(personRelatedVerticesDict[VerticeType.Commit].Count));
+            else metricz.Add(0.0f);
+            if (personRelatedVerticesDict.ContainsKey(VerticeType.RepoFile)) metricz.Add((float)Math.Sqrt(personRelatedVerticesDict[VerticeType.RepoFile].Count));
+            else metricz.Add(0.0f);
+            if (personRelatedVerticesDict.ContainsKey(VerticeType.File)) metricz.Add((float)Math.Sqrt(personRelatedVerticesDict[VerticeType.File].Count));
+            else metricz.Add(0.0f);
+            if (personRelatedVerticesDict.ContainsKey(VerticeType.Wiki)) metricz.Add((float)Math.Sqrt(personRelatedVerticesDict[VerticeType.Wiki].Count));
+            else metricz.Add(0.0f);
 
-    public void selectionChanged(bool value, VerticeData person, int toggleIndex)
-    {
-        if (value)
-        {
-            Debug.Log("adding " + person.name + " with id " + person.id.ToString() + " to my kiwiat!");
-            shownPersons.Add(person);
-        }
-        else
-        {
-            Debug.Log("removing " + person.name + " with id " + person.id.ToString() + " from my kiwiat!");
-            shownPersons.Remove(person);
-        }
-    }
 
-    // Update is called once per frame
-    public void generateKiwiat(DataHolder dataHolder)
-    {
-        // removeCurrentKiwiat();
-    }
+            Debug.Log("---- for person " + person.Value.name + " ----");
+            foreach (var x in metricz) Debug.Log("currently in list " + x.ToString());
+            Debug.Log("-------");
 
-    public void removeCurrentKiwiat()
-    {
+            float sum = 0;
+            foreach (float v in metricz) sum += v;
 
-        foreach (Transform child in kiwiatDiagramArea.transform)
-        {
-            GameObject.Destroy(child.gameObject);
-        }
-    }
-
-    public Dictionary<long, Dictionary<String, float>> computeMetrics(DataHolder dataHolder)
-    {
-        Dictionary<long, Dictionary<String, float>> metrics = new Dictionary<long, Dictionary<String, float>>();
-        foreach (KeyValuePair<long, VerticeData> person in allPersons)
-        {
-            Dictionary<String, float> metricz = new Dictionary<String, float>();
-            metricz["0"] = UnityEngine.Random.Range(0.0f, 1.0f);
-            metricz["1"] = UnityEngine.Random.Range(0.0f, 1.0f);
-            metricz["2"] = UnityEngine.Random.Range(0.0f, 1.0f);
-            metricz["3"] = UnityEngine.Random.Range(0.0f, 1.0f);
-            metricz["4"] = UnityEngine.Random.Range(0.0f, 1.0f);
-            metricz["5"] = UnityEngine.Random.Range(0.0f, 1.0f);
-            metrics[person.Value.id] = metricz;
+            if (sum > 0)
+                metrics[person.Value.id] = metricz;
+            else { Debug.Log("ignoring " + person.Value.name + "cuz its all 0"); }
+            // metrics[person.Value.id] = new List<float>() { 1, 2, 3, 4, 5 };
         }
         return metrics;
     }
