@@ -42,8 +42,6 @@ public class DataHolder
     public DateTime minDate = DateTime.MaxValue.Date;
     public DateTime maxDate = DateTime.MinValue.Date;
     public List<DateTime> dates = new();
-    
-    
 
     // TODO This function needs a rework. I know that data are only loading for tickets.
     public void LoadData()
@@ -145,46 +143,8 @@ public class DataHolder
         }
         
         
-        // Dictionary<VerticeType, List < string >> dic= new();
         foreach (var (key, value) in verticeWrappers)
         {
-            // if (!dic.ContainsKey(value.verticeData.verticeType))
-            // {
-            //     dic[value.verticeData.verticeType] = new List<string>();
-            // }
-            //
-            // dic[value.verticeData.verticeType].Add(String.Join(", ",
-            //     value.GetRelatedVertices().Select(x => x.verticeType.ToString()).Distinct().OrderBy(x => x)));
-            
-            
-            // if((value.verticeData.verticeType == VerticeType.Wiki && value.GetRelatedVerticesDict().ContainsKey(VerticeType.Ticket)) ||
-            //    (value.verticeData.verticeType == VerticeType.Change && value.GetRelatedVerticesDict().ContainsKey(VerticeType.Ticket) 
-            //                                                         && value.GetRelatedVerticesDict().ContainsKey(VerticeType.Wiki))) {
-            //     Debug.LogError("FOUND "+value.verticeData.verticeType+" ID "+value.verticeData.id);
-            // }
-            //
-            // if (value.verticeData.verticeType == VerticeType.Person &&
-            //     value.GetRelatedVerticesDict().ContainsKey(VerticeType.Ticket) &&
-            //     value.GetRelatedVerticesDict().Values.Count == 1)
-            // {
-            //     Debug.LogError("Found person - ticket for person id "+value.verticeData.id);
-            //     Debug.LogError("Found person - ticket for ticket id "+value.GetRelatedVerticesDict()[VerticeType.Ticket][0].id);
-            // }
-
-            // DateTime dateTime = value.GetTimeWithoutHours();
-            // if (dateTime != value.verticeData.created)
-            // {
-            //     Debug.Log("created: "+value.verticeData.verticeType);
-            // }
-            // if (dateTime != value.verticeData.committed)
-            // {
-            //     Debug.Log("committed: "+value.verticeData.verticeType);
-            // }
-            // if (dateTime != value.verticeData.begin)
-            // {
-            //     Debug.Log("begin: "+value.verticeData.verticeType);
-            // }
-
             if (value.verticeData.verticeType == VerticeType.Change ||
                 value.verticeData.verticeType == VerticeType.Commit)
             {
@@ -202,25 +162,26 @@ public class DataHolder
                     }
                     dates.Add(dateTime);
                 }
+
+                foreach (var related in value.GetRelatedVertices())
+                {
+                    if (!verticesByDate.ContainsKey(value.GetTimeWithoutHours()))
+                    {
+                        verticesByDate[value.GetTimeWithoutHours()] = new();
+                    }
+
+                    if (!verticesByDate[value.GetTimeWithoutHours()].Contains(verticeWrappers[related.id]))
+                        verticesByDate[value.GetTimeWithoutHours()].Add(verticeWrappers[related.id]);
+                    
+                    verticeWrappers[related.id].AddChangeOrCommit(value);
+                }
             }
         }
 
         dates = dates.Distinct().OrderBy(x => x).ToList();
 
         startDate = minDate;
-        
-        // Debug.Log("Min: "+minDate);
-        // Debug.Log("Max: "+maxDate);
-        //
-        // foreach (var (key, value) in dic)
-        // {
-        //     foreach (var s in value)
-        //     {
-        //         
-        //         Debug.LogWarning(key + " - " + s);   
-        //     }
-        // }
-        
+
         // Dictionary<long, long> usageHistogram = new();
         // foreach (var v in verticeWrappers.Values.Where(x=>x.verticeData.verticeType == VerticeType.Change))
         // {

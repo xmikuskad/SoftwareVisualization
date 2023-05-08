@@ -19,18 +19,19 @@ public class FilterController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        foreach (EdgeType type in (EdgeType[]) Enum.GetValues(typeof(EdgeType)))
-        {
-            GameObject edgeCheckbox = Instantiate(checkboxPrefab, Vector3.zero, Quaternion.identity, edgeSpawn.transform);
-            edgeCheckbox.GetComponentInChildren<TMP_Text>().text = type.ToString();
-            Toggle t = edgeCheckbox.GetComponent<Toggle>();
-            t.isOn = true;
-            edgeFilter.Add(type,t);
-        }
+        // foreach (EdgeType type in (EdgeType[]) Enum.GetValues(typeof(EdgeType)))
+        // {
+        //     GameObject edgeCheckbox = Instantiate(checkboxPrefab, Vector3.zero, Quaternion.identity, edgeSpawn.transform);
+        //     edgeCheckbox.GetComponentInChildren<TMP_Text>().text = type.ToString();
+        //     Toggle t = edgeCheckbox.GetComponent<Toggle>();
+        //     t.isOn = true;
+        //     edgeFilter.Add(type,t);
+        // }
         
         foreach (VerticeType type in (VerticeType[]) Enum.GetValues(typeof(VerticeType)))
         {
             if(type == VerticeType.Change) continue;
+            if(type == VerticeType.Commit) continue;
             GameObject verticeCheckbox = Instantiate(checkboxPrefab, Vector3.zero, Quaternion.identity, verticeSpawn.transform);
             verticeCheckbox.GetComponentInChildren<TMP_Text>().text = type.ToString();
             Toggle t = verticeCheckbox.GetComponent<Toggle>();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Helpers;
 using UnityEngine;
 
 namespace Data
@@ -13,6 +14,8 @@ namespace Data
         
         private Dictionary<long, VerticeData> relatedVerticesById = new();
         private Dictionary<long, EdgeData> relatedEdgesById= new();
+
+        private Dictionary<long, VerticeWrapper> relatedChangesOrCommits = new();
 
         private List<DateTime> dates = new();
         public long updateCount = 1;
@@ -36,22 +39,25 @@ namespace Data
                 relatedVerticesById[vertice.id] = vertice;
             }
 
-            // Set up edge dictionary by type
-            if (!relatedEdges.ContainsKey(edge.type))
+            if (edge != null)
             {
-                relatedEdges[edge.type] = new();
-            }
+                // Set up edge dictionary by type
+                if (!relatedEdges.ContainsKey(edge.type))
+                {
+                    relatedEdges[edge.type] = new();
+                }
 
-            relatedEdges[edge.type].Add(edge);
-            if (!relatedEdges[edge.type].Contains(edge))
-            {
                 relatedEdges[edge.type].Add(edge);
-            }
+                if (!relatedEdges[edge.type].Contains(edge))
+                {
+                    relatedEdges[edge.type].Add(edge);
+                }
 
-            // Set up edge dictionary by ID
-            if (!relatedEdgesById.ContainsKey(edge.id))
-            {
-                relatedEdgesById[edge.id] = edge;
+                // Set up edge dictionary by ID
+                if (!relatedEdgesById.ContainsKey(edge.id))
+                {
+                    relatedEdgesById[edge.id] = edge;
+                }
             }
 
             this.dates = new();
@@ -74,11 +80,11 @@ namespace Data
 
         }
 
-        public void SetDates(List<DateTime> dateTimes)
+        public void AddChangeOrCommit(VerticeWrapper v)
         {
-            this.dates = dateTimes;
+            this.relatedChangesOrCommits[v.verticeData.id] = v;
         }
-
+        
         // Change, RepoFile, Wiki can have null author!
         public long GetAuthorId()
         {
@@ -122,33 +128,6 @@ namespace Data
             }
             
             return DateTime.MinValue;
-            //
-            // if (this.verticeData.verticeType != VerticeType.Change)
-            // {
-            //     Debug.LogError("Trying to get time from vertice which doesnt have time!");
-            // }
-            //
-            // return verticeData.created ?? verticeData.begin ?? verticeData.committed ?? DateTime.MinValue;
-            
-            //
-            // if (!this.relatedVertices.ContainsKey(VerticeType.Change) || this.verticeData.verticeType == VerticeType.Person)
-            // {
-            //     return DateTime.MinValue;
-            // }
-            //
-            // // Find change vertice
-            // VerticeData changeVertice = this.verticeData.verticeType == VerticeType.Change
-            //     ? this.verticeData
-            //     : this.relatedVertices[VerticeType.Change][0];
-            //
-            // // Return commited time for commit
-            // if (this.verticeData.verticeType == VerticeType.Commit)
-            // {
-            //     return verticeData.committed ?? verticeData.created ?? verticeData.begin ?? DateTime.MinValue; 
-            // }
-            //
-            // // Return created/begin for others
-            // return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
         }
 
         public DateTime GetTimeWithoutHours()
@@ -158,6 +137,7 @@ namespace Data
         
         public bool IsConnectedWithVertices(HashSet<long> verticeId)
         {
+            if (verticeId.Count == 0) return false;
             return relatedEdgesById.Values.Where(x => verticeId.Contains(x.to)).ToList().Count() > 0 || verticeId.Contains(this.verticeData.id);
         }
 
@@ -165,12 +145,7 @@ namespace Data
         {
             return relatedVerticesById.Values.ToList();
         }
-        
-        public Dictionary<VerticeType,List<VerticeData>> GetRelatedVerticesDict()
-        {
-            return relatedVertices;
-        }
-        
+
         public List<VerticeData> GetOrderedRelatedVerticesByType(VerticeType type)
         {
             if (relatedVertices.ContainsKey(type))
@@ -215,6 +190,43 @@ namespace Data
                 return this.dates[0];
             }
             return DateTime.MinValue;
+        }
+
+        public bool IsConnected(Pair<VerticeData, VerticeWrapper> pair, VerticeData commitOrChange)
+        {
+            // Ehm this will never happen
+            if (this.verticeData.verticeType == VerticeType.Change ||
+                this.verticeData.verticeType == VerticeType.Commit)
+            {
+                return IsDirectlyConnected((pair.Left ?? pair.Right.verticeData).id);
+            }
+
+            if (pair.Left != null)
+            {
+                return ContainsChangeOrCommit(pair.Left.id);
+            }
+            else
+            {
+                return IsConnectedByChangeOrCommit(pair.Right.verticeData.id, (commitOrChange?.id??-1));
+            }
+        }
+
+        public bool IsConnectedByChangeOrCommit(long verticeId, long commitOrChangeId)
+        {
+            if(commitOrChangeId <0)
+                return this.verticeData.id == verticeId || this.relatedChangesOrCommits.Values.Any(x => x.IsDirectlyConnected(verticeId));
+            return this.verticeData.id == verticeId || (this.relatedChangesOrCommits.ContainsKey(commitOrChangeId) && this.relatedChangesOrCommits[commitOrChangeId].IsDirectlyConnected(verticeId));
+        }
+
+        public bool ContainsChangeOrCommit(long verticeId)
+        {
+            return this.verticeData.id == verticeId || this.relatedChangesOrCommits.ContainsKey(verticeId);
+
+        }
+
+        public bool IsDirectlyConnected(long verticeId)
+        {
+            return this.verticeData.id == verticeId || this.relatedVerticesById.Values.Select(x=>x.id).Any(x => x==verticeId);
         }
     }
 }

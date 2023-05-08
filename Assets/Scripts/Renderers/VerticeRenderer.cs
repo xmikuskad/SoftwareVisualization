@@ -52,12 +52,12 @@ public class VerticeRenderer : MouseOverRenderer
             SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIDDEN).color;
     }
 
-    private void OnResetEvent()
+    private void OnResetEvent(ResetEventReason reason)
     {
         this.meshRenderer.material = nonHoverMaterial;
     }
 
-    private void OnVerticeSelected(Pair<long, List<VerticeWrapper>> pair)
+    private void OnVerticeSelected(Pair<long, List<Pair<VerticeData, VerticeWrapper>>> pair)
     {
         if (this.projectId != pair.Left)
         {
@@ -65,17 +65,19 @@ public class VerticeRenderer : MouseOverRenderer
             return;
         }
 
-        if (this.verticeWrapper.IsConnectedWithVertices(pair.Right.Select(x=>x.verticeData.id).ToHashSet()))
+        // if (this.verticeWrapper.IsConnectedWithVertices(pair.Right
+        //         .Select(x => (x.Left ?? x.Right.verticeData).id).ToHashSet()))
+        if (pair.Right.Any(x => this.verticeWrapper.IsConnected(x,this.commitOrChange)))
         {
-            // SetHighlighted(pair.Right.Select(x=>x.verticeData.id).ToHashSet().Contains(this.verticeWrapper.verticeData.id));
             SetHighlighted(true);
         }
         else
         {
             SetHidden(true);
         }
+
     }
-    
+
     private void OnDatesSelected(Pair<long, List<DateTime>> pair)
     {
         if (this.projectId != pair.Left)
@@ -84,7 +86,7 @@ public class VerticeRenderer : MouseOverRenderer
             return;
         }
         
-        if (this.verticeWrapper.ContainsDate(pair.Right))
+        if (this.commitOrChange?.HasDatesWithoutHours(pair.Right) ?? this.verticeWrapper.ContainsDate(pair.Right))
         {
             SetHighlighted(true);
         }
@@ -100,9 +102,8 @@ public class VerticeRenderer : MouseOverRenderer
         SingletonManager.Instance.dataManager.ResetEvent += OnResetEvent;
         SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
         SingletonManager.Instance.dataManager.DatesSelectedEvent += OnDatesSelected;
-        SingletonManager.Instance.dataManager.VerticesCompareEvent += OnVerticeCompare;
-        SingletonManager.Instance.dataManager.VerticesCompareEndEvent += OnVerticeCompareEnd;
         SingletonManager.Instance.dataManager.DatesRangeSelectedEvent += OnDateRangeSelected;
+        SingletonManager.Instance.dataManager.SpecificVerticeSelected += OnSpecificVerticeSelected;
     }
 
     public void OnDespawned()
@@ -111,9 +112,26 @@ public class VerticeRenderer : MouseOverRenderer
         SingletonManager.Instance.dataManager.ResetEvent -= OnResetEvent;
         SingletonManager.Instance.dataManager.VerticesSelectedEvent -= OnVerticeSelected;
         SingletonManager.Instance.dataManager.DatesSelectedEvent -= OnDatesSelected;
-        SingletonManager.Instance.dataManager.VerticesCompareEvent -= OnVerticeCompare;
-        SingletonManager.Instance.dataManager.VerticesCompareEndEvent -= OnVerticeCompareEnd;
         SingletonManager.Instance.dataManager.DatesRangeSelectedEvent -= OnDateRangeSelected;
+        SingletonManager.Instance.dataManager.SpecificVerticeSelected -= OnSpecificVerticeSelected;
+    }
+
+    private void OnSpecificVerticeSelected(long projectId, VerticeWrapper verticeWrapper)
+    {
+        if (this.projectId != projectId)
+        {
+            this.meshRenderer.material = nonHoverMaterial;
+            return;
+        }
+        
+        if (this.verticeWrapper.verticeData.id == verticeWrapper.verticeData.id)
+        {
+            SetHighlighted(true);
+        }
+        else
+        {
+            SetHidden(true);
+        }
     }
     
     private void OnDateRangeSelected(Pair<long, List<DateTime>> pair)
@@ -124,7 +142,7 @@ public class VerticeRenderer : MouseOverRenderer
             return;
         }
         
-        if (this.verticeWrapper.IsDateBetween(pair.Right[0],pair.Right[1]))
+        if (this.commitOrChange?.IsDateBetween(pair.Right[0],pair.Right[1]) ?? this.verticeWrapper.IsDateBetween(pair.Right[0],pair.Right[1]))
         {
             SetHighlighted(true);
         }
@@ -132,34 +150,6 @@ public class VerticeRenderer : MouseOverRenderer
         {
             SetHidden(true);
         }
-    }
-
-    
-    private void OnVerticeCompareEnd(long projectId)
-    {
-        if (this.projectId != projectId)
-        {
-            OnResetEvent();
-            return;
-        }
-
-        Vector3 pos = this.transform.position;
-        pos.z += 0.25f;
-        this.transform.position = pos;
-        this.transform.localScale = new Vector3(1, 1, 1f);
-    }
-    private void OnVerticeCompare(long projectId)
-    {
-        if (this.projectId != projectId)
-        {
-            OnResetEvent();
-            return;
-        }
-
-        Vector3 pos = this.transform.position;
-        pos.z -= 0.25f;
-        this.transform.position = pos;
-        this.transform.localScale = new Vector3(1, 1, 0.5f);
     }
 
     private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
@@ -182,9 +172,6 @@ public class VerticeRenderer : MouseOverRenderer
             case VerticeType.Wiki:
                 this.nonHoverMaterial.color = colorMappings[ColorMapping.WIKI.id].color;
                 break;
-            case VerticeType.Commit:
-                this.nonHoverMaterial.color = colorMappings[ColorMapping.COMMIT.id].color;
-                break;
             case VerticeType.RepoFile:
                 this.nonHoverMaterial.color = colorMappings[ColorMapping.REPOFILE.id].color;
                 break;
@@ -205,8 +192,6 @@ public class VerticeRenderer : MouseOverRenderer
                 return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.FILE).color;
             case VerticeType.Wiki:
                 return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.WIKI).color;
-            case VerticeType.Commit:
-                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.COMMIT).color;
             case VerticeType.RepoFile:
                 return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.REPOFILE).color;
             default:
@@ -231,7 +216,7 @@ public class VerticeRenderer : MouseOverRenderer
         // }
         
         
-        hoverText.text = "ID: "+verticeWrapper.verticeData.id+" | Vertice: "+verticeWrapper.TmpGetDateNoHours()+" | Change: "+(commitOrChange?.created ?? commitOrChange?.begin ?? DateTime.MinValue.Date);
+        hoverText.text = "Vertice ID: "+verticeWrapper.verticeData.id+" | Vertice: "+verticeWrapper.TmpGetDateNoHours()+" | Change ID: "+(commitOrChange?.id.ToString()??"???")+" | Change: "+(commitOrChange?.created ?? commitOrChange?.begin ?? DateTime.MinValue.Date);
 
         if (shouldHover)
             meshRenderer.material = hoverMaterial;
@@ -253,7 +238,7 @@ public class VerticeRenderer : MouseOverRenderer
     {
         if (!isLoaded) return;
         sidebarScript.slideOut(projectId, verticeWrapper.verticeData);
-        SingletonManager.Instance.dataManager.ProcessVerticeClick(this.projectId, this.verticeWrapper);
+        SingletonManager.Instance.dataManager.ProcessVerticeClick(this.projectId, new Pair<VerticeData, VerticeWrapper>(this.commitOrChange,this.verticeWrapper));
     }
 
     public void SetUpReferences(Canvas hoverCanvas, GameObject hoverElement, TMP_Text hoverText,

@@ -34,6 +34,7 @@ namespace UI
             SingletonManager.Instance.dataManager.DatesSelectedEvent += OnDatesSelected;
             SingletonManager.Instance.dataManager.DatesRangeSelectedEvent += OnDatesRangeSelectedSelected;
             SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
+            // SingletonManager.Instance.dataManager.DateChangeEvent += OnDateChanged;
             this.highlightMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIGHLIGHTED).color;
             this.hiddenMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIDDEN).color;
         }
@@ -45,16 +46,34 @@ namespace UI
             SingletonManager.Instance.dataManager.DatesSelectedEvent -= OnDatesSelected;
             SingletonManager.Instance.dataManager.DatesRangeSelectedEvent -= OnDatesRangeSelectedSelected;
             SingletonManager.Instance.dataManager.VerticesSelectedEvent -= OnVerticeSelected;
+            // SingletonManager.Instance.dataManager.DateChangeEvent -= OnDateChanged;
         }
 
+        // private void OnDateChanged(long projectId, DateTime date)
+        // {
+        //     if (this.projectId != projectId)
+        //     {
+        //         this.image.material = originalMaterial;
+        //         return;
+        //     }
+        //
+        //     if (this.date == date)
+        //     {
+        //         SetHighlighted(true);
+        //     }
+        //     else
+        //     {
+        //         SetHidden(true);
+        //     }
+        // }
+        
         private void OnMappingChanged(Dictionary<long,ColorMapping> colorMappings)
         {
-            // TODO
             this.highlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
             this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;
         }
 
-        private void OnResetEvent()
+        private void OnResetEvent(ResetEventReason reason)
         {
             this.image.material = originalMaterial;
         }
@@ -95,7 +114,7 @@ namespace UI
             }
         }
         
-        private void OnVerticeSelected(Pair<long, List<VerticeWrapper>> pair)
+        private void OnVerticeSelected(Pair<long, List<Pair<VerticeData,VerticeWrapper>>> pair)
         {
             if (pair.Left != projectId)
             {
@@ -103,9 +122,9 @@ namespace UI
                 return;
             }
 
-            foreach (var verticeWrapper in pair.Right)
+            foreach (var val in pair.Right)
             {
-                if (verticeWrapper.ContainsDate(this.date))
+                if ((val.Left != null && val.Left.HasDateWithoutHours(this.date)) || val.Right.ContainsDate(this.date))
                 {
                     SetHighlighted(true);
                     return;

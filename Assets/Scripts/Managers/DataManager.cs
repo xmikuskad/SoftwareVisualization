@@ -18,20 +18,19 @@ public class DataManager: MonoBehaviour
     private FilterHolder filterHolder;
 
     // Events
-    public event Action ResetEvent;
-    public event Action<Pair<long,List<DateTime>>> DatesSelectedEvent;
-    public event Action<Pair<long,List<DateTime>>> DatesRangeSelectedEvent;
-    public event Action<Pair<long,List<VerticeWrapper>>> VerticesSelectedEvent;
-    
-    public event Action<long> VerticesCompareEvent;
-    public event Action<long> VerticesCompareEndEvent;
-    public event Action<FilterHolder> DataFilterEvent;
+    public event Action<ResetEventReason> ResetEvent;   // Called for clearings
+    public event Action<Pair<long,List<DateTime>>> DatesSelectedEvent;  // Called on calendar clicked
+    public event Action<Pair<long,List<DateTime>>> DatesRangeSelectedEvent; // Called on calendar clicked
+    public event Action<Pair<long,List<Pair<VerticeData,VerticeWrapper>>>> VerticesSelectedEvent;   // Called on vertice click
+    public event Action<Pair<long,Pair<DateTime,DateTime>>> DateRenderChangedEvent; 
+    public event Action<FilterHolder> DataFilterEvent;  // When filter is applied
 
-    public event Action<long, DateTime> DateChangeEvent;
+    public event Action<long, DateTime> DateChangeEvent;    // When moving forward/backwards with dates
+    public event Action<long, VerticeWrapper> SpecificVerticeSelected;    // When moving forward/backwards with dates
     
     // Other
     public List<DateTime> selectedDates = new();
-    public List<VerticeWrapper> selectedVertices = new();
+    public List<Pair<VerticeData,VerticeWrapper>> selectedVertices = new();
     public long selectedProjectId = -1;
     
     [Header("References")]
@@ -61,11 +60,11 @@ public class DataManager: MonoBehaviour
         DataFilterEvent?.Invoke(f);
     }
 
-    public void ProcessVerticeClick(long projectId, VerticeWrapper verticeWrapper)
+    public void ProcessVerticeClick(long projectId, Pair<VerticeData,VerticeWrapper> pair)
     {
         if (this.selectedProjectId != projectId)
         {
-            this.ResetEvent?.Invoke();
+            this.ResetEvent?.Invoke(ResetEventReason.PROJECT_CHANGED);
         }
 
         this.selectedProjectId = projectId;
@@ -76,35 +75,35 @@ public class DataManager: MonoBehaviour
         if (ctrlPressed)
         {
             // Clicking already selected, removing them
-            if (this.selectedVertices.Contains(verticeWrapper))
+            if (this.selectedVertices.Contains(pair))
             {
-                this.selectedVertices.Remove(verticeWrapper);
+                this.selectedVertices.Remove(pair);
                 if (this.selectedVertices.Count == 0)
                 {
-                    ResetEvent?.Invoke();
+                    ResetEvent?.Invoke(ResetEventReason.VERTICE_UNSELECTED);
                 }
                 else
                     VerticesSelectedEvent?.Invoke(
-                        new Pair<long, List<VerticeWrapper>>(this.selectedProjectId, this.selectedVertices));
+                        new Pair<long, List<Pair<VerticeData,VerticeWrapper>>>(this.selectedProjectId, this.selectedVertices));
             }
             // Clicking new, adding and changing filter
             else
             {
-                this.selectedVertices.Add(verticeWrapper);
+                this.selectedVertices.Add(pair);
                 VerticesSelectedEvent?.Invoke(
-                    new Pair<long, List<VerticeWrapper>>(this.selectedProjectId, this.selectedVertices));
+                    new Pair<long, List<Pair<VerticeData,VerticeWrapper>>>(this.selectedProjectId, this.selectedVertices));
             }
         }
         else
         {
-            this.selectedVertices = new List<VerticeWrapper>() { verticeWrapper };
+            this.selectedVertices = new List<Pair<VerticeData,VerticeWrapper>>() { pair };
             VerticesSelectedEvent?.Invoke(
-                new Pair<long, List<VerticeWrapper>>(this.selectedProjectId, this.selectedVertices));
+                new Pair<long, List<Pair<VerticeData,VerticeWrapper>>>(this.selectedProjectId, this.selectedVertices));
 
         }
     }
 
-    public void OnResetEvent()
+    public void OnResetEvent(ResetEventReason reason)
     {
         this.selectedDates.Clear();
         this.selectedVertices.Clear();
@@ -115,7 +114,7 @@ public class DataManager: MonoBehaviour
     {
         if (this.selectedProjectId != projectId)
         {
-            this.ResetEvent?.Invoke();
+            this.ResetEvent?.Invoke(ResetEventReason.PROJECT_CHANGED);
         }
 
         this.selectedProjectId = projectId;
@@ -133,7 +132,7 @@ public class DataManager: MonoBehaviour
             }
 
             List<DateTime> tmp = new List<DateTime>() { this.selectedDates.Min(), date };
-            this.ResetEvent?.Invoke();
+            this.ResetEvent?.Invoke(ResetEventReason.CLEARING_DATES);
             this.selectedDates.Clear();
             // this.selectedDates.AddRange(unchangedDataHolders[projectId].verticesByDate.Keys.Where(x=>x>=tmp[0] && x<=tmp[1]));
 
@@ -159,7 +158,7 @@ public class DataManager: MonoBehaviour
         {
             this.selectedDates.Remove(date);
             if (this.selectedDates.Count == 0)
-                ResetEvent?.Invoke();
+                ResetEvent?.Invoke(ResetEventReason.DATES_UNSELECTED);
             else
                 DatesSelectedEvent?.Invoke(new Pair<long, List<DateTime>>(this.selectedProjectId, this.selectedDates));
         }
@@ -172,28 +171,29 @@ public class DataManager: MonoBehaviour
         
     }
 
-    public void InvokeResetEvent()
+    public void InvokeResetEvent(ResetEventReason reason)
     {
-        ResetEvent?.Invoke();
+        ResetEvent?.Invoke(reason);
     }
 
-    public void InvokeCompareEvent(long projectId)
+    public void InvokeRenderDateEvent(long projectId, Pair<DateTime, DateTime> pair)
     {
-        VerticesCompareEvent?.Invoke(projectId);
-    }
-    
-    public void InvokeCompareEndEvent(long projectId)
-    {
-        VerticesCompareEndEvent?.Invoke(projectId);
+        DateRenderChangedEvent?.Invoke(new Pair<long, Pair<DateTime, DateTime>>(projectId, pair));
     }
 
-    public void InvokeVerticeSelect(List<VerticeWrapper> verticeWrapper, long projectId)
+    public void InvokeVerticeSelect(List<Pair<VerticeData,VerticeWrapper>> v, long projectId)
     {
-        VerticesSelectedEvent?.Invoke(new Pair<long, List<VerticeWrapper>>(projectId,verticeWrapper));
+        VerticesSelectedEvent?.Invoke(new Pair<long, List<Pair<VerticeData,VerticeWrapper>>>(projectId,v));
     }
 
     public void InvokeDateChangedEvent(long projectId, DateTime date)
     {
         DateChangeEvent?.Invoke(projectId,date);
+    }
+    
+    public void InvokeSpecificVerticeSelected(long projectId, VerticeWrapper verticeWrapper)
+    {
+        ResetEvent?.Invoke(ResetEventReason.CLEARING_DATES);
+        SpecificVerticeSelected?.Invoke(projectId,verticeWrapper);
     }
 }
