@@ -26145,7 +26145,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 2000
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -26171,8 +26171,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1351013593}
-  m_LocalRotation: {x: -0.29851863, y: 0.27180928, z: -0.08911323, w: -0.9105302}
-  m_LocalPosition: {x: 1149.7401, y: 1062.2781, z: 883.18445}
+  m_LocalRotation: {x: -0.26480225, y: 0.1587899, z: -0.044255935, w: -0.95010895}
+  m_LocalPosition: {x: 1203.7423, y: 1051.0867, z: 842.171}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -42540,6 +42540,10 @@ PrefabInstance:
       propertyPath: clickablePlatformPrefab
       value: 
       objectReference: {fileID: 2515161177860733246, guid: 5da1b0963a80e6642ace271477886453, type: 3}
+    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
+      propertyPath: distanceBetweenProjects
+      value: 150
+      objectReference: {fileID: 0}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: helperDistanceFromGraph
       value: 25
