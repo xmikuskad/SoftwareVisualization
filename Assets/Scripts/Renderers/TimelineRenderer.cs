@@ -27,6 +27,23 @@ namespace Renderers
         public Material hiddenMaterial;
 
         public DataRenderer dataRenderer;
+
+        private void Awake()
+        {
+            SingletonManager.Instance.dataManager.ResetEvent += OnResetEvent;
+        }
+
+        private void OnResetEvent(ResetEventReason reason)
+        {
+            if (reason == ResetEventReason.CLICK_OUTSIDE)
+            {
+                foreach (var (key, value) in btnObjects)
+                {
+                    value.GetComponent<Image>().color = Color.white;
+                }
+            }
+        }
+
         public void LoadTimeline(DataHolder dataHolder)
         {
             ResetTimeline();
@@ -112,7 +129,7 @@ namespace Renderers
             }
         }
 
-        private void OnBtnClick(DateTime date, long  projectIdTmp)
+        public void OnBtnClick(DateTime date, long projectIdTmp)
         {
             bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
             if (ctrlPressed && dataRenderer.dateFilter.Left != DateTime.MinValue.Date)
@@ -125,31 +142,14 @@ namespace Renderers
                     dataRenderer.dateFilter.Right = tmp;
                 }
                 
-                dataRenderer.RenderComparisionForDate(date, projectIdTmp);
-                SingletonManager.Instance.dataManager.InvokeCompareEvent(projectIdTmp);
                 ColorTimelineBtnRange(dataRenderer.dateFilter);
+                SingletonManager.Instance.dataManager.InvokeRenderDateEvent(projectIdTmp,dataRenderer.dateFilter);
             }
             else
             {
-                dataRenderer.dateFilter.Left = date;
-                CheckForCompare(projectIdTmp);
-                dataRenderer.RenderUntilDateWithReset(date, projectIdTmp);
                 ColorTimelineBtn(date);
-            }
-        }
-
-        public void SetCurrentDate(DateTime date, long projectId)
-        {
-            CheckForCompare(projectId);
-            ColorTimelineBtn(date);
-        }
-
-        private void CheckForCompare(long projectId)
-        {
-            if (dataRenderer.HasActiveDateFilter())
-            {
-                dataRenderer.dateFilter.Right = DateTime.MinValue.Date;
-                SingletonManager.Instance.dataManager.InvokeCompareEndEvent(projectId);
+                dataRenderer.dateFilter.Left = date;
+                SingletonManager.Instance.dataManager.InvokeDateChangedEvent(projectIdTmp,date);
             }
         }
 
@@ -205,14 +205,6 @@ namespace Renderers
             return dt.ToString("MMM") + " " + group.year; // combine month abbreviation and year
         }
 
-        // public void UnhighlightElements()
-        // {
-        //     foreach (var bar in this.barObjects.Values)
-        //     {
-        //         bar.SetHighlighted(false);
-        //     }
-        // }
-
         public void ShowHideTimeline()
         {
             graphContainer.gameObject.SetActive(!graphContainer.gameObject.activeInHierarchy);
@@ -222,19 +214,6 @@ namespace Renderers
         {
             SingletonManager.Instance.dataManager.ProcessDateClick(1L,date);
         }
-
-        // public void HighlightDates(List<DateTime> dates)
-        // {
-        //     foreach (var obj in barObjects.Values)
-        //     {
-        //         obj.SetHidden(true);
-        //     }
-        //     
-        //     foreach (var dateTime in dates)
-        //     {
-        //         barObjects[dateTime].SetHighlighted(true);
-        //     }
-        // }
     }
 
     class MonthGroup

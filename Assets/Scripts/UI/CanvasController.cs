@@ -18,7 +18,7 @@ public class CanvasController : MonoBehaviour
 
     public void RestartAnimation()
     {
-        dataRenderer.RerenderProject(1L, true);
+        // dataRenderer.RerenderProject(1L, true);
         SingletonManager.Instance.pauseManager.SetAnimationPaused(false);
         pauseImg.sprite = pauseIcon;
     }

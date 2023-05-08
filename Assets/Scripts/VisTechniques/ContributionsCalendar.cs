@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Renderers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,6 +20,8 @@ public class ContributionsCalendar : MonoBehaviour
     public TMP_Text defaultTileElementTooltip;
 
     public TMP_Dropdown yearDropdown;
+
+    public TimelineRenderer timelineRenderer;
 
     // Start is called before the first frame update
 
@@ -88,7 +91,12 @@ public class ContributionsCalendar : MonoBehaviour
             newDateElement.GetComponentInChildren<Image>().color =
                 GradientUtility.CreateGradient((noTimeCounts.ContainsKey(date.Date) ? ((noTimeCounts[date] * 1.0f - minValue * 1.0f) / (maxValue * 1.0f - minValue * 1.0f)) * 1.0f : 0.0f),
                     SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.TILEMAPHIGHLIGHT).color);
-            newDateElement.GetComponentInChildren<Button>().onClick.AddListener(() => defaultTileElementTooltip.text = dateTooltip);
+            DateTime tmp = date;
+            newDateElement.GetComponentInChildren<Button>().onClick.AddListener(() =>
+            {
+                timelineRenderer.OnBtnClick(tmp,dataHolder.projectId);
+                defaultTileElementTooltip.text = dateTooltip;
+            });
             newDateElement.gameObject.SetActive(true);
             if ((int)date.DayOfWeek == 6) index++;
         }

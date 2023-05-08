@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.IO;
 using SFB;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -29,12 +31,13 @@ public class ExternalJsonLoader : MonoBehaviour
         {
             dataLoaderJob = new DataLoaderJob();
             dataLoaderJob.text = www.downloadHandler.text;
+            dataLoaderJob.name = Path.GetFileName(new Uri(url).LocalPath);
             dataLoaderJob.Start(); // Don't touch any data in the job class after you called Start until IsDone is true.
         }
         else
         {
             // Error occurred while loading the file
-            Debug.LogError("Error loading file: " + www.error);
+            //Debug.LogError("Error loading file: " + www.error);
             SetLoading(false);
         }
     }

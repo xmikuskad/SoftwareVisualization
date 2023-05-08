@@ -1,3 +1,4 @@
+using Helpers;
 using UIWidgets;
 using UnityEngine;
 using TMPro;
@@ -55,7 +56,7 @@ public class SidebarController : MonoBehaviour
             else
             {
                 this.slideIn();
-                SingletonManager.Instance.dataManager.InvokeResetEvent();
+                SingletonManager.Instance.dataManager.InvokeResetEvent(ResetEventReason.CLICK_OUTSIDE);
             }
         }
     }

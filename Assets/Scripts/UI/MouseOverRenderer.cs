@@ -49,6 +49,7 @@ public abstract class MouseOverRenderer : MonoBehaviour
 
     private void OnMouseExit()
     {
+        if (GetCanvas() == null) return;
         OnHoverExit();
     }
 

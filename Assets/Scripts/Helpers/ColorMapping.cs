@@ -5,15 +5,15 @@ using UnityEngine;
 // Java enum implementation from https://stackoverflow.com/a/469315
 public class ColorMapping : ICloneable
 {
-    public static readonly ColorMapping HIGHLIGHTED = new(1, new Color32(226, 255, 0, 255), "Highlighted color");
+    public static readonly ColorMapping HIGHLIGHTED = new(1, new Color32(255, 255, 0, 255), "Highlighted color");
     public static readonly ColorMapping HIDDEN = new(2, new Color32(118, 118, 118, 255), "Hidden color");
     public static readonly ColorMapping TILEMAPHIGHLIGHT = new(3, new Color32(0, 180, 0, 255), "Contributions Calendar Color");
-    public static readonly ColorMapping TICKET = new(20, new Color32(193, 32, 35, 255), "Ticket vertice");
+    public static readonly ColorMapping TICKET = new(20, new Color32(230, 30, 30, 255), "Ticket vertice");
     public static readonly ColorMapping PERSON = new(21, new Color32(69, 229, 234, 255), "Person vertice");
-    public static readonly ColorMapping FILE = new(22, new Color32(135, 188, 69, 255), "File vertice");
-    public static readonly ColorMapping WIKI = new(23, new Color32(255, 197, 28, 255), "Wiki vertice");
-    public static readonly ColorMapping COMMIT = new(24, new Color32(179, 61, 198, 255), "Commit vertice");
-    public static readonly ColorMapping REPOFILE = new(25, new Color32(0, 21, 255, 255), "RepoFile vertice");
+    public static readonly ColorMapping FILE = new(22, new Color32(230, 100, 30, 255), "File vertice");
+    public static readonly ColorMapping WIKI = new(23, new Color32(30, 230, 30, 255), "Wiki vertice");
+    public static readonly ColorMapping REPOFILE = new(25, new Color32(30, 30, 230, 255), "RepoFile vertice");
+    public static readonly ColorMapping VERTICE_HOVER = new(26, new Color32(255, 255, 255, 255), "Vertice hover");
 
     public static IEnumerable<ColorMapping> Values
     {
@@ -26,8 +26,8 @@ public class ColorMapping : ICloneable
             yield return PERSON;
             yield return FILE;
             yield return WIKI;
-            yield return COMMIT;
             yield return REPOFILE;
+            yield return VERTICE_HOVER;
         }
     }
 

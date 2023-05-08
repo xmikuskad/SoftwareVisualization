@@ -111,7 +111,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   offsetY: 1.5
+  isGhost: 0
   hoverMaterial: {fileID: 2100000, guid: 662263a504008ad47961864a6d290939, type: 2}
-  nonHoverMaterial: {fileID: 0}
-  hightlightMaterial: {fileID: 2100000, guid: d59696d3af72d8145a493c1d5579300d, type: 2}
-  hiddenMaterial: {fileID: 2100000, guid: 504fcf8544a18374d81bd8a755a77d35, type: 2}
+  nonHoverMaterial: {fileID: 2100000, guid: c6312456935fb7645aa9d5a684d6bace, type: 2}
+  hightlightMaterial: {fileID: 2100000, guid: c6312456935fb7645aa9d5a684d6bace, type: 2}
+  hiddenMaterial: {fileID: 2100000, guid: c6312456935fb7645aa9d5a684d6bace, type: 2}

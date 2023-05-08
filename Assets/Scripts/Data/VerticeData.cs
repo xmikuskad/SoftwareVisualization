@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 
@@ -121,5 +122,35 @@ public class VerticeData
                $"{nameof(severitySuperClass)}: {severitySuperClass}, {nameof(statusClass)}: {statusClass}, " +
                $"{nameof(statusSuperClass)}: {statusSuperClass}, {nameof(resolutionClass)}: {resolutionClass}, " +
                $"{nameof(resolutionSuperClass)}: {resolutionSuperClass}";
+    }
+
+    public DateTime GetTime()
+    {
+        return this.created ?? this.begin ?? DateTime.MinValue;
+    }
+
+    public DateTime GetTimeWithoutHours()
+    {
+        return GetTime().Date;
+    }
+
+    public bool HasDate(DateTime date)
+    {
+        return GetTime() == date;
+    }
+    
+    public bool HasDateWithoutHours(DateTime date)
+    {
+        return GetTimeWithoutHours() == date;
+    }
+    
+    public bool HasDatesWithoutHours(List<DateTime> dates)
+    {
+        return dates.Contains(GetTimeWithoutHours());
+    }
+    
+    public bool IsDateBetween(DateTime from, DateTime to)
+    {
+        return from <= GetTimeWithoutHours() && GetTimeWithoutHours() <= to;
     }
 }
