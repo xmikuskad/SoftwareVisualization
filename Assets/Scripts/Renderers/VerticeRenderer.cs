@@ -73,8 +73,6 @@ public class VerticeRenderer : MouseOverRenderer
             return;
         }
 
-        // if (this.verticeWrapper.IsConnectedWithVertices(pair.Right
-        //         .Select(x => (x.Left ?? x.Right.verticeData).id).ToHashSet()))
         if (pair.Right.Any(x => this.verticeWrapper.IsConnected(x,this.commitOrChange)))
         {
             SetHighlighted(true);
@@ -95,7 +93,6 @@ public class VerticeRenderer : MouseOverRenderer
             this.meshRenderer.material = nonHoverMaterial;
             return;
         }
-        
         if (this.commitOrChange?.HasDatesWithoutHours(pair.Right) ?? this.verticeWrapper.ContainsDate(pair.Right))
         {
             SetHighlighted(true);
@@ -153,7 +150,6 @@ public class VerticeRenderer : MouseOverRenderer
             ChangeScale(false);
         }
     }
-    
     private void OnDateRangeSelected(Pair<long, List<DateTime>> pair)
     {
         if (this.projectId != pair.Left)
@@ -207,7 +203,7 @@ public class VerticeRenderer : MouseOverRenderer
             case VerticeType.Person:
                 return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.PERSON).color;
             case VerticeType.Ticket:
-                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.TICKET).color;;
+                return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.TICKET).color; ;
             case VerticeType.File:
                 return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.FILE).color;
             case VerticeType.Wiki:

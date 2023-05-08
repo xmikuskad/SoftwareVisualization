@@ -10,10 +10,10 @@ namespace Data
     {
         public VerticeData verticeData;
         private Dictionary<VerticeType, List<VerticeData>> relatedVertices = new();
-        private Dictionary<EdgeType, List<EdgeData>> relatedEdges= new();
-        
+        private Dictionary<EdgeType, List<EdgeData>> relatedEdges = new();
+
         private Dictionary<long, VerticeData> relatedVerticesById = new();
-        private Dictionary<long, EdgeData> relatedEdgesById= new();
+        private Dictionary<long, EdgeData> relatedEdgesById = new();
 
         public Dictionary<long, VerticeWrapper> relatedChangesOrCommits = new();
 
@@ -38,7 +38,6 @@ namespace Data
             {
                 relatedVerticesById[vertice.id] = vertice;
             }
-
             if (edge != null)
             {
                 // Set up edge dictionary by type
@@ -112,7 +111,6 @@ namespace Data
         {
             return TmpGetDate().Date;
         }
-        
         // Returns DateTime.MinValue on fail.
         public DateTime GetTime()
         {
@@ -126,7 +124,7 @@ namespace Data
             {
                 return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
             }
-            
+           
             return DateTime.MinValue;
         }
 
@@ -134,7 +132,7 @@ namespace Data
         {
             return GetTime().Date;
         }
-        
+
         public bool IsConnectedWithVertices(HashSet<long> verticeId)
         {
             if (verticeId.Count == 0) return false;
@@ -145,7 +143,6 @@ namespace Data
         {
             return relatedVerticesById.Values.ToList();
         }
-
         public List<VerticeData> GetOrderedRelatedVerticesByType(VerticeType type)
         {
             if (relatedVertices.ContainsKey(type))
@@ -160,7 +157,7 @@ namespace Data
         {
             return this.dates.Contains(date);
         }
-        
+
         public bool ContainsDate(List<DateTime> dates)
         {
             foreach (var dateTime in dates)
@@ -176,7 +173,7 @@ namespace Data
         {
             foreach (var dateTime in dates)
             {
-                if (this.dates.Any(x => x>=from && x<=to))
+                if (this.dates.Any(x => x >= from && x <= to))
                     return true;
             }
 

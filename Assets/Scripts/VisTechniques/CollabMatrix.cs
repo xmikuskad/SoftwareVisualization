@@ -64,16 +64,17 @@ public class CollabMatrix : MonoBehaviour
             Vector3 pos = matrixDefaultTextElement.transform.position;
             pos.x = pos.x + xOffset * helpIndex + xOffset;
             TMP_Text newText = Instantiate(matrixDefaultTextElement, pos, Quaternion.identity, matrixArea.transform);
-            newText.text = collaborant.name;
+            // newText.text = collaborant.name;
+            newText.text = DataUtils.PersonNameToInitials(collaborant.name);
             if (collaborant.name == "unknown") newText.text = "??";
-            newText.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2],dataHolder.projectId));
+            newText.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2], dataHolder.projectId));
 
             pos = matrixDefaultTextElement.transform.position;
             pos.y = pos.y + yOffset * helpIndex + yOffset;
             TMP_Text newText2 = Instantiate(matrixDefaultTextElement, pos, Quaternion.identity, matrixArea.transform);
-            newText2.text = collaborant.name;
+            newText2.text = DataUtils.PersonNameToInitials(collaborant.name);
             if (collaborant.name == "unknown") newText2.text = "??";
-            newText2.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2],dataHolder.projectId));
+            newText2.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2], dataHolder.projectId));
 
             helpIndex++;
         }
@@ -175,7 +176,8 @@ public class CollabMatrix : MonoBehaviour
 
     public void onClickTicketList(List<VerticeWrapper> relatedTickets, string a, string b, long projectId)
     {
-        ticketListViewHeader.text = "Collaborations " + (a.Equals("unknown") ? "??" : a) + " - " + (b.Equals("unknown") ? "??" : b);
+        ticketListViewHeader.text = "Collaborations " + (a.Equals("unknown") ? "??" : DataUtils.PersonNameToInitials(a)) + " - " +
+            (b.Equals("unknown") ? "??" : DataUtils.PersonNameToInitials(b));
         ticketListView.Clear();
         foreach (VerticeWrapper relatedTicket in relatedTickets)
         {
@@ -184,7 +186,7 @@ public class CollabMatrix : MonoBehaviour
         ticketListView.ItemsEvents.PointerClick.RemoveAllListeners();
         ticketListView.ItemsEvents.PointerClick.AddListener((x, y, z) => onClickTicket(relatedTickets, x, projectId));
         ticketListViewHolder.SetActive(true);
-        
+
         SingletonManager.Instance.dataManager.InvokeVerticeSelect(relatedTickets.Select(x=>new Pair<VerticeData,VerticeWrapper>(null,x)).ToList(), projectId);
     }
 
