@@ -9,6 +9,7 @@ using UnityEngine.Serialization;
 [Serializable]
 public class DataHolder
 {
+    public string projectName;
     public long projectId;
     public Dictionary<long, EdgeData> edgeData;
     public Dictionary<long, VerticeData> verticeData;
@@ -122,17 +123,7 @@ public class DataHolder
 
         // Count the most occurring type
         maxVerticeCount = verticeWrappers.Values.Count(v => v.verticeData.verticeType == mostOccurringType);
-        
-        // // Group vertices by type and find the most occurring type
-        // var mostOccurringType2 = verticeWrappers.Values.Where(x=>x.verticeData.verticeType== VerticeType.Change || x.verticeData.verticeType == VerticeType.Commit)
-        //     .GroupBy(v => v.verticeData.verticeType)
-        //     .OrderByDescending(g => g.Count())
-        //     .Select(g => g.Key)
-        //     .FirstOrDefault();
-        //
-        // // Count the most occurring type
-        // maxEdgeCount = verticeWrappers.Values.Count(v => v.verticeData.verticeType == mostOccurringType2);
-        
+
         foreach (VerticeType t in (VerticeType[]) Enum.GetValues(typeof(VerticeType)))
         {
             foreach (List<Pair<VerticeData,VerticeWrapper>> pairs in GetVerticesForPlatform(t))
@@ -148,6 +139,12 @@ public class DataHolder
             if (value.verticeData.verticeType == VerticeType.Change ||
                 value.verticeData.verticeType == VerticeType.Commit)
             {
+
+                // if (value.GetRelatedVertices().Count > 3)
+                // {
+                //     Debug.Log("id: "+value.verticeData.id+" = "+value.GetRelatedVertices().Count);
+                // }
+                
                 DateTime dateTime = value.GetTimeWithoutHours();
                 if (dateTime != DateTime.MinValue.Date)
                 {
@@ -181,66 +178,6 @@ public class DataHolder
         dates = dates.Distinct().OrderBy(x => x).ToList();
 
         startDate = minDate;
-
-        // Dictionary<long, long> usageHistogram = new();
-        // foreach (var v in verticeWrappers.Values.Where(x=>x.verticeData.verticeType == VerticeType.Change))
-        // {
-        //     if (!changesByDate.ContainsKey(v.GetTimeWithoutHours()))
-        //     {
-        //         changesByDate[v.GetTimeWithoutHours()] = new();
-        //     }
-        //     if(!changesByDate[v.GetTimeWithoutHours()].Contains(v))
-        //         changesByDate[v.GetTimeWithoutHours()].Add(v);
-        //     
-        //     if (!usageHistogram.ContainsKey(v.verticeData.id))
-        //     {
-        //         usageHistogram[v.verticeData.id] = 0;
-        //     }
-        //     usageHistogram[v.verticeData.id]+=1;
-        //     
-        //     foreach (var related in v.GetRelatedVertices())
-        //     {
-        //         if (!verticesByDate.ContainsKey(v.GetTimeWithoutHours()))
-        //         {
-        //             verticesByDate[v.GetTimeWithoutHours()] = new();
-        //         }
-        //         if(!verticesByDate[v.GetTimeWithoutHours()].Contains(verticeWrappers[related.id]))
-        //             verticesByDate[v.GetTimeWithoutHours()].Add(verticeWrappers[related.id]);
-        //
-        //         if (!datesForVertice.ContainsKey(related.id))
-        //         {
-        //             datesForVertice[related.id] = new();
-        //         }
-        //         if(!datesForVertice[related.id].Contains(v.GetTimeWithoutHours()))
-        //             datesForVertice[related.id].Add(v.GetTimeWithoutHours());
-        //         
-        //         if (!usageHistogram.ContainsKey(related.id))
-        //         {
-        //             usageHistogram[related.id] = 0;
-        //         }
-        //
-        //         usageHistogram[related.id] += 1;
-        //     }
-        //     // Debug.Log("Change "+v.verticeData.id +": Tickets:"+string.Join(", ",
-        //     //     v.GetRelatedVertices().Where(x=>x.verticeType == VerticeType.Ticket).Select(x=>x.id)));
-        // }
-        //
-        // HashSet<long> usedVertices = usageHistogram.Keys.ToHashSet();
-        // foreach (var l in verticeWrappers.Keys.Where(x=>!usedVertices.Contains(x)))
-        // {
-        //     spawnAtStart.Add(verticeWrappers[l]);
-        // }
-        //
-        // this.orderedDates = changesByDate.Keys.Distinct().OrderBy(x => x).ToList();
-        //
-        // this.startDate = verticesByDate.Keys.Where(x => x != DateTime.MinValue.Date).Min();
-        //  foreach (var (key, value) in datesForVertice)
-        //  {
-        //      verticeWrappers[key].SetDates(value);
-        //      verticeWrappers[key].updateCount = Math.Max(usageHistogram[key] -1,1);
-        //  }
-
-
     }
 
     public void UpdateUsageForFilter(DateTime from, DateTime to)

@@ -41,20 +41,27 @@ public class VerticeRenderer : MouseOverRenderer
     protected void Awake()
     {
         meshRenderer = GetComponent<MeshRenderer>();
+        this.transform.localScale = new Vector3(1, 1, 1);
     }
 
     protected new void Start()
     {
         base.Start();
+        this.hightlightMaterial = new Material(hightlightMaterial);
+        this.hiddenMaterial = new Material(hiddenMaterial);
+        this.hoverMaterial = new Material(hoverMaterial);
         this.hightlightMaterial.color = SingletonManager.Instance.preferencesManager
             .GetColorMapping(ColorMapping.HIGHLIGHTED).color;
         this.hiddenMaterial.color =
             SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIDDEN).color;
+        this.hoverMaterial.color =
+            SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.VERTICE_HOVER).color;
     }
 
     private void OnResetEvent(ResetEventReason reason)
     {
         this.meshRenderer.material = nonHoverMaterial;
+        ChangeScale(false);
     }
 
     private void OnVerticeSelected(Pair<long, List<Pair<VerticeData, VerticeWrapper>>> pair)
@@ -62,6 +69,7 @@ public class VerticeRenderer : MouseOverRenderer
         if (this.projectId != pair.Left)
         {
             this.meshRenderer.material = nonHoverMaterial;
+            ChangeScale(false);
             return;
         }
 
@@ -70,10 +78,12 @@ public class VerticeRenderer : MouseOverRenderer
         if (pair.Right.Any(x => this.verticeWrapper.IsConnected(x,this.commitOrChange)))
         {
             SetHighlighted(true);
+            ChangeScale(false);
         }
         else
         {
             SetHidden(true);
+            ChangeScale(false);
         }
 
     }
@@ -116,21 +126,31 @@ public class VerticeRenderer : MouseOverRenderer
         SingletonManager.Instance.dataManager.SpecificVerticeSelected -= OnSpecificVerticeSelected;
     }
 
+    private void ChangeScale(bool makeBigger)
+    {
+        if(this.verticeWrapper.verticeData.verticeType == VerticeType.Person)
+            return;
+        this.transform.localScale = makeBigger ? new Vector3(2,2,2) : new Vector3(1, 1, 1);
+    }
+
     private void OnSpecificVerticeSelected(long projectId, VerticeWrapper verticeWrapper)
     {
         if (this.projectId != projectId)
         {
             this.meshRenderer.material = nonHoverMaterial;
+            ChangeScale(false);
             return;
         }
         
         if (this.verticeWrapper.verticeData.id == verticeWrapper.verticeData.id)
         {
             SetHighlighted(true);
+            ChangeScale(true);
         }
         else
         {
             SetHidden(true);
+            ChangeScale(false);
         }
     }
     
@@ -274,12 +294,6 @@ public class VerticeRenderer : MouseOverRenderer
         newMat.color = GetColor();
         meshRenderer.material = newMat;
         this.nonHoverMaterial = newMat;
-    }
-
-    public void AddCompletedEdge(long count, long maxTasks)
-    {
-        this.completedCount += count;
-        this.taskCount = maxTasks;
     }
 
     public void SetHighlighted(bool isHighlighted)

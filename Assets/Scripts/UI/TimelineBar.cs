@@ -124,7 +124,7 @@ namespace UI
 
             foreach (var val in pair.Right)
             {
-                if ((val.Left != null && val.Left.HasDateWithoutHours(this.date)) || val.Right.ContainsDate(this.date))
+                if ((val.Left != null && val.Left.HasDateWithoutHours(this.date)) || (val.Left == null && val.Right.ContainsDate(this.date)))
                 {
                     SetHighlighted(true);
                     return;

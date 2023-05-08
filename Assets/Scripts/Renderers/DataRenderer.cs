@@ -42,6 +42,8 @@ public class DataRenderer : MonoBehaviour
     private Dictionary<long, GameObject> datePlatformTrackers = new();
     private DateTime lastDate = DateTime.MinValue.Date;
 
+    public Dictionary<long, Dictionary<long, Vector3>> linePosHolder = new();
+
     [Header("Properties")]
 
     public float renderDistanceBetweenObjs = 3;
@@ -61,8 +63,8 @@ public class DataRenderer : MonoBehaviour
     public float spaceBetweenObjects = 1f;
     public byte platformAlpha = 100;
     public long helperDistanceFromGraph = 100;
+    public float lineWidth = 2f;
 
-    
     [Header("Prefabs")]
     public GameObject verticePrefab;
     public Material verticeMaterial;
@@ -70,7 +72,7 @@ public class DataRenderer : MonoBehaviour
     public GameObject clickablePlatformPrefab;
     public Material transparentMaterial;
     public GameObject arrowPrefab;
-    
+    public GameObject linePrefab;
     
     [Header("References")]
 
@@ -102,11 +104,57 @@ public class DataRenderer : MonoBehaviour
 
     private void Start()
     {
-        SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter; //TODO fix
+        SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
         SingletonManager.Instance.dataManager.DateChangeEvent += OnDateChangeEvent;
         SingletonManager.Instance.dataManager.DateRenderChangedEvent += OnDateRenderChanged;
         SingletonManager.Instance.dataManager.ResetEvent += OnReset;
+        SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
         filterHolder = new();
+    }
+
+    private void OnVerticeSelected(Pair<long,List<Pair<VerticeData,VerticeWrapper>>> pair)
+    {
+        PoolManager.Pools[PoolNames.LINES].DespawnAll();
+        if(linePosHolder.ContainsKey(pair.Left))
+            linePosHolder[pair.Left].Clear();
+
+        foreach (Pair<VerticeData,VerticeWrapper> p in pair.Right)
+        {
+            if (p.Left == null)
+                continue;
+            foreach (var verticeData in p.Right.relatedChangesOrCommits[p.Left.id].GetRelatedVertices().Where(x=>x.id != p.Right.verticeData.id))
+            {
+                List<VerticeRenderer> from = verticesWithEdges[pair.Left][p.Right.verticeData.id]
+                    .Where(x => (x.commitOrChange ?? p.Left).id == p.Left.id).ToList();
+
+                List<VerticeRenderer> to = verticesWithEdges[pair.Left][verticeData.id]
+                    .Where(x => (x.commitOrChange ?? p.Left).id == p.Left.id).ToList();
+
+                if (from.Count == 0 || to.Count == 0)
+                {
+                    continue;
+                }
+                foreach (var f in from)
+                {
+                    foreach (var t in to)
+                    {
+                        CreatePath(f,t,pair.Left);
+                    }
+                }
+            }
+        }
+    }
+
+    private void CreatePath(VerticeRenderer from, VerticeRenderer to, long projectId)
+    {
+        Transform t = PoolManager.Pools[PoolNames.LINES].Spawn(linePrefab);
+        LineRenderer lr = t.GetComponent<LineRenderer>();
+        lr.positionCount = 2;
+        
+        lr.SetPosition(0, from.transform.position);
+        lr.SetPosition(1, to.transform.position);
+        lr.startWidth = lineWidth;
+        lr.endWidth = lineWidth;
     }
 
     private void OnReset(ResetEventReason reason)
@@ -118,6 +166,8 @@ public class DataRenderer : MonoBehaviour
                 dateFilter = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
                 RenderAllDates();
             }
+            PoolManager.Pools[PoolNames.LINES].DespawnAll();
+            linePosHolder.Clear();
         }
     }
     
@@ -177,20 +227,45 @@ public class DataRenderer : MonoBehaviour
     
     private void OnDataFilter(FilterHolder f)
     {
-        // TODO
         this.filterHolder = f;
-        long projectId = 1L;
         
-        // TODO move specific platforms up/down
+        // TODO move specific platforms up/down?
+        foreach (var (projectId, ignored) in this.loadedProjects)
+        {
+                    
+            foreach (var (key, value) in platforms[projectId])
+            {
+                value.SetActive(!f.disabledVertices.Contains(key));
+            }
         
-        if (currentProjectDate[projectId] == DateTime.MinValue.Date)
-        {
-            RenderAllDates();
+            foreach (var (key, value) in verticePlatforms[projectId])
+            {
+                if (f.disabledVertices.Contains(key))
+                {
+                    foreach (var o in value)
+                    {
+                        o.SetActive(false);
+                    }
+                }
+                else
+                {
+                    foreach (var o in value)
+                    {
+                        o.SetActive(true);
+                    }
+                }
+            }
+        
+            if (currentProjectDate[projectId] == DateTime.MinValue.Date)
+            {
+                RenderAllDates();
+            }
+            else
+            {
+                OnDateChangeEvent(projectId, currentProjectDate[projectId]);
+            }
         }
-        else
-        {
-            OnDateChangeEvent(projectId, currentProjectDate[projectId]);
-        }
+
     } 
     
     public void AddData(DataHolder dataHolder, bool rerender, bool renderFirst)
@@ -239,11 +314,15 @@ public class DataRenderer : MonoBehaviour
         SpawnHelper(projectId);
         
         // Load viz techniques
-        collabMatrix.fillMatrix(this.loadedProjects[projectId]);
-        contributionsCalendar.fillContributionsCalendar(this.loadedProjects[projectId], this.loadedProjects[projectId].startDate.Year);
-        timelineRenderer.LoadTimeline(this.loadedProjects[projectId]);
-        kiviatDiagram.initiateKiviat(this.loadedProjects[projectId]);
-        
+        if (projectId == 1)
+        {
+            collabMatrix.fillMatrix(this.loadedProjects[projectId]);
+            contributionsCalendar.fillContributionsCalendar(this.loadedProjects[projectId],
+                this.loadedProjects[projectId].startDate.Year);
+            timelineRenderer.LoadTimeline(this.loadedProjects[projectId]);
+            kiviatDiagram.initiateKiviat(this.loadedProjects[projectId]);
+        }
+
         SetLoading(false);
     }
 
@@ -282,6 +361,10 @@ public class DataRenderer : MonoBehaviour
         go.GetComponent<ArrowRenderer>().SetUpNoArrows(from, to, 2f,text,Direction.DOWN);
     }
 
+    // private Vector3 GetSpawnVector(long projectId)
+    // {
+    //     Vector3 baseVector = new Vector3()
+    // }
     
     public void SpawnPlatform(int index, VerticeType type, long projectId, float platformWidth, int alreadySpawnedCount)
     {
@@ -513,8 +596,10 @@ public class DataRenderer : MonoBehaviour
     // Called from UI
     public void RenderNextDate()
     {
-        // TODO foreach project?
-        RenderNextDateForProject(1L);
+        foreach (var (key, value) in this.loadedProjects)
+        {
+            RenderNextDateForProject(key);
+        }
     }
     
     public void RenderNextDateForProject(long projectId)
@@ -539,8 +624,10 @@ public class DataRenderer : MonoBehaviour
     // Called from UI
     public void RenderPreviousDate()
     {
-        // TODO foreach project?
-        RenderPreviousDateForProject(1L);
+        foreach (var (key, value) in this.loadedProjects)
+        {
+            RenderPreviousDateForProject(key);
+        }
     }
     
     public void RenderPreviousDateForProject(long projectId)
@@ -561,7 +648,10 @@ public class DataRenderer : MonoBehaviour
 
     public void RenderAllDates()
     {
-        ShowAllDatesForProject(1L);
+        foreach (var (key, value) in this.loadedProjects)
+        {
+            ShowAllDatesForProject(key);
+        }
     }
 
     public void ShowAllDatesForProject(long projectId)
@@ -596,361 +686,11 @@ public class DataRenderer : MonoBehaviour
         loadingBar.SetActive(status);
         loadBtn.SetActive(!status);
     }
-
-    /*
-     * OLD CODE BELOW
-     *
-     * 
-     */
-    //
-    // public void RenderData(bool rerender, bool renderFirst)
-    // {
-    //     if (loadedProjects == null) return;
-    //     SpawnPeople(1L);
-    //     SpawnOutlineObjects(1L);
-    //     SpawnStartObjects(1L);
-    //     collabMatrix.fillMatrix(this.loadedProjects[1]);
-    //     contributionsCalendar.fillContributionsCalendar(this.loadedProjects[1], this.loadedProjects[1].startDate.Year);
-    //     timelineRenderer.LoadTimeline(this.loadedProjects[1]);
-    //     kiviatDiagram.initiateKiviat(this.loadedProjects[1]);
-    //     SetLoading(false);
-    //     if(renderFirst)
-    //         RenderNext(1L);
-    // }
-    //
-    // private void SpawnStartObjects(long projectId)
-    // {
-    //     SpawnByType(this.loadedProjects[projectId].spawnAtStart.Select(x=>x.verticeData).ToList(),projectId);
-    // }
-    //
-    // public void RerenderProject(long projectId, bool renderFirst)
-    // {
-    //     DataHolder holder = this.loadedProjects[projectId];
-    //     ResetData(renderFirst);
-    //     AddData(holder, false, renderFirst);
-    // }
-
-    // private void RenderDate(DateTime dateTime, long projectId)
-    // {
-    //     currentDateText.text = dateTime.ToString("dd/MM/yyyy") + " (Day " + (dateTime.Subtract(loadedProjects[projectId].startDate).Days + 1) + ")";
-    //     foreach (var verticeWrapper in this.loadedProjects[projectId].changesByDate[dateTime])
-    //     {
-    //         Dictionary<VerticeType,List<VerticeData>> dict = verticeWrapper.GetRelatedVerticesDict();
-    //
-    //         // We can skip person, we already spawned them
-    //         if(dict.ContainsKey(VerticeType.Ticket))
-    //             SpawnByType(dict[VerticeType.Ticket],projectId);
-    //         if(dict.ContainsKey(VerticeType.Wiki))
-    //             SpawnByType(dict[VerticeType.Wiki],projectId);
-    //         if(dict.ContainsKey(VerticeType.RepoFile))
-    //             SpawnByType(dict[VerticeType.RepoFile],projectId);
-    //         if(dict.ContainsKey(VerticeType.File))
-    //             SpawnByType(dict[VerticeType.File],projectId);
-    //         if(dict.ContainsKey(VerticeType.Commit))
-    //             SpawnByType(dict[VerticeType.Commit],projectId);
-    //     }
-    // }
-    //
-    // public void RenderComparisionForDate(DateTime dateTime, long projectId)
-    // {
-    //     // TODO comparisions??
-    // }
-    //
-    // public void RenderUntilDateWithReset(DateTime dateTime, long projectId)
-    // {
-    //     RerenderProject(projectId, false);
-    //     RenderUntilDate(dateTime,projectId);
-    // }
-    //
-    // public void RenderUntilDate(DateTime dateTime, long projectId)
-    // {
-    //     this.dateIndexTracker[projectId] = this.loadedProjects[projectId].orderedDates.IndexOf(dateTime);
-    //     for (var i = 0; i < this.loadedProjects[projectId].orderedDates.Count; i++)
-    //     {
-    //         DateTime date = this.loadedProjects[projectId].orderedDates[i];
-    //         if (dateFilter.Left != DateTime.MinValue.Date && dateFilter.Right != DateTime.MaxValue)
-    //         {
-    //             if (date > dateTime) return;
-    //             RenderDate(date, projectId);
-    //         }
-    //     }
-    // }
-    //
-    // public void RenderNext(long projectId)
-    // {
-    //     if (dateIndexTracker[projectId] <= -2 ||
-    //         this.loadedProjects[projectId].orderedDates.Count <= dateIndexTracker[projectId]) return;
-    //     dateIndexTracker[projectId] += 1;
-    //
-    //     RenderDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]], projectId);
-    //     if (this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]] == DateTime.MinValue.Date)
-    //     {
-    //         RenderNext(projectId);
-    //         return;
-    //     }
-    //
-    //     timelineRenderer.SetCurrentDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]],
-    //         projectId);
-    //
-    // }
-    //
-    // public void RenderPrevious(long projectId)
-    // {
-    //     if (dateIndexTracker[projectId] <= 0) return;
-    //     dateIndexTracker[projectId] -= 1;
-    //     RenderUntilDateWithReset(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]],projectId);
-    //     timelineRenderer.SetCurrentDate(this.loadedProjects[projectId].orderedDates[this.dateIndexTracker[projectId]], projectId);
-    // }
-    //
-    // public void RenderNextBtn()
-    // {
-    //     RenderNext(1L);
-    // }
-    //
-    // public void RenderPreviousBtn()
-    // {
-    //     RenderPrevious(1L);
-    // }
-
+    
     public bool HasActiveDateFilter()
     {
         return this.dateFilter.Left != DateTime.MinValue.Date && this.dateFilter.Right != DateTime.MinValue.Date;
     }
-
-    // private void SpawnByType(List<VerticeData> verticeDatas, long projectId)
-    // {
-    //     foreach (var verticeData in verticeDatas)
-    //     {
-    //         if (filterHolder.disabledVertices.Contains(verticeData.verticeType))
-    //             continue;
-    //         switch (verticeData.verticeType)
-    //         {
-    //             case VerticeType.Ticket:
-    //                 if (!vertices[projectId].ContainsKey(verticeData.id))
-    //                 {
-    //                     float idk = spawnTheta[projectId];
-    //                     float x = Mathf.Cos(idk) * idk;
-    //                     float y = Mathf.Sin(idk) * idk;
-    //                     Transform obj = SpawnGeneralVertice(projectId, new Vector3(x, 0, y), verticeData.id,-1);
-    //                     spawnTheta[projectId] += renderDistanceBetweenObjs / idk;
-    //                 }
-    //                 else
-    //                 {
-    //                     VerticeRenderer ver = vertices[projectId][verticeData.id];
-    //                     float distanceToMove = distanceOnComplete / ver.verticeWrapper.updateCount;
-    //                     ver.AddCompletedEdge(1L, ver.verticeWrapper.updateCount);
-    //                     Vector3 newPos = ver.transform.position - new Vector3(0, distanceToMove, 0);
-    //                     ver.transform.position = newPos;
-    //                 }
-    //
-    //                 break;
-    //             case VerticeType.Commit:
-    //                 if (!vertices[projectId].ContainsKey(verticeData.id))
-    //                 {
-    //                     if (commitPosTracker.ContainsKey(projectId))
-    //                     {
-    //                         if (commitPosTracker[projectId].x > projectSizesX[projectId].Right)
-    //                         {
-    //                             Vector3 pos = commitPosTracker[projectId];
-    //                             pos.z -= spaceBetweenWallObjs;
-    //                             pos.x = projectSizesX[projectId].Left;
-    //                             commitPosTracker[projectId] = pos;
-    //                         }
-    //                         else
-    //                         {
-    //                             Vector3 pos = commitPosTracker[projectId];
-    //                             pos.x += spaceBetweenWallObjs;
-    //                             commitPosTracker[projectId] = pos;
-    //                         }
-    //                     }
-    //                     else
-    //                     {
-    //                         commitPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left, -(distanceFromMiddleGraph + distanceOnComplete),
-    //                             projectSizesZ[projectId].Right);
-    //                     }
-    //                     Transform obj = SpawnGeneralVertice(projectId, commitPosTracker[projectId], verticeData.id,-1);
-    //                 }
-    //                 
-    //                 break;
-    //             case VerticeType.Wiki:
-    //                 if (!vertices[projectId].ContainsKey(verticeData.id))
-    //                 {
-    //                     if (wikiPosTracker.ContainsKey(projectId))
-    //                     {
-    //                         if (wikiPosTracker[projectId].z > projectSizesZ[projectId].Right)
-    //                         {
-    //                             Vector3 pos = wikiPosTracker[projectId];
-    //                             pos.y -= spaceBetweenWallObjs;
-    //                             pos.z = projectSizesZ[projectId].Left;
-    //                             wikiPosTracker[projectId] = pos;
-    //                         }
-    //                         else
-    //                         {
-    //                             Vector3 pos = wikiPosTracker[projectId];
-    //                             pos.z += spaceBetweenWallObjs;
-    //                             wikiPosTracker[projectId] = pos;
-    //                         }
-    //                     }
-    //                     else
-    //                     {
-    //                         wikiPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left-(distanceFromMiddleGraph), 0,
-    //                             projectSizesZ[projectId].Left);
-    //                     }
-    //                     Transform obj = SpawnGeneralVertice(projectId, wikiPosTracker[projectId], verticeData.id,-1);
-    //                 }
-    //
-    //                 break;
-    //             
-    //             case VerticeType.RepoFile:
-    //                 if (!vertices[projectId].ContainsKey(verticeData.id))
-    //                 {
-    //                     if (repoPosTracker.ContainsKey(projectId))
-    //                     {
-    //                         if (repoPosTracker[projectId].x > projectSizesX[projectId].Right)
-    //                         {
-    //                             Vector3 pos = repoPosTracker[projectId];
-    //                             pos.y += spaceBetweenWallObjs;
-    //                             pos.x = projectSizesX[projectId].Left;
-    //                             repoPosTracker[projectId] = pos;
-    //                         }
-    //                         else
-    //                         {
-    //                             Vector3 pos = repoPosTracker[projectId];
-    //                             pos.x += spaceBetweenWallObjs;
-    //                             repoPosTracker[projectId] = pos;
-    //                         }
-    //                     }
-    //                     else
-    //                     {
-    //                         repoPosTracker[projectId] = new Vector3(projectSizesX[projectId].Left, -(distanceOnComplete),
-    //                             projectSizesZ[projectId].Right+(distanceFromMiddleGraph));
-    //                     }
-    //                     Transform obj = SpawnGeneralVertice(projectId, repoPosTracker[projectId], verticeData.id,-1);
-    //                 }
-    //
-    //                 break;
-    //             case VerticeType.File:
-    //                 if (!vertices[projectId].ContainsKey(verticeData.id))
-    //                 {
-    //                     if (filePosTracker.ContainsKey(projectId))
-    //                     {
-    //                         if (filePosTracker[projectId].z > projectSizesZ[projectId].Right)
-    //                         {
-    //                             Vector3 pos = filePosTracker[projectId];
-    //                             pos.y -= spaceBetweenWallObjs;
-    //                             pos.z = projectSizesZ[projectId].Left;
-    //                             filePosTracker[projectId] = pos;
-    //                         }
-    //                         else
-    //                         {
-    //                             Vector3 pos = filePosTracker[projectId];
-    //                             pos.z += spaceBetweenWallObjs;
-    //                             filePosTracker[projectId] = pos;
-    //                         }
-    //                     }
-    //                     else
-    //                     {
-    //                         filePosTracker[projectId] = new Vector3(projectSizesX[projectId].Right+(distanceFromMiddleGraph), 0,
-    //                             projectSizesZ[projectId].Left);
-    //                     }
-    //                     Transform obj = SpawnGeneralVertice(projectId, filePosTracker[projectId], verticeData.id,-1);
-    //                 }
-    //
-    //                 break;
-    //             case VerticeType.Change:
-    //             case VerticeType.Person:
-    //                 break;
-    //             default:
-    //                 break;
-    //         }    
-    //     }
-    // }
-    //
-    //
-    // private void SpawnPeople(long projectId)
-    // {
-    //     if (filterHolder.disabledVertices.Contains(VerticeType.Person))
-    //         return;
-    //     float counter = spaceBetweenWallObjs;
-    //
-    //     foreach (var (key, value) in this.loadedProjects[projectId].verticeWrappers.Where(x=>x.Value.verticeData.verticeType == VerticeType.Person))
-    //     {
-    //         if (!this.loadedProjects[projectId].verticeData.ContainsKey(key)) continue;
-    //         SpawnGeneralVertice(projectId, new Vector3(counter, distanceFromMiddleGraph + counter, 0), key, -1);
-    //         counter += spaceBetweenWallObjs;
-    //     }
-    // }
-
-    // private Transform SpawnGeneralVertice(long projectId, Vector3 spawnPos, long verticeId, long edgeId)
-    // {
-    //     Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, spawnPos, Quaternion.identity);
-    //
-    //     VerticeRenderer verticeRenderer = obj.GetComponent<VerticeRenderer>();
-    //     verticeRenderer.SetUpReferences(hoverCanvas, hoverElement, hoverText, sidebarController, this);
-    //     VerticeWrapper d = loadedProjects[projectId].verticeWrappers[verticeId];
-    //     // verticeRenderer.SetVerticeData(d, projectId, verticeMaterial);
-    //     if (!vertices.ContainsKey(projectId))
-    //     {
-    //         vertices[projectId] = new();
-    //     }
-    //     vertices[projectId][verticeId]= verticeRenderer;
-    //     // CheckAndApplyHighlight(projectId, verticeId); //TODO return
-    //     verticeRenderer.SetIsLoaded(true);
-    //     return obj;
-    // }
-    //
-    // private void SpawnOutlineObjects(long projectId)
-    // {
-    //     float pos = renderDistanceBetweenObjs;
-    //     for (int i = 0; i < loadedProjects[projectId].GetTicketCount(); i++)
-    //     {
-    //         if (spawnTopOutlinesForSpiral)
-    //         {
-    //             SpawnOutlineObject(pos, 0, projectId); // TODO do we want the top one too?
-    //         }
-    //
-    //         pos += SpawnOutlineObject(pos, -distanceOnComplete, projectId);
-    //     }
-    // }
-
-    // private float SpawnOutlineObject(float pos, float yPos, long projectId)
-    // {
-    //     float x = Mathf.Cos(pos) * pos;
-    //     float z = Mathf.Sin(pos) * pos;
-    //
-    //     if (!filterHolder.disabledVertices.Contains(VerticeType.Ticket))
-    //     {
-    //         Transform obj = PoolManager.Pools[PoolNames.VERTICE_OUTLINE]
-    //             .Spawn(verticePrefab, new Vector3(x, yPos, z), Quaternion.identity);
-    //         if (obj.TryGetComponent<VerticeRenderer>(out VerticeRenderer vr))
-    //         {
-    //             vr.OnDespawned();
-    //         }
-    //         Destroy(obj.GetComponent<VerticeRenderer>());
-    //         Destroy(obj.GetComponent<BoxCollider>());
-    //         MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
-    //         renderer.materials = new[] { outlineMaterial };
-    //     }
-    //
-    //     // keeping track of max/min Z and X axes
-    //     if (!projectSizesZ.ContainsKey(projectId))
-    //     {
-    //         projectSizesZ[projectId] = new Pair<float, float>(x, z);
-    //         projectSizesX[projectId] = new Pair<float, float>(x, z);
-    //     }
-    //     else
-    //     {
-    //         Pair<float, float> zAxe = projectSizesZ[projectId];
-    //         if (zAxe.Left > z) zAxe.Left = z;
-    //         if (zAxe.Right < z) zAxe.Right = z;
-    //         
-    //         Pair<float, float> xAxe = projectSizesX[projectId];
-    //         if (xAxe.Left > x) xAxe.Left = x;
-    //         if (xAxe.Right < x) xAxe.Right = x;
-    //     }
-    //
-    //     return renderDistanceBetweenObjs / pos;
-    // }
 
     // public void CheckAndApplyHighlight(long projectId, long verticeId)
     // {

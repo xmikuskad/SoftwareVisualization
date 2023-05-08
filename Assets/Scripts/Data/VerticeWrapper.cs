@@ -15,7 +15,7 @@ namespace Data
         private Dictionary<long, VerticeData> relatedVerticesById = new();
         private Dictionary<long, EdgeData> relatedEdgesById= new();
 
-        private Dictionary<long, VerticeWrapper> relatedChangesOrCommits = new();
+        public Dictionary<long, VerticeWrapper> relatedChangesOrCommits = new();
 
         private List<DateTime> dates = new();
         public long updateCount = 1;
@@ -194,39 +194,91 @@ namespace Data
 
         public bool IsConnected(Pair<VerticeData, VerticeWrapper> pair, VerticeData commitOrChange)
         {
+            // This is only person
+            if ((commitOrChange?.id ?? -1) < 0)
+            {
+                if (pair.Left?.id == null)
+                {
+                    if (pair.Right.verticeData.verticeType == VerticeType.Person)
+                    {
+                        // Do not show other person when clicking on person
+                        return pair.Right.verticeData.id == this.verticeData.id;
+                    }
+                    else
+                    {
+                        // If the ticket contains reference to this then show it
+                        return pair.Right.relatedVertices.ContainsKey(VerticeType.Person) && pair.Right
+                            .relatedVertices[VerticeType.Person].Any(x => x.id == this.verticeData.id);
+                    }
+                }
+                else
+                {
+                    // Check if person is mentioned in a commit
+                    return this.relatedChangesOrCommits.ContainsKey(pair.Left.id) &&
+                           this.relatedChangesOrCommits[pair.Left.id].relatedVerticesById
+                               .ContainsKey(this.verticeData.id);
+                }
+                
+            }
+
+            if (pair.Left?.id != null)
+            {
+                return commitOrChange.id == pair.Left.id;
+            }
+            else
+            {
+                return pair.Right.relatedVerticesById.ContainsKey(this.verticeData.id);
+            }
+
+
+
             // Ehm this will never happen
             if (this.verticeData.verticeType == VerticeType.Change ||
                 this.verticeData.verticeType == VerticeType.Commit)
             {
-                return IsDirectlyConnected((pair.Left ?? pair.Right.verticeData).id);
+                Debug.Log("Happened?");
+                return IsDirectlyConnected(pair.Left ?? pair.Right.verticeData);
             }
 
             if (pair.Left != null)
             {
-                return ContainsChangeOrCommit(pair.Left.id);
+                return pair.Left.id == commitOrChange?.id || (this.verticeData.verticeType == VerticeType.Person && (this.relatedChangesOrCommits.ContainsKey(pair.Left.id)));
             }
             else
             {
-                return IsConnectedByChangeOrCommit(pair.Right.verticeData.id, (commitOrChange?.id??-1));
+                return IsConnectedByChangeOrCommit(pair.Right.verticeData, (commitOrChange?.id??-1));
             }
         }
 
-        public bool IsConnectedByChangeOrCommit(long verticeId, long commitOrChangeId)
+        public bool IsConnectedByChangeOrCommit(VerticeData v, long commitOrChangeId)
         {
+            if (this.verticeData.id == v.id) return true;
+            if (this.verticeData.verticeType == VerticeType.Person) return false;
+            
             if(commitOrChangeId <0)
-                return this.verticeData.id == verticeId || this.relatedChangesOrCommits.Values.Any(x => x.IsDirectlyConnected(verticeId));
-            return this.verticeData.id == verticeId || (this.relatedChangesOrCommits.ContainsKey(commitOrChangeId) && this.relatedChangesOrCommits[commitOrChangeId].IsDirectlyConnected(verticeId));
+                return this.relatedChangesOrCommits.Values.Any(x => x.IsDirectlyConnected(v));
+            return (this.relatedChangesOrCommits.ContainsKey(commitOrChangeId) && this.relatedChangesOrCommits[commitOrChangeId].IsDirectlyConnected(v));
         }
 
-        public bool ContainsChangeOrCommit(long verticeId)
-        {
-            return this.verticeData.id == verticeId || this.relatedChangesOrCommits.ContainsKey(verticeId);
+        // public bool ContainsChangeOrCommit(long verticeId, long commitOrChangeIdFrom,long commitOrChangeIdTo)
+        // {
+        //     if(commitOrChangeIdTo <0)
+        //         return this.verticeData.id == verticeId || this.relatedChangesOrCommits.ContainsKey(commitOrChangeIdFrom);
+        //     if (this.verticeData.id == verticeId && commitOrChangeIdFrom == commitOrChangeIdTo)
+        //         return true;
+        //     return this.relatedChangesOrCommits.ContainsKey(commitOrChangeIdFrom);
+        // }
 
-        }
-
-        public bool IsDirectlyConnected(long verticeId)
+        public bool IsDirectlyConnected(VerticeData v)
         {
-            return this.verticeData.id == verticeId || this.relatedVerticesById.Values.Select(x=>x.id).Any(x => x==verticeId);
+            if (this.verticeData.id == v.id) return true;
+            if (this.verticeData.verticeType == VerticeType.Person)
+            {
+                return false;
+                // return this.relatedVerticesById.Values.Where(x => x.verticeType != VerticeType.Person).Select(x => x.id)
+                //     .Any(x => x == v.id);
+            }
+            return this.verticeData.id == v.id || this.relatedVerticesById.Values.Select(x=>x.id).Any(x => x==v.id);
         }
     }
 }

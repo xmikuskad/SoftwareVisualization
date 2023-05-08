@@ -10,9 +10,7 @@ public class DataManager: MonoBehaviour
 {
     // Cached values
     private long projectIdCounter = 0;
-    private Dictionary<long, String> projectNames = new();
     private Dictionary<long, DataHolder> unchangedDataHolders = new();
-    private Dictionary<long, DataHolder> filteredDataHolders = new();
 
     // Filters
     private FilterHolder filterHolder;
@@ -47,8 +45,6 @@ public class DataManager: MonoBehaviour
     public void LoadData(DataHolder holder)
     {
         projectIdCounter++;
-        // Template name
-        projectNames.Add(projectIdCounter,"SomeName"+projectIdCounter);
         holder.projectId = projectIdCounter;
         holder.LoadData();
         unchangedDataHolders.Add(projectIdCounter,holder);

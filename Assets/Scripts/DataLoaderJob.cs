@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 public class DataLoaderJob : ThreadedJob
 {
     public string text;
+    public string name;
     public DataHolder dataHolder;
     
     protected override void ThreadFunction()
@@ -13,6 +14,7 @@ public class DataLoaderJob : ThreadedJob
         dataHolder = new DataHolder();
         dataHolder.edgeData = holder.edges.Select((edge) => new EdgeData(edge)).ToDictionary(i=>i.id);
         dataHolder.verticeData = holder.vertices.Select((vertice) => new VerticeData(vertice)).ToDictionary(i=>i.id);
+        dataHolder.projectName = name;
         // Make other computations here!
     }
 

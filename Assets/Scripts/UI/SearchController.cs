@@ -49,15 +49,16 @@ namespace UI
             }
             
             foreach (var val in dataRenderer.loadedProjects[1L].verticeWrappers.Values
-                         .Where(x=>!dataRenderer.filterHolder.disabledVertices.Contains(x.verticeData.verticeType)))
+                         .Where(x=>!dataRenderer.filterHolder.disabledVertices.Contains(x.verticeData.verticeType) && 
+                                   x.verticeData.verticeType != VerticeType.Change && x.verticeData.verticeType != VerticeType.Commit))
             {
-                if (!val.verticeData.name.ToLower().Contains(typed.ToLower()))
+                if (!val.verticeData.name.ToLower().Contains(typed.ToLower()) && !val.verticeData.id.ToString().Contains(typed.ToLower()))
                 {
                     continue;
                 }
                 
                 GameObject go = Instantiate(listItem, listItemHolder.transform);
-                go.GetComponentInChildren<TMP_Text>().text = val.verticeData.name;
+                go.GetComponentInChildren<TMP_Text>().text = "<b>["+val.verticeData.verticeType+" "+val.verticeData.id+"]</b> "+val.verticeData.name;
                 VerticeWrapper tmp = val;
                 go.GetComponentInChildren<Button>().onClick.AddListener(() =>Search(tmp));
             }
