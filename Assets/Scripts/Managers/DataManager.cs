@@ -26,6 +26,8 @@ public class DataManager: MonoBehaviour
     public event Action<long> VerticesCompareEvent;
     public event Action<long> VerticesCompareEndEvent;
     public event Action<FilterHolder> DataFilterEvent;
+
+    public event Action<long, DateTime> DateChangeEvent;
     
     // Other
     public List<DateTime> selectedDates = new();
@@ -188,5 +190,10 @@ public class DataManager: MonoBehaviour
     public void InvokeVerticeSelect(List<VerticeWrapper> verticeWrapper, long projectId)
     {
         VerticesSelectedEvent?.Invoke(new Pair<long, List<VerticeWrapper>>(projectId,verticeWrapper));
+    }
+
+    public void InvokeDateChangedEvent(long projectId, DateTime date)
+    {
+        DateChangeEvent?.Invoke(projectId,date);
     }
 }

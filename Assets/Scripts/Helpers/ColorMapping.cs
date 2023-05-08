@@ -10,8 +10,8 @@ public class ColorMapping : ICloneable
     public static readonly ColorMapping TILEMAPHIGHLIGHT = new(3, new Color32(0, 180, 0, 255), "Contributions Calendar Color");
     public static readonly ColorMapping TICKET = new(20, new Color32(193, 32, 35, 255), "Ticket vertice");
     public static readonly ColorMapping PERSON = new(21, new Color32(69, 229, 234, 255), "Person vertice");
-    public static readonly ColorMapping FILE = new(22, new Color32(135, 188, 69, 255), "File vertice");
-    public static readonly ColorMapping WIKI = new(23, new Color32(255, 197, 28, 255), "Wiki vertice");
+    public static readonly ColorMapping FILE = new(22, new Color32(252, 207, 3, 255), "File vertice");
+    public static readonly ColorMapping WIKI = new(23, new Color32(3, 252, 48, 255), "Wiki vertice");
     public static readonly ColorMapping COMMIT = new(24, new Color32(179, 61, 198, 255), "Commit vertice");
     public static readonly ColorMapping REPOFILE = new(25, new Color32(0, 21, 255, 255), "RepoFile vertice");
 

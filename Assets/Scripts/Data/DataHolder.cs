@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Data;
+using Helpers;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [Serializable]
 public class DataHolder
@@ -33,6 +35,15 @@ public class DataHolder
     public List<DateTime> orderedDates = new();
 
     public List<VerticeWrapper> spawnAtStart = new();
+
+    public long maxVerticeCount = 0;
+    public long maxEdgeCount = 0;
+
+    public DateTime minDate = DateTime.MaxValue.Date;
+    public DateTime maxDate = DateTime.MinValue.Date;
+    public List<DateTime> dates = new();
+    
+    
 
     // TODO This function needs a rework. I know that data are only loading for tickets.
     public void LoadData()
@@ -73,20 +84,6 @@ public class DataHolder
             if(!ticketToChangeListPerAuthor[ticket.id][changeAuthorId].Contains(change.verticeData))
                 ticketToChangeListPerAuthor[ticket.id][changeAuthorId].Add(change.verticeData);
         }
-        
-        foreach (var (key, value) in ticketToChangeListPerAuthor)
-        {
-         
-            Debug.LogWarning("Ticket "+key+": "+string.Join(", ",
-                value
-                    .SelectMany(kv => kv.Value) // Flatten the values of the dictionary into a single IEnumerable<VerticeData>
-                    .GroupBy(v => v.id) // Group the VerticeData objects by the Id property
-                        .Select(g => g.First()) // Select the first VerticeData object from each group
-                        .ToList().Select(x=>x.id))
-            + " ||| "+string.Join(", ",value
-                .SelectMany(kv => kv.Value).ToList().Select(x=>x.id)));  
-            
-        }
     }
 
     // Get person ids based on names
@@ -102,7 +99,6 @@ public class DataHolder
         return verticeData.Count(e => e.Value.verticeType == VerticeType.Ticket);
     }
 
-    // TODO FINISH
     private void LoadVerticeWrappers()
     {
 
@@ -118,64 +114,170 @@ public class DataHolder
         {
             verticeWrappers[value.from].AddData(verticeData[value.to], value);
         }
+        
+        // Group vertices by type and find the most occurring type
+        var mostOccurringType = verticeWrappers.Values.Where(x=>x.verticeData.verticeType!= VerticeType.Change && x.verticeData.verticeType != VerticeType.Commit)
+            .GroupBy(v => v.verticeData.verticeType)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.Key)
+            .FirstOrDefault();
 
-        Dictionary<long, long> usageHistogram = new();
-        foreach (var v in verticeWrappers.Values.Where(x=>x.verticeData.verticeType == VerticeType.Change))
+        // Count the most occurring type
+        maxVerticeCount = verticeWrappers.Values.Count(v => v.verticeData.verticeType == mostOccurringType);
+        
+        // // Group vertices by type and find the most occurring type
+        // var mostOccurringType2 = verticeWrappers.Values.Where(x=>x.verticeData.verticeType== VerticeType.Change || x.verticeData.verticeType == VerticeType.Commit)
+        //     .GroupBy(v => v.verticeData.verticeType)
+        //     .OrderByDescending(g => g.Count())
+        //     .Select(g => g.Key)
+        //     .FirstOrDefault();
+        //
+        // // Count the most occurring type
+        // maxEdgeCount = verticeWrappers.Values.Count(v => v.verticeData.verticeType == mostOccurringType2);
+        
+        foreach (VerticeType t in (VerticeType[]) Enum.GetValues(typeof(VerticeType)))
         {
-            if (!changesByDate.ContainsKey(v.GetTimeWithoutHours()))
+            foreach (List<Pair<VerticeData,VerticeWrapper>> pairs in GetVerticesForPlatform(t))
             {
-                changesByDate[v.GetTimeWithoutHours()] = new();
+                if (pairs.Count > maxEdgeCount)
+                    maxEdgeCount = pairs.Count;
             }
-            if(!changesByDate[v.GetTimeWithoutHours()].Contains(v))
-                changesByDate[v.GetTimeWithoutHours()].Add(v);
+        }
+        
+        
+        // Dictionary<VerticeType, List < string >> dic= new();
+        foreach (var (key, value) in verticeWrappers)
+        {
+            // if (!dic.ContainsKey(value.verticeData.verticeType))
+            // {
+            //     dic[value.verticeData.verticeType] = new List<string>();
+            // }
+            //
+            // dic[value.verticeData.verticeType].Add(String.Join(", ",
+            //     value.GetRelatedVertices().Select(x => x.verticeType.ToString()).Distinct().OrderBy(x => x)));
             
-            if (!usageHistogram.ContainsKey(v.verticeData.id))
-            {
-                usageHistogram[v.verticeData.id] = 0;
-            }
-            usageHistogram[v.verticeData.id]+=1;
             
-            foreach (var related in v.GetRelatedVertices())
+            // if((value.verticeData.verticeType == VerticeType.Wiki && value.GetRelatedVerticesDict().ContainsKey(VerticeType.Ticket)) ||
+            //    (value.verticeData.verticeType == VerticeType.Change && value.GetRelatedVerticesDict().ContainsKey(VerticeType.Ticket) 
+            //                                                         && value.GetRelatedVerticesDict().ContainsKey(VerticeType.Wiki))) {
+            //     Debug.LogError("FOUND "+value.verticeData.verticeType+" ID "+value.verticeData.id);
+            // }
+            //
+            // if (value.verticeData.verticeType == VerticeType.Person &&
+            //     value.GetRelatedVerticesDict().ContainsKey(VerticeType.Ticket) &&
+            //     value.GetRelatedVerticesDict().Values.Count == 1)
+            // {
+            //     Debug.LogError("Found person - ticket for person id "+value.verticeData.id);
+            //     Debug.LogError("Found person - ticket for ticket id "+value.GetRelatedVerticesDict()[VerticeType.Ticket][0].id);
+            // }
+
+            // DateTime dateTime = value.GetTimeWithoutHours();
+            // if (dateTime != value.verticeData.created)
+            // {
+            //     Debug.Log("created: "+value.verticeData.verticeType);
+            // }
+            // if (dateTime != value.verticeData.committed)
+            // {
+            //     Debug.Log("committed: "+value.verticeData.verticeType);
+            // }
+            // if (dateTime != value.verticeData.begin)
+            // {
+            //     Debug.Log("begin: "+value.verticeData.verticeType);
+            // }
+
+            if (value.verticeData.verticeType == VerticeType.Change ||
+                value.verticeData.verticeType == VerticeType.Commit)
             {
-                if (!verticesByDate.ContainsKey(v.GetTimeWithoutHours()))
+                DateTime dateTime = value.GetTimeWithoutHours();
+                if (dateTime != DateTime.MinValue.Date)
                 {
-                    verticesByDate[v.GetTimeWithoutHours()] = new();
-                }
-                if(!verticesByDate[v.GetTimeWithoutHours()].Contains(verticeWrappers[related.id]))
-                    verticesByDate[v.GetTimeWithoutHours()].Add(verticeWrappers[related.id]);
+                    if (dateTime > maxDate)
+                    {
+                        maxDate = dateTime;
+                    }
 
-                if (!datesForVertice.ContainsKey(related.id))
-                {
-                    datesForVertice[related.id] = new();
+                    if (dateTime < minDate)
+                    {
+                        minDate = dateTime;
+                    }
+                    dates.Add(dateTime);
                 }
-                if(!datesForVertice[related.id].Contains(v.GetTimeWithoutHours()))
-                    datesForVertice[related.id].Add(v.GetTimeWithoutHours());
-                
-                if (!usageHistogram.ContainsKey(related.id))
-                {
-                    usageHistogram[related.id] = 0;
-                }
-
-                usageHistogram[related.id] += 1;
             }
-            // Debug.Log("Change "+v.verticeData.id +": Tickets:"+string.Join(", ",
-            //     v.GetRelatedVertices().Where(x=>x.verticeType == VerticeType.Ticket).Select(x=>x.id)));
         }
 
-        HashSet<long> usedVertices = usageHistogram.Keys.ToHashSet();
-        foreach (var l in verticeWrappers.Keys.Where(x=>!usedVertices.Contains(x)))
-        {
-            spawnAtStart.Add(verticeWrappers[l]);
-        }
+        dates = dates.Distinct().OrderBy(x => x).ToList();
 
-        this.orderedDates = changesByDate.Keys.Distinct().OrderBy(x => x).ToList();
-
-        this.startDate = verticesByDate.Keys.Where(x => x != DateTime.MinValue.Date).Min();
-         foreach (var (key, value) in datesForVertice)
-         {
-             verticeWrappers[key].SetDates(value);
-             verticeWrappers[key].updateCount = Math.Max(usageHistogram[key] -1,1);
-         }
+        startDate = minDate;
+        
+        // Debug.Log("Min: "+minDate);
+        // Debug.Log("Max: "+maxDate);
+        //
+        // foreach (var (key, value) in dic)
+        // {
+        //     foreach (var s in value)
+        //     {
+        //         
+        //         Debug.LogWarning(key + " - " + s);   
+        //     }
+        // }
+        
+        // Dictionary<long, long> usageHistogram = new();
+        // foreach (var v in verticeWrappers.Values.Where(x=>x.verticeData.verticeType == VerticeType.Change))
+        // {
+        //     if (!changesByDate.ContainsKey(v.GetTimeWithoutHours()))
+        //     {
+        //         changesByDate[v.GetTimeWithoutHours()] = new();
+        //     }
+        //     if(!changesByDate[v.GetTimeWithoutHours()].Contains(v))
+        //         changesByDate[v.GetTimeWithoutHours()].Add(v);
+        //     
+        //     if (!usageHistogram.ContainsKey(v.verticeData.id))
+        //     {
+        //         usageHistogram[v.verticeData.id] = 0;
+        //     }
+        //     usageHistogram[v.verticeData.id]+=1;
+        //     
+        //     foreach (var related in v.GetRelatedVertices())
+        //     {
+        //         if (!verticesByDate.ContainsKey(v.GetTimeWithoutHours()))
+        //         {
+        //             verticesByDate[v.GetTimeWithoutHours()] = new();
+        //         }
+        //         if(!verticesByDate[v.GetTimeWithoutHours()].Contains(verticeWrappers[related.id]))
+        //             verticesByDate[v.GetTimeWithoutHours()].Add(verticeWrappers[related.id]);
+        //
+        //         if (!datesForVertice.ContainsKey(related.id))
+        //         {
+        //             datesForVertice[related.id] = new();
+        //         }
+        //         if(!datesForVertice[related.id].Contains(v.GetTimeWithoutHours()))
+        //             datesForVertice[related.id].Add(v.GetTimeWithoutHours());
+        //         
+        //         if (!usageHistogram.ContainsKey(related.id))
+        //         {
+        //             usageHistogram[related.id] = 0;
+        //         }
+        //
+        //         usageHistogram[related.id] += 1;
+        //     }
+        //     // Debug.Log("Change "+v.verticeData.id +": Tickets:"+string.Join(", ",
+        //     //     v.GetRelatedVertices().Where(x=>x.verticeType == VerticeType.Ticket).Select(x=>x.id)));
+        // }
+        //
+        // HashSet<long> usedVertices = usageHistogram.Keys.ToHashSet();
+        // foreach (var l in verticeWrappers.Keys.Where(x=>!usedVertices.Contains(x)))
+        // {
+        //     spawnAtStart.Add(verticeWrappers[l]);
+        // }
+        //
+        // this.orderedDates = changesByDate.Keys.Distinct().OrderBy(x => x).ToList();
+        //
+        // this.startDate = verticesByDate.Keys.Where(x => x != DateTime.MinValue.Date).Min();
+        //  foreach (var (key, value) in datesForVertice)
+        //  {
+        //      verticeWrappers[key].SetDates(value);
+        //      verticeWrappers[key].updateCount = Math.Max(usageHistogram[key] -1,1);
+        //  }
 
 
     }
@@ -183,5 +285,31 @@ public class DataHolder
     public void UpdateUsageForFilter(DateTime from, DateTime to)
     {
         // TODO
+    }
+
+
+    public List<List<Pair<VerticeData,VerticeWrapper>>> GetVerticesForPlatform(VerticeType type)
+    {
+        List<List<Pair<VerticeData,VerticeWrapper>>> list = new();
+        
+        foreach (var val in verticeWrappers.Values.Where(x=>x.verticeData.verticeType == type).OrderBy(x=>x.GetFirstDate()))
+        {
+            if (type == VerticeType.RepoFile)
+            {
+                // comparision by commits
+                list.Add(val.GetOrderedRelatedVerticesByType(VerticeType.Commit).Select(x=>new Pair<VerticeData,VerticeWrapper>(x,val)).ToList());
+            }
+            else if (type == VerticeType.Person)
+            {
+                list.Add(new() { new Pair<VerticeData, VerticeWrapper>(null,val) });
+            }
+            else
+            {
+                // compare by changes
+                list.Add(val.GetOrderedRelatedVerticesByType(VerticeType.Change).Select(x=>new Pair<VerticeData,VerticeWrapper>(x,val)).ToList());
+            }
+        }
+        
+        return list;
     }
 }

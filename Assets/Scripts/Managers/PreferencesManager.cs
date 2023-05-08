@@ -33,6 +33,25 @@ public class PreferencesManager: MonoBehaviour
         return colorMappings[c.id];
     }
 
+    public ColorMapping GetColorMappingByType(VerticeType verticeType)
+    {
+        switch (verticeType)
+        {
+            case VerticeType.Ticket:
+                return colorMappings[ColorMapping.TICKET.id];
+            case VerticeType.Person:
+                return colorMappings[ColorMapping.PERSON.id];
+            case VerticeType.File:
+                return colorMappings[ColorMapping.FILE.id];
+            case VerticeType.RepoFile:
+                return colorMappings[ColorMapping.REPOFILE.id];
+            case VerticeType.Wiki:
+                return colorMappings[ColorMapping.WIKI.id];
+        }
+
+        return ColorMapping.PERSON;
+    }
+
     public Dictionary<long,ColorMapping> GetMappings()
     {
         Dictionary<long, ColorMapping> copy = new();

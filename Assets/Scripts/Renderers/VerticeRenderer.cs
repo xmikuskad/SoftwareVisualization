@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Data;
 using Helpers;
+using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 
@@ -10,7 +11,8 @@ public class VerticeRenderer : MouseOverRenderer
 {
 
     public bool isGhost = false;
-    private long projectId;
+    private long projectId =-1;
+    [CanBeNull] public VerticeData commitOrChange;
     public VerticeWrapper verticeWrapper;
     private MeshRenderer meshRenderer;
 
@@ -33,6 +35,8 @@ public class VerticeRenderer : MouseOverRenderer
     private SidebarController sidebarScript;
     private DataRenderer dataRenderer;
 
+    public DateTime beforeDate = DateTime.MinValue.Date;
+    public DateTime afterDate = DateTime.MinValue.Date;
 
     protected void Awake()
     {
@@ -63,7 +67,8 @@ public class VerticeRenderer : MouseOverRenderer
 
         if (this.verticeWrapper.IsConnectedWithVertices(pair.Right.Select(x=>x.verticeData.id).ToHashSet()))
         {
-            SetHighlighted(pair.Right.Select(x=>x.verticeData.id).ToHashSet().Contains(this.verticeWrapper.verticeData.id) ? true : false);
+            // SetHighlighted(pair.Right.Select(x=>x.verticeData.id).ToHashSet().Contains(this.verticeWrapper.verticeData.id));
+            SetHighlighted(true);
         }
         else
         {
@@ -81,7 +86,7 @@ public class VerticeRenderer : MouseOverRenderer
         
         if (this.verticeWrapper.ContainsDate(pair.Right))
         {
-            SetHighlighted(false);
+            SetHighlighted(true);
         }
         else
         {
@@ -121,7 +126,7 @@ public class VerticeRenderer : MouseOverRenderer
         
         if (this.verticeWrapper.IsDateBetween(pair.Right[0],pair.Right[1]))
         {
-            SetHighlighted(false);
+            SetHighlighted(true);
         }
         else
         {
@@ -216,14 +221,17 @@ public class VerticeRenderer : MouseOverRenderer
             return;
         }
 
-        if (verticeWrapper.verticeData.verticeType == VerticeType.Ticket)
-        {
-            hoverText.text = completedCount + " / " + taskCount;
-        }
-        else
-        {
-            hoverText.text = verticeWrapper.verticeData.ToString();
-        }
+        // if (verticeWrapper.verticeData.verticeType == VerticeType.Ticket)
+        // {
+        //     hoverText.text = completedCount + " / " + taskCount;
+        // }
+        // else
+        // {
+        //     hoverText.text = verticeWrapper.verticeData.ToString();
+        // }
+        
+        
+        hoverText.text = "ID: "+verticeWrapper.verticeData.id+" | Vertice: "+verticeWrapper.TmpGetDateNoHours()+" | Change: "+(commitOrChange?.created ?? commitOrChange?.begin ?? DateTime.MinValue.Date);
 
         if (shouldHover)
             meshRenderer.material = hoverMaterial;
@@ -268,10 +276,13 @@ public class VerticeRenderer : MouseOverRenderer
         return hoverElement;
     }
 
-    public void SetVerticeData(VerticeWrapper verticeWrapper, long projectId, Material material)
+    public void SetVerticeData(VerticeWrapper verticeWrapper, long projectId, Material material, VerticeData changeOrCommit, Pair<DateTime, DateTime> pair)
     {
         this.verticeWrapper = verticeWrapper;
         this.projectId = projectId;
+        this.commitOrChange = changeOrCommit;
+        this.beforeDate = pair.Left;
+        this.afterDate = pair.Right;
 
         // We need to duplicate material because otherwise all objects with that material will be changed
         Material newMat = new Material(material);
@@ -301,6 +312,12 @@ public class VerticeRenderer : MouseOverRenderer
     public void SetIsLoaded(bool isLoaded)
     {
         this.isLoaded = isLoaded;
+    }
+
+    public bool ContainsDate(DateTime date)
+    {
+        // return this.beforeDate < date && this.afterDate > date ;
+        return this.beforeDate < date && this.afterDate > date && (this.commitOrChange?.created ?? this.commitOrChange?.begin ?? DateTime.MaxValue).Date <= date;
     }
 
 }

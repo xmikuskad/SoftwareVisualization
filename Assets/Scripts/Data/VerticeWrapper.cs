@@ -22,11 +22,12 @@ namespace Data
             // Set up vertice dictionary by type
             if (!relatedVertices.ContainsKey(vertice.verticeType))
             {
-                relatedVertices[vertice.verticeType] = new ();
+                relatedVertices[vertice.verticeType] = new();
             }
+
             if (!relatedVertices[vertice.verticeType].Contains(vertice))
             {
-                relatedVertices[vertice.verticeType].Add(vertice);   
+                relatedVertices[vertice.verticeType].Add(vertice);
             }
 
             // Set up vertice dictionary by ID
@@ -34,23 +35,43 @@ namespace Data
             {
                 relatedVerticesById[vertice.id] = vertice;
             }
-            
+
             // Set up edge dictionary by type
             if (!relatedEdges.ContainsKey(edge.type))
             {
-                relatedEdges[edge.type] = new ();
+                relatedEdges[edge.type] = new();
             }
+
             relatedEdges[edge.type].Add(edge);
             if (!relatedEdges[edge.type].Contains(edge))
             {
-                relatedEdges[edge.type].Add(edge);  
+                relatedEdges[edge.type].Add(edge);
             }
-            
+
             // Set up edge dictionary by ID
             if (!relatedEdgesById.ContainsKey(edge.id))
             {
                 relatedEdgesById[edge.id] = edge;
             }
+
+            this.dates = new();
+            if (this.relatedVertices.ContainsKey(VerticeType.Change))
+            {
+                this.dates = this.relatedVertices[VerticeType.Change]
+                    .Select(x => x.created ?? x.begin ?? DateTime.MinValue)
+                    .Select(x => x.Date).Distinct().Where(x => x > DateTime.MinValue.Date).OrderBy(x=>x).ToList();
+            }
+            else if (this.relatedVertices.ContainsKey(VerticeType.Commit))
+            {
+                this.dates = this.relatedVertices[VerticeType.Commit]
+                    .Select(x => x.created ?? x.begin ?? DateTime.MinValue)
+                    .Select(x => x.Date).Distinct().Where(x => x > DateTime.MinValue.Date).OrderBy(x=>x).ToList();
+            }
+            else
+            {
+                this.dates.Add(DateTime.MinValue.Date);
+            }
+
         }
 
         public void SetDates(List<DateTime> dateTimes)
@@ -63,28 +84,51 @@ namespace Data
         {
             if (!relatedEdges.ContainsKey(EdgeType.Authorship))
             {
-                Debug.Log(this.verticeData.verticeType+" - Authorship not found");
+                //Debug.Log(this.verticeData.verticeType+" - Authorship not found");
                 return -1L;
             }
             if (relatedEdges[EdgeType.Authorship].Count > 1)
             {
-                Debug.Log(this.verticeData.verticeType+" - Multiple authorship found: "+relatedEdges[EdgeType.Authorship].Count);
+                //Debug.Log(this.verticeData.verticeType+" - Multiple authorship found: "+relatedEdges[EdgeType.Authorship].Count);
                 return -1L;
             }
-            Debug.Log("Author OK");
+            //Debug.Log("Author OK");
 
             return relatedEdges[EdgeType.Authorship][0].to;
+        }
+
+        public DateTime TmpGetDate()
+        {
+            return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
+        }
+        
+        public DateTime TmpGetDateNoHours()
+        {
+            return TmpGetDate().Date;
         }
         
         // Returns DateTime.MinValue on fail.
         public DateTime GetTime()
         {
-            if (this.verticeData.verticeType != VerticeType.Change)
+
+            if (this.verticeData.verticeType == VerticeType.Change)
             {
-                Debug.LogError("Trying to get time from vertice which doesnt have time!");
+                return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
+            }
+
+            if (this.verticeData.verticeType == VerticeType.Commit)
+            {
+                return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
             }
             
-            return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
+            return DateTime.MinValue;
+            //
+            // if (this.verticeData.verticeType != VerticeType.Change)
+            // {
+            //     Debug.LogError("Trying to get time from vertice which doesnt have time!");
+            // }
+            //
+            // return verticeData.created ?? verticeData.begin ?? verticeData.committed ?? DateTime.MinValue;
             
             //
             // if (!this.relatedVertices.ContainsKey(VerticeType.Change) || this.verticeData.verticeType == VerticeType.Person)
@@ -126,6 +170,16 @@ namespace Data
         {
             return relatedVertices;
         }
+        
+        public List<VerticeData> GetOrderedRelatedVerticesByType(VerticeType type)
+        {
+            if (relatedVertices.ContainsKey(type))
+            {
+                return relatedVertices[type].OrderBy(x=>x.created ?? x.begin ?? DateTime.MinValue).ToList();
+            }
+
+            return new();
+        }
 
         public bool ContainsDate(DateTime date)
         {
@@ -152,6 +206,15 @@ namespace Data
             }
 
             return false;
+        }
+
+        public DateTime GetFirstDate()
+        {
+            if (this.dates.Count > 0)
+            {
+                return this.dates[0];
+            }
+            return DateTime.MinValue;
         }
     }
 }

@@ -34,7 +34,7 @@ public class ExternalJsonLoader : MonoBehaviour
         else
         {
             // Error occurred while loading the file
-            Debug.LogError("Error loading file: " + www.error);
+            //Debug.LogError("Error loading file: " + www.error);
             SetLoading(false);
         }
     }
