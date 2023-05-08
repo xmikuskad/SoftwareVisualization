@@ -9,10 +9,10 @@ namespace Data
     {
         public VerticeData verticeData;
         private Dictionary<VerticeType, List<VerticeData>> relatedVertices = new();
-        private Dictionary<EdgeType, List<EdgeData>> relatedEdges= new();
-        
+        private Dictionary<EdgeType, List<EdgeData>> relatedEdges = new();
+
         private Dictionary<long, VerticeData> relatedVerticesById = new();
-        private Dictionary<long, EdgeData> relatedEdgesById= new();
+        private Dictionary<long, EdgeData> relatedEdgesById = new();
 
         private List<DateTime> dates = new();
         public long updateCount = 1;
@@ -22,11 +22,11 @@ namespace Data
             // Set up vertice dictionary by type
             if (!relatedVertices.ContainsKey(vertice.verticeType))
             {
-                relatedVertices[vertice.verticeType] = new ();
+                relatedVertices[vertice.verticeType] = new();
             }
             if (!relatedVertices[vertice.verticeType].Contains(vertice))
             {
-                relatedVertices[vertice.verticeType].Add(vertice);   
+                relatedVertices[vertice.verticeType].Add(vertice);
             }
 
             // Set up vertice dictionary by ID
@@ -34,18 +34,18 @@ namespace Data
             {
                 relatedVerticesById[vertice.id] = vertice;
             }
-            
+
             // Set up edge dictionary by type
             if (!relatedEdges.ContainsKey(edge.type))
             {
-                relatedEdges[edge.type] = new ();
+                relatedEdges[edge.type] = new();
             }
             relatedEdges[edge.type].Add(edge);
             if (!relatedEdges[edge.type].Contains(edge))
             {
-                relatedEdges[edge.type].Add(edge);  
+                relatedEdges[edge.type].Add(edge);
             }
-            
+
             // Set up edge dictionary by ID
             if (!relatedEdgesById.ContainsKey(edge.id))
             {
@@ -63,19 +63,19 @@ namespace Data
         {
             if (!relatedEdges.ContainsKey(EdgeType.Authorship))
             {
-                Debug.Log(this.verticeData.verticeType+" - Authorship not found");
+                Debug.Log(this.verticeData.verticeType + " - Authorship not found");
                 return -1L;
             }
             if (relatedEdges[EdgeType.Authorship].Count > 1)
             {
-                Debug.Log(this.verticeData.verticeType+" - Multiple authorship found: "+relatedEdges[EdgeType.Authorship].Count);
+                Debug.Log(this.verticeData.verticeType + " - Multiple authorship found: " + relatedEdges[EdgeType.Authorship].Count);
                 return -1L;
             }
             Debug.Log("Author OK");
 
             return relatedEdges[EdgeType.Authorship][0].to;
         }
-        
+
         // Returns DateTime.MinValue on fail.
         public DateTime GetTime()
         {
@@ -83,9 +83,9 @@ namespace Data
             {
                 Debug.LogError("Trying to get time from vertice which doesnt have time!");
             }
-            
+
             return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
-            
+
             //
             // if (!this.relatedVertices.ContainsKey(VerticeType.Change) || this.verticeData.verticeType == VerticeType.Person)
             // {
@@ -111,7 +111,7 @@ namespace Data
         {
             return GetTime().Date;
         }
-        
+
         public bool IsConnectedWithVertices(HashSet<long> verticeId)
         {
             return relatedEdgesById.Values.Where(x => verticeId.Contains(x.to)).ToList().Count() > 0 || verticeId.Contains(this.verticeData.id);
@@ -121,8 +121,8 @@ namespace Data
         {
             return relatedVerticesById.Values.ToList();
         }
-        
-        public Dictionary<VerticeType,List<VerticeData>> GetRelatedVerticesDict()
+
+        public Dictionary<VerticeType, List<VerticeData>> GetRelatedVerticesDict()
         {
             return relatedVertices;
         }
@@ -131,7 +131,7 @@ namespace Data
         {
             return this.dates.Contains(date);
         }
-        
+
         public bool ContainsDate(List<DateTime> dates)
         {
             foreach (var dateTime in dates)
@@ -147,7 +147,7 @@ namespace Data
         {
             foreach (var dateTime in dates)
             {
-                if (this.dates.Any(x => x>=from && x<=to))
+                if (this.dates.Any(x => x >= from && x <= to))
                     return true;
             }
 
