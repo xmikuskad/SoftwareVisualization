@@ -62,12 +62,15 @@ public class SidebarController : MonoBehaviour
     }
 
 
-    private void OnAllVerticesDeselected()
+    private void OnAllVerticesDeselected(ResetEventReason reason)
     {
         // Debug.Log("nothing selected");
         slideIn();
     }
-    private void OnVerticeSelected(Pair<long, List<VerticeWrapper>> pair)
+    
+     // Old method params
+    // private void OnVerticeSelected(Pair<long, List<VerticeWrapper>> pair)
+    private void OnVerticeSelected(Pair<long,List<Pair<VerticeData,VerticeWrapper>>> pair)
     {
         // Debug.Log("currently " + pair.Right.Count.ToString() + " onClicked vertices");
 
@@ -85,15 +88,16 @@ public class SidebarController : MonoBehaviour
         //     addVerticesToSidebarPages(pair.Right);
         // }
 
-        List<VerticeWrapper> newClickedVertices = pair.Right.Except(verticesCurrentlyInSidebar).ToList();
-        foreach (VerticeWrapper diff in newClickedVertices)
-            if (pair.Right.Contains(diff) && !verticesCurrentlyInSidebar.Contains(diff))
-                addVerticeToSidebarPages(diff);
-
-        List<VerticeWrapper> unclickedVertices = verticesCurrentlyInSidebar.Except(pair.Right).ToList();
-        foreach (VerticeWrapper diff in newClickedVertices)
-            if (!pair.Right.Contains(diff) && verticesCurrentlyInSidebar.Contains(diff))
-                removeVerticeFromSidebarPages(diff);
+        // TODO REWORK
+        // List<VerticeWrapper> newClickedVertices = pair.Right.Except(verticesCurrentlyInSidebar).ToList();
+        // foreach (VerticeWrapper diff in newClickedVertices)
+        //     if (pair.Right.Contains(diff) && !verticesCurrentlyInSidebar.Contains(diff))
+        //         addVerticeToSidebarPages(diff);
+        //
+        // List<VerticeWrapper> unclickedVertices = verticesCurrentlyInSidebar.Except(pair.Right).ToList();
+        // foreach (VerticeWrapper diff in newClickedVertices)
+        //     if (!pair.Right.Contains(diff) && verticesCurrentlyInSidebar.Contains(diff))
+        //         removeVerticeFromSidebarPages(diff);
     }
 
     // Open

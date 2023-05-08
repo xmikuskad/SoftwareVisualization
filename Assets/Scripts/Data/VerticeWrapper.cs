@@ -143,6 +143,11 @@ namespace Data
         {
             return relatedVerticesById.Values.ToList();
         }
+        
+        public Dictionary<VerticeType,List<VerticeData>> GetRelatedVerticesDict()
+        {
+            return relatedVertices;
+        }
         public List<VerticeData> GetOrderedRelatedVerticesByType(VerticeType type)
         {
             if (relatedVertices.ContainsKey(type))

@@ -64,6 +64,7 @@ public class DataRenderer : MonoBehaviour
     public byte platformAlpha = 100;
     public long helperDistanceFromGraph = 100;
     public float lineWidth = 2f;
+    public long distanceBetweenProjects = 300;
 
     [Header("Prefabs")]
     public GameObject verticePrefab;
@@ -340,14 +341,14 @@ public class DataRenderer : MonoBehaviour
         float platformWidth = projectDays*(spaceBetweenObjects+1);
         
         GameObject go = Instantiate(arrowPrefab);
-        Vector3 from = new Vector3(baseXPos - helperDistanceFromGraph, baseYPos, baseZPos - helperDistanceFromGraph);
-        Vector3 to = new Vector3(baseXPos - helperDistanceFromGraph, baseYPos, baseZPos - helperDistanceFromGraph+ platformWidth);
+        Vector3 from = new Vector3( - helperDistanceFromGraph, 0,  - helperDistanceFromGraph) + GetSpawnVector(projectId);
+        Vector3 to = new Vector3( - helperDistanceFromGraph, 0,  - helperDistanceFromGraph+ platformWidth) + GetSpawnVector(projectId);
         go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f,"Changes",Direction.LEFT);
         
                 
         go = Instantiate(arrowPrefab);
-        from = new Vector3(baseXPos - helperDistanceFromGraph, baseYPos, baseZPos - helperDistanceFromGraph);
-         to = new Vector3(baseXPos - helperDistanceFromGraph+platformWidth, baseYPos, baseZPos - helperDistanceFromGraph);
+        from = new Vector3(- helperDistanceFromGraph, 0, - helperDistanceFromGraph) + GetSpawnVector(projectId);
+         to = new Vector3(- helperDistanceFromGraph+platformWidth, 0, - helperDistanceFromGraph) + GetSpawnVector(projectId);
         go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f,"Elements",Direction.RIGHT);
     }
 
@@ -356,15 +357,25 @@ public class DataRenderer : MonoBehaviour
         GameObject go = Instantiate(arrowPrefab);
         float maxCount = (this.loadedProjects[projectId].maxVerticeCount ) * (1 + spaceBetweenObjects);
         float height = platformHeight + platformDistanceBetween;
-        Vector3 from = new Vector3(baseXPos - helperDistanceFromGraph, baseYPos -index*height, baseZPos - helperDistanceFromGraph);
-        Vector3 to = new Vector3(baseXPos - helperDistanceFromGraph, baseYPos - height - index*height, baseZPos - helperDistanceFromGraph);
+        Vector3 from = new Vector3(- helperDistanceFromGraph, 0 -index*height, - helperDistanceFromGraph) + GetSpawnVector(projectId);
+        Vector3 to = new Vector3(- helperDistanceFromGraph, 0 - height - index*height, - helperDistanceFromGraph)+ GetSpawnVector(projectId);
         go.GetComponent<ArrowRenderer>().SetUpNoArrows(from, to, 2f,text,Direction.DOWN);
     }
 
-    // private Vector3 GetSpawnVector(long projectId)
-    // {
-    //     Vector3 baseVector = new Vector3()
-    // }
+    private Vector3 GetSpawnVector(long projectId)
+    {
+        Vector3 vector = new Vector3(baseXPos, baseYPos, baseZPos);
+
+        for (int i = 1; i < projectId; i++)
+        {
+            TimeSpan diff = this.loadedProjects[i].maxDate - this.loadedProjects[i].minDate;
+            int projectDays = (int)diff.TotalDays;
+            float platformWidth = projectDays * (spaceBetweenObjects + 1);
+            vector.z += platformWidth + distanceBetweenProjects;
+        }
+
+        return vector;
+    }
     
     public void SpawnPlatform(int index, VerticeType type, long projectId, float platformWidth, int alreadySpawnedCount)
     {
@@ -372,7 +383,7 @@ public class DataRenderer : MonoBehaviour
         color.a = platformAlpha;
         float maxCount = (this.loadedProjects[projectId].maxVerticeCount - alreadySpawnedCount ) * (1 + spaceBetweenObjects);
         
-        Vector3 pos = new Vector3(baseXPos + (alreadySpawnedCount)* (1 + spaceBetweenObjects)+ maxCount/2f -1f, baseYPos + (-index) * platformDistanceBetween, baseZPos + platformWidth/2f);
+        Vector3 pos = new Vector3( (alreadySpawnedCount)* (1 + spaceBetweenObjects)+ maxCount/2f -1f,  (-index) * platformDistanceBetween,  platformWidth/2f) + GetSpawnVector(projectId);
 
         GameObject platform = Instantiate(platformPrefab, pos, Quaternion.identity);
         platform.transform.localScale = new Vector3(maxCount+1, platformHeight, platformWidth+1f);
@@ -466,7 +477,7 @@ public class DataRenderer : MonoBehaviour
     {
         float maxCount = (this.loadedProjects[projectId].maxVerticeCount ) * (1 + spaceBetweenObjects);
         float height = platformHeight * 4 - (4) * platformDistanceBetween;
-        return new Vector3(baseXPos + maxCount / 2 -1, baseYPos + height / 2f - platformDistanceBetween / 2f, baseZPos);
+        return new Vector3(maxCount / 2 -1,  height / 2f - platformDistanceBetween / 2f, 0) + GetSpawnVector(projectId);
     }
 
     public void SpawnVerticeAndEdges(int index, VerticeType type, long projectId, float datePosAdd, float platformWidth)
@@ -500,25 +511,30 @@ public class DataRenderer : MonoBehaviour
 
                 if (type == VerticeType.Person)
                 {
-                    // Transform t = SpawnVerticeEdge(projectId, new Vector3(baseXPos + zIndex * (1 + spaceBetweenObjects) * 10 -5f,
-                    //     baseYPos + (-index) * platformDistanceBetween -5f, baseZPos + xPos -5f), change.Right, change.Left);
-                    
-                    Transform t = SpawnVerticeEdge(projectId, new Vector3(baseXPos +this.loadedProjects[projectId].maxVerticeCount * (1 + spaceBetweenObjects)/2f+ -5f,
-                        baseYPos + (-index) * platformDistanceBetween, baseZPos + zIndex * (1 + spaceBetweenObjects) * 10 +5f), change.Right, change.Left, new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MaxValue.Date));
+                    Transform t = SpawnVerticeEdge(projectId, new Vector3(
+                                                                  +this.loadedProjects[projectId].maxVerticeCount *
+                                                                  (1 + spaceBetweenObjects) / 2f + -5f,
+                                                                  (-index) * platformDistanceBetween,
+                                                                  zIndex * (1 + spaceBetweenObjects) * 10 + 5f) +
+                                                              GetSpawnVector(projectId), change.Right, change.Left,
+                        new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MaxValue.Date));
                     t.localScale = new Vector3(10, 10, 10);
                 }
                 else
                 {
-                    SpawnVerticeEdge(projectId, new Vector3(baseXPos + zIndex * (1 + spaceBetweenObjects),
-                        baseYPos + (-index) * platformDistanceBetween, baseZPos + xPos), change.Right, change.Left,
-                        GetDatetimeForPos(changes,xIndex));
+                    SpawnVerticeEdge(projectId, new Vector3(zIndex * (1 + spaceBetweenObjects),
+                            (-index) * platformDistanceBetween, xPos) + GetSpawnVector(projectId), change.Right,
+                        change.Left,
+                        GetDatetimeForPos(changes, xIndex));
                 }
             }
 
             if (type != VerticeType.Person)
             {
-                SpawnVerticePlatform(zIndex, type,projectId,platformWidth,new Vector3(baseXPos + zIndex * (1 + spaceBetweenObjects),
-                    baseYPos + (-index) * platformDistanceBetween, baseZPos  + platformWidth/2f), changes[0].Right);
+                SpawnVerticePlatform(zIndex, type, projectId, platformWidth, new Vector3(
+                        zIndex * (1 + spaceBetweenObjects),
+                        (-index) * platformDistanceBetween, platformWidth / 2f) + GetSpawnVector(projectId),
+                    changes[0].Right);
             }
         }
 
