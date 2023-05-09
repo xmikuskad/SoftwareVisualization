@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
-  moveSpeed: -60
-  zoomSpeed: 1000
-  rotateSpeed: 400
+  moveSpeed: -800
+  zoomSpeed: 30000
+  rotateSpeed: 200
   startingPosition: {x: 0, y: 0, z: 0}

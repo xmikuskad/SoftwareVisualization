@@ -43,6 +43,7 @@ public class DataRenderer : MonoBehaviour
     private DateTime lastDate = DateTime.MinValue.Date;
 
     public Dictionary<long, Dictionary<long, Vector3>> linePosHolder = new();
+    public Dictionary<long, GameObject> projectNamesObjects = new();
 
     [Header("Properties")]
 
@@ -60,7 +61,7 @@ public class DataRenderer : MonoBehaviour
     public long baseYPos = 0;
     public float platformHeight = 10f;
     public float platformDistanceBetween = 2f;
-    public float spaceBetweenObjects = 1f;
+    public long spaceBetweenObjects = 2;
     public byte platformAlpha = 100;
     public long helperDistanceFromGraph = 100;
     public float lineWidth = 2f;
@@ -119,28 +120,36 @@ public class DataRenderer : MonoBehaviour
         if(linePosHolder.ContainsKey(pair.Left))
             linePosHolder[pair.Left].Clear();
 
-        foreach (Pair<VerticeData,VerticeWrapper> p in pair.Right)
+        // pair<Commit/Change, VErtice of commit>
+        foreach (Pair<VerticeData, VerticeWrapper> p in pair.Right)
         {
-            if (p.Left == null)
+            if (p.Left == null) // No commit = no lines
                 continue;
-            foreach (var verticeData in p.Right.relatedChangesOrCommits[p.Left.id].GetRelatedVertices().Where(x=>x.id != p.Right.verticeData.id))
-            {
-                List<VerticeRenderer> from = verticesWithEdges[pair.Left][p.Right.verticeData.id]
-                    .Where(x => (x.commitOrChange ?? p.Left).id == p.Left.id).ToList();
 
+            VerticeRenderer from = verticesWithEdges[pair.Left][p.Right.verticeData.id]
+                .Where(x => x.commitOrChange?.id == p.Left.id).ToList()[0];
+
+            // Related vertices of commit/changes
+            foreach (var verticeData in p.Right.relatedChangesOrCommits[p.Left.id].GetRelatedVertices().Where(x =>
+                         x.id != p.Right.verticeData.id && x.verticeType != VerticeType.Change &&
+                         x.verticeType != VerticeType.Commit))
+            {
                 List<VerticeRenderer> to = verticesWithEdges[pair.Left][verticeData.id]
                     .Where(x => (x.commitOrChange ?? p.Left).id == p.Left.id).ToList();
 
-                if (from.Count == 0 || to.Count == 0)
+                if (to.Count == 0)
                 {
                     continue;
                 }
-                foreach (var f in from)
+
+                if (to.Count > 1)
                 {
-                    foreach (var t in to)
-                    {
-                        CreatePath(f,t,pair.Left);
-                    }
+                    Debug.LogError("Found multiple TO`s");
+                }
+
+                foreach (var t in to)
+                {
+                    CreatePath(from, t, pair.Left);
                 }
             }
         }
@@ -350,6 +359,7 @@ public class DataRenderer : MonoBehaviour
         from = new Vector3(- helperDistanceFromGraph, 0, - helperDistanceFromGraph) + GetSpawnVector(projectId);
          to = new Vector3(- helperDistanceFromGraph+platformWidth, 0, - helperDistanceFromGraph) + GetSpawnVector(projectId);
         go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f,"Elements",Direction.RIGHT);
+        
     }
 
     private void SpawnHelperPlatformText(long projectId, int index, string text)
@@ -486,6 +496,7 @@ public class DataRenderer : MonoBehaviour
             list = this.loadedProjects[projectId].GetVerticesForPlatform(type);
 
 
+        Dictionary<long, Dictionary<DateTime, float>> heightTracker = new();
         for (int zIndex = 0; zIndex < list.Count; zIndex++)
         {
             List<Pair<VerticeData, VerticeWrapper>> changes = list[zIndex];
@@ -523,7 +534,9 @@ public class DataRenderer : MonoBehaviour
                 else
                 {
                     SpawnVerticeEdge(projectId, new Vector3(zIndex * (1 + spaceBetweenObjects),
-                            (-index) * platformDistanceBetween, xPos) + GetSpawnVector(projectId), change.Right,
+                                                    (-index) * platformDistanceBetween +
+                                                    GetVerticeHeight(heightTracker, change), xPos) +
+                                                GetSpawnVector(projectId), change.Right,
                         change.Left,
                         GetDatetimeForPos(changes, xIndex));
                 }
@@ -540,8 +553,26 @@ public class DataRenderer : MonoBehaviour
 
         if (list.Count < this.loadedProjects[1].maxVerticeCount && type != VerticeType.Person)
         {
-            SpawnPlatform(index,type,projectId,platformWidth,list.Count);
+            SpawnPlatform(index, type, projectId, platformWidth, list.Count);
         }
+    }
+
+    private float GetVerticeHeight( Dictionary<long, Dictionary<DateTime, float>> heightTracker, Pair<VerticeData, VerticeWrapper> change)
+    {
+        DateTime current = (change.Left.created ?? change.Left.begin ?? DateTime.MinValue).Date;
+        if (!heightTracker.ContainsKey(change.Right.verticeData.id))
+        {
+            heightTracker[change.Right.verticeData.id] = new();
+        }
+
+        if (!heightTracker[change.Right.verticeData.id].ContainsKey(current))
+        {
+            heightTracker[change.Right.verticeData.id][current] = 1.5f;
+        }
+
+        float height = heightTracker[change.Right.verticeData.id][current];
+        heightTracker[change.Right.verticeData.id][current] = height + 1;
+        return height;
     }
 
     private Pair<DateTime, DateTime> GetDatetimeForPos(List<Pair<VerticeData, VerticeWrapper>> changes, int xIndex)
@@ -568,7 +599,7 @@ public class DataRenderer : MonoBehaviour
         }
         
         tracker = xIndex + 1;    
-        while (tracker < changes.Count-1)
+        while (tracker < changes.Count)
         {
             DateTime date = (changes[tracker].Left.created ??
                             changes[tracker].Left.begin ?? DateTime.MinValue).Date;
@@ -664,6 +695,7 @@ public class DataRenderer : MonoBehaviour
 
     public void RenderAllDates()
     {
+        SingletonManager.Instance.dataManager.InvokeResetEvent(ResetEventReason.RERENDER);
         foreach (var (key, value) in this.loadedProjects)
         {
             ShowAllDatesForProject(key);

@@ -35,7 +35,7 @@ namespace Renderers
 
         private void OnResetEvent(ResetEventReason reason)
         {
-            if (reason == ResetEventReason.CLICK_OUTSIDE)
+            if (reason == ResetEventReason.CLICK_OUTSIDE || reason == ResetEventReason.RERENDER)
             {
                 foreach (var (key, value) in btnObjects)
                 {

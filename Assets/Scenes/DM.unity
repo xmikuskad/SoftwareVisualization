@@ -4984,207 +4984,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 183237498}
   m_CullTransparentMesh: 1
---- !u!1 &185908285
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 185908286}
-  - component: {fileID: 185908288}
-  - component: {fileID: 185908287}
-  m_Layer: 5
-  m_Name: Tooltip
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &185908286
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 185908285}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 958922580}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.0000084639, y: -28.9}
-  m_SizeDelta: {x: 40, y: 14.6713}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &185908287
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 185908285}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: Close
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 14
-  m_fontSizeBase: 14
-  m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
-  m_fontStyle: 0
-  m_HorizontalAlignment: 2
-  m_VerticalAlignment: 512
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 1
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0.57128906, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!222 &185908288
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 185908285}
-  m_CullTransparentMesh: 1
---- !u!1 &197790787
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 197790788}
-  - component: {fileID: 197790789}
-  m_Layer: 0
-  m_Name: LineRendererPool
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &197790788
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 197790787}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 214839978}
-  m_RootOrder: 4
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &197790789
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 197790787}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59dfbc0f4f3a98b4ebf4ad40fc3f43aa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  poolName: lines
-  matchPoolScale: 0
-  matchPoolLayer: 0
-  dontReparent: 0
-  _dontDestroyOnLoad: 0
-  logMessages: 0
-  _perPrefabPoolOptions:
-  - prefab: {fileID: 2723466005977160119, guid: 9903f576e2b8fcf439a5baa1311cac49, type: 3}
-    preloadAmount: 500
-    preloadTime: 0
-    preloadFrames: 2
-    preloadDelay: 0
-    limitInstances: 0
-    limitAmount: 100
-    limitFIFO: 0
-    cullDespawned: 0
-    cullAbove: 50
-    cullDelay: 60
-    cullMaxPerPass: 5
-    _logMessages: 0
-    spawnPool: {fileID: 0}
-  maxParticleDespawnTime: 300
 --- !u!1 &200122893
 GameObject:
   m_ObjectHideFlags: 0
@@ -5599,11 +5398,6 @@ RectTransform:
   m_AnchoredPosition: {x: -780, y: 75}
   m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!4 &214839978 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7523557984909132482, guid: 769e686060ce6494686489282cf10898, type: 3}
-  m_PrefabInstance: {fileID: 2078136342}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &219006721
 GameObject:
   m_ObjectHideFlags: 0
@@ -20583,21 +20377,9 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2416559571262261238, guid: 11135a69e0f306b48b2602efbfe56dce, type: 3}
-      propertyPath: moveSpeed
-      value: -800
-      objectReference: {fileID: 0}
-    - target: {fileID: 2416559571262261238, guid: 11135a69e0f306b48b2602efbfe56dce, type: 3}
-      propertyPath: zoomSpeed
-      value: 10000
-      objectReference: {fileID: 0}
-    - target: {fileID: 2416559571262261238, guid: 11135a69e0f306b48b2602efbfe56dce, type: 3}
       propertyPath: mainCamera
       value: 
       objectReference: {fileID: 1351013595}
-    - target: {fileID: 2416559571262261238, guid: 11135a69e0f306b48b2602efbfe56dce, type: 3}
-      propertyPath: rotateSpeed
-      value: 200
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 11135a69e0f306b48b2602efbfe56dce, type: 3}
 --- !u!1 &1003056904
@@ -41015,10 +40797,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1246620051, guid: 769e686060ce6494686489282cf10898, type: 3}
-      propertyPath: m_Name
-      value: HighlightObjectPool
-      objectReference: {fileID: 0}
     - target: {fileID: 7523557984909132482, guid: 769e686060ce6494686489282cf10898, type: 3}
       propertyPath: m_RootOrder
       value: 9
@@ -42401,33 +42179,13 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 304477610}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: baseXPos
-      value: 1000
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: baseYPos
-      value: 1000
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: baseZPos
-      value: 1000
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: hoverText
       value: 
       objectReference: {fileID: 1848961900}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: linePrefab
-      value: 
-      objectReference: {fileID: 2723466005977160117, guid: 9903f576e2b8fcf439a5baa1311cac49, type: 3}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: loadingBar
       value: 
       objectReference: {fileID: 1071992800}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: arrowPrefab
-      value: 
-      objectReference: {fileID: 2742218351095386164, guid: 00c547efbbdd51b40a4ee77465d1860c, type: 3}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: hoverCanvas
       value: 
@@ -42445,116 +42203,28 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1753645961}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: lineMaterial
-      value: 
-      objectReference: {fileID: 2100000, guid: 36b124f629ffefe43a4ca6841b0f11d0, type: 2}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: lineRenderer
-      value: 
-      objectReference: {fileID: 6538947346163714398, guid: 025ad9c5f3e99104198b06268955c62a, type: 3}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: moveAnimTime
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: eventRenderer
-      value: 
-      objectReference: {fileID: 897751972}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: kiviatDiagram
       value: 
       objectReference: {fileID: 23177017}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: platformAlpha
-      value: 40
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: platformWidth
-      value: 500
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: spawnAnimTime
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: platformHeight
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: platformPrefab
-      value: 
-      objectReference: {fileID: 2515161177860733246, guid: de7c4edd37a47c84ba9685d147ecfa36, type: 3}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: currentDateText
       value: 
       objectReference: {fileID: 1174657458}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: outlineMaterial
-      value: 
-      objectReference: {fileID: 2100000, guid: 4b4493cdbf9280d459db49b8f5eda2b5, type: 2}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: previousDateBtn
       value: 
       objectReference: {fileID: 1098566783}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: verticeMaterial
-      value: 
-      objectReference: {fileID: 2100000, guid: c6312456935fb7645aa9d5a684d6bace, type: 2}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: timelineRenderer
       value: 
       objectReference: {fileID: 985232845}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: dateTrackerPrefab
-      value: 
-      objectReference: {fileID: 2515161177860733246, guid: f34673e03fa8f8a4a883e45c726a27aa, type: 3}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: sidebarController
       value: 
       objectReference: {fileID: 23177013}
     - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: distanceOnComplete
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: colorChangeAnimTime
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: spaceBetweenObjects
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: transparentMaterial
-      value: 
-      objectReference: {fileID: 2100000, guid: 7e969c91817a9824e94513fb6aa176bb, type: 2}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: spaceBetweenWallObjs
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
       propertyPath: contributionsCalendar
       value: 
       objectReference: {fileID: 23177016}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: clickablePlatformPrefab
-      value: 
-      objectReference: {fileID: 2515161177860733246, guid: 5da1b0963a80e6642ace271477886453, type: 3}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: distanceBetweenProjects
-      value: 150
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: helperDistanceFromGraph
-      value: 25
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: platformDistanceBetween
-      value: 50
-      objectReference: {fileID: 0}
-    - target: {fileID: 5105029508102681987, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
-      propertyPath: spawnTopOutlinesForSpiral
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fac95c57ce097b54dbb006cc83125661, type: 3}
