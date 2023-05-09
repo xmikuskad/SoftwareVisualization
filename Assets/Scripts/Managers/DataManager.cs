@@ -34,11 +34,15 @@ public class DataManager: MonoBehaviour
     [Header("References")]
     private DataRenderer dataRenderer;
     private TimelineRenderer timelineRenderer;
+    public GameObject welcomeCanvas;
+    public GameObject sidebarBtn;
+    private SidebarBtnController sidebarBtnController;
     
     private void Start()
     {
         dataRenderer = FindObjectOfType<DataRenderer>();
         timelineRenderer = FindObjectOfType<TimelineRenderer>();
+        sidebarBtnController = FindObjectOfType<SidebarBtnController>();
         ResetEvent += OnResetEvent;
     }
 
@@ -49,6 +53,10 @@ public class DataManager: MonoBehaviour
         holder.LoadData();
         unchangedDataHolders.Add(projectIdCounter,holder);
         dataRenderer.AddData(holder, false, true);
+        sidebarBtn.gameObject.SetActive(true);
+        welcomeCanvas.gameObject.SetActive(false);
+        sidebarBtnController.AddProject(holder);
+        sidebarBtnController.Open();
     }
 
     public void InvokeDataFilterEvent(FilterHolder f)

@@ -66,6 +66,7 @@ public class DataRenderer : MonoBehaviour
     public long helperDistanceFromGraph = 100;
     public float lineWidth = 2f;
     public long distanceBetweenProjects = 300;
+    public long projectNameDistance = 50;
 
     [Header("Prefabs")]
     public GameObject verticePrefab;
@@ -75,6 +76,7 @@ public class DataRenderer : MonoBehaviour
     public Material transparentMaterial;
     public GameObject arrowPrefab;
     public GameObject linePrefab;
+    public GameObject projectNamePrefab;
     
     [Header("References")]
 
@@ -104,6 +106,8 @@ public class DataRenderer : MonoBehaviour
     public Button previousDateBtn;
     public GameObject dateTrackerPrefab;
 
+    private Transform mainCameraTransform;
+    
     private void Start()
     {
         SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
@@ -112,6 +116,19 @@ public class DataRenderer : MonoBehaviour
         SingletonManager.Instance.dataManager.ResetEvent += OnReset;
         SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
         filterHolder = new();
+        mainCameraTransform = Camera.main.transform;
+    }
+
+    private void LateUpdate()
+    {
+        foreach (var (key, value) in projectNamesObjects)
+        {
+            Vector3 directionToCamera = mainCameraTransform.position - value.transform.position;
+            Quaternion rotationToCamera = Quaternion.LookRotation(directionToCamera);
+
+            // Apply the rotation to the text
+            value.transform.rotation = rotationToCamera * Quaternion.Euler(0, 180, 0);
+        }
     }
 
     private void OnVerticeSelected(Pair<long,List<Pair<VerticeData,VerticeWrapper>>> pair)
@@ -349,6 +366,8 @@ public class DataRenderer : MonoBehaviour
         int projectDays = (int)diff.TotalDays;
         float platformWidth = projectDays*(spaceBetweenObjects+1);
         
+        float maxCount = (this.loadedProjects[projectId].maxVerticeCount ) * (1 + spaceBetweenObjects);
+        
         GameObject go = Instantiate(arrowPrefab);
         Vector3 from = new Vector3( - helperDistanceFromGraph, 0,  - helperDistanceFromGraph) + GetSpawnVector(projectId);
         Vector3 to = new Vector3( - helperDistanceFromGraph, 0,  - helperDistanceFromGraph+ platformWidth) + GetSpawnVector(projectId);
@@ -359,13 +378,18 @@ public class DataRenderer : MonoBehaviour
         from = new Vector3(- helperDistanceFromGraph, 0, - helperDistanceFromGraph) + GetSpawnVector(projectId);
          to = new Vector3(- helperDistanceFromGraph+platformWidth, 0, - helperDistanceFromGraph) + GetSpawnVector(projectId);
         go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f,"Elements",Direction.RIGHT);
-        
+
+
+        go = Instantiate(projectNamePrefab, GetSpawnVector(projectId) + new Vector3(maxCount/2f,projectNameDistance,platformWidth/2f), Quaternion.identity);
+        projectNamesObjects[projectId] = go;
+        go.GetComponent<TMP_Text>().text = this.loadedProjects[projectId].projectName;
+
     }
 
     private void SpawnHelperPlatformText(long projectId, int index, string text)
     {
         GameObject go = Instantiate(arrowPrefab);
-        float maxCount = (this.loadedProjects[projectId].maxVerticeCount ) * (1 + spaceBetweenObjects);
+        // float maxCount = (this.loadedProjects[projectId].maxVerticeCount ) * (1 + spaceBetweenObjects);
         float height = platformHeight + platformDistanceBetween;
         Vector3 from = new Vector3(- helperDistanceFromGraph, 0 -index*height, - helperDistanceFromGraph) + GetSpawnVector(projectId);
         Vector3 to = new Vector3(- helperDistanceFromGraph, 0 - height - index*height, - helperDistanceFromGraph)+ GetSpawnVector(projectId);
