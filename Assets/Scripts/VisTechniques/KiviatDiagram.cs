@@ -108,24 +108,24 @@ public class KiviatDiagram : MonoBehaviour
             for (int i = 0; i < 5; i++)
             {
                 if (metricz[i] < 0.01f) metricz[i] = 0.01f;
-                else metricz[i] = (float)Math.Log(metricz[i]);
+                else metricz[i] = (float)Math.Sqrt(metricz[i]);
                 if (metricz[i] < 0.01f) metricz[i] = 0.01f;
             }
 
-            Debug.Log("---- for person " + person.Value.name + " ----");
+            // Debug.Log("---- for person " + person.Value.name + " ----");
 
 
-            foreach (var x in metricz) Debug.Log("currently in list " + x.ToString());
+            // foreach (var x in metricz) Debug.Log("currently in list " + x.ToString());
 
             float sum = 0;
             foreach (float v in metricz) sum += v;
 
             if (sum > 0.05f)
                 metrics[person.Value.id] = metricz;
-            else { Debug.Log("ignoring " + person.Value.name + "cuz its all 0"); }
+            // else { Debug.Log("ignoring " + person.Value.name + "cuz its all 0"); }
 
 
-            Debug.Log("-------");
+            // Debug.Log("-------");
 
             // metrics[person.Value.id] = new List<float>() { 1, 2, 3, 4, 5 };
         }
