@@ -89,13 +89,13 @@ namespace UIWidgets
 				Cache.Push(this);
 			}
 
-			#if UNITY_2019_3_OR_NEWER
-			[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-			static void Init()
-			{
-				Cache.Clear();
-			}
-			#endif
+			// #if UNITY_2019_3_OR_NEWER
+			// [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+			// static void Init()
+			// {
+			// 	Cache.Clear();
+			// }
+			// #endif
 		}
 
 		/// <summary>

@@ -38,6 +38,8 @@ public class VerticeRenderer : MouseOverRenderer
     public DateTime beforeDate = DateTime.MinValue.Date;
     public DateTime afterDate = DateTime.MinValue.Date;
 
+    private bool isLast = false;
+
     protected void Awake()
     {
         meshRenderer = GetComponent<MeshRenderer>();
@@ -170,6 +172,9 @@ public class VerticeRenderer : MouseOverRenderer
 
     private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
     {
+        if(isLast)
+            return;
+        
         // TODO
         this.hightlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
         this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;
@@ -285,9 +290,10 @@ public class VerticeRenderer : MouseOverRenderer
         this.beforeDate = pair.Left;
         this.afterDate = pair.Right;
 
+        isLast = (changeOrCommit?.changes ?? "").Contains("-> Closed");
         // We need to duplicate material because otherwise all objects with that material will be changed
         Material newMat = new Material(material);
-        newMat.color = GetColor();
+        newMat.color = isLast ?  Color.black : GetColor();
         meshRenderer.material = newMat;
         this.nonHoverMaterial = newMat;
     }
@@ -311,8 +317,13 @@ public class VerticeRenderer : MouseOverRenderer
 
     public bool ContainsDate(DateTime date)
     {
-        // return this.beforeDate < date && this.afterDate > date ;
-        return this.beforeDate < date && this.afterDate > date && (this.commitOrChange?.created ?? this.commitOrChange?.begin ?? DateTime.MaxValue).Date <= date;
+        if (isLast)
+        {
+            return (this.commitOrChange?.created ?? this.commitOrChange?.begin ?? DateTime.MaxValue).Date <= date;
+        }
+        
+        return this.beforeDate < date && this.afterDate > date &&
+               (this.commitOrChange?.created ?? this.commitOrChange?.begin ?? DateTime.MaxValue).Date <= date;
     }
 
 }

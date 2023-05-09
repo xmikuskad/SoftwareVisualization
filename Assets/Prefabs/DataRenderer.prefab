@@ -44,28 +44,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8432f8a326d446c38ac5b317a8536a54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loadedProjects: []
-  instantiatePerFrame: 500
-  verticeMaterialsList:
-  - {fileID: 11400000, guid: ec743f14e525731448b73847a4e5ed43, type: 2}
-  - {fileID: 11400000, guid: 2beb163ece252b44cbf0a1f3d65fa52c, type: 2}
-  - {fileID: 11400000, guid: 206d9499bff56c9408e210a65dccf4b1, type: 2}
-  - {fileID: 11400000, guid: b8a0929221b5a58429e24904974a6912, type: 2}
-  - {fileID: 11400000, guid: 899a5405d1b59cc41926312924f9c88e, type: 2}
-  - {fileID: 11400000, guid: 4aca692d24897b549b4e2fe178e27fbb, type: 2}
-  - {fileID: 11400000, guid: a0b771c1da5181143bfcfe8bd3dbf2af, type: 2}
-  edgeMaterialsList:
-  - {fileID: 11400000, guid: 0f331a5e3e6c27a47a6ef40f2d17639a, type: 2}
-  - {fileID: 11400000, guid: 5367b56e7189cdf44b64f03c5b46aebc, type: 2}
-  - {fileID: 11400000, guid: f4d7016d99571364cae1b1cde68d3b0e, type: 2}
-  - {fileID: 11400000, guid: fb3bb32add12a8846a163d6e7e80db05, type: 2}
-  - {fileID: 11400000, guid: ac94c7d43281ead45bd87077588ab059, type: 2}
-  - {fileID: 11400000, guid: 3b5b24199aea54143b9fa69286c349bd, type: 2}
-  - {fileID: 11400000, guid: 44ed81c51659fbe41a10aac3f2cfce52, type: 2}
+  renderDistanceBetweenObjs: 3
+  distanceOnComplete: 10
+  spawnTopOutlinesForSpiral: 1
+  spaceBetweenWallObjs: 2
+  distanceFromMiddleGraph: 5
+  baseXPos: 1000
+  baseZPos: 1000
+  baseYPos: 1000
+  platformHeight: 2
+  platformDistanceBetween: 50
+  spaceBetweenObjects: 3
+  platformAlpha: 40
+  helperDistanceFromGraph: 25
+  lineWidth: 2
+  distanceBetweenProjects: 150
   verticePrefab: {fileID: 2515161177860733246, guid: 6a13776bb2538424eb1e08420dacdda0, type: 3}
-  edgePrefab: {fileID: 8105395278447939852, guid: 55d64d62ea6f4db48828d03a49205403, type: 3}
+  verticeMaterial: {fileID: 2100000, guid: c6312456935fb7645aa9d5a684d6bace, type: 2}
+  platformPrefab: {fileID: 2515161177860733246, guid: de7c4edd37a47c84ba9685d147ecfa36, type: 3}
+  clickablePlatformPrefab: {fileID: 2515161177860733246, guid: 5da1b0963a80e6642ace271477886453, type: 3}
+  transparentMaterial: {fileID: 2100000, guid: 7e969c91817a9824e94513fb6aa176bb, type: 2}
+  arrowPrefab: {fileID: 2742218351095386164, guid: 00c547efbbdd51b40a4ee77465d1860c, type: 3}
+  linePrefab: {fileID: 2723466005977160117, guid: 9903f576e2b8fcf439a5baa1311cac49, type: 3}
   hoverCanvas: {fileID: 0}
   hoverElement: {fileID: 0}
   hoverText: {fileID: 0}
   loadingBar: {fileID: 0}
   loadBtn: {fileID: 0}
+  currentDateText: {fileID: 0}
+  collabMatrix: {fileID: 0}
+  outlineMaterial: {fileID: 2100000, guid: 4b4493cdbf9280d459db49b8f5eda2b5, type: 2}
+  lineRenderer: {fileID: 6538947346163714398, guid: 025ad9c5f3e99104198b06268955c62a, type: 3}
+  sidebarController: {fileID: 0}
+  timelineRenderer: {fileID: 0}
+  contributionsCalendar: {fileID: 0}
+  kiviatDiagram: {fileID: 0}
+  nextDateBtn: {fileID: 0}
+  previousDateBtn: {fileID: 0}
+  dateTrackerPrefab: {fileID: 2515161177860733246, guid: f34673e03fa8f8a4a883e45c726a27aa, type: 3}
