@@ -58,6 +58,8 @@ public class DataHolder
         LoadVerticeWrappers();
 
         fillTicketToChangeListPerAuthor();
+
+        this.projectName = projectName + "-" + projectId;
         Debug.Log("Data holder load finished created");
     }
 
