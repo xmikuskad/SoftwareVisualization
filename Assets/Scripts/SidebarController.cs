@@ -20,17 +20,26 @@ public class SidebarController : MonoBehaviour
     public TMP_Text verticeType;
     public TMP_Text verticeId;
 
-    public TMP_Text personInitials;
-    public TMP_Text ticketCreatedDate;
-    public TMP_Text ticketDueDate;
     public GameObject personData;
     public GameObject ticketData;
+    public GameObject changeData;
+    public TMP_Text personInitials;
 
+    public TMP_Text ticketCreatedDate;
+    public TMP_Text ticketDueDate;
+
+    public GameObject overlayDataHolder;
     public GameObject collabMatrix;
+    public Button nextDataOverlayBtn;
 
-    public Button showCollabMatrixBtn;
-
+    public Button prevDataOverlayBtn;
     public CollabBarChart collabBarChart;
+
+    private Pair<VerticeData, VerticeWrapper> currentlyShownObject;
+
+    private List<Pair<VerticeData, VerticeWrapper>> currentlyClickedObjects;
+
+    private long projectId;
 
 
     private void Start()
@@ -69,7 +78,74 @@ public class SidebarController : MonoBehaviour
     // project ID, list vsetkych objektov ktore su oznacene <commit/change/null, ticket/person/repo/file/wiki>
     private void OnVerticeSelected(Pair<long, List<Pair<VerticeData, VerticeWrapper>>> pair)
     {
+        projectId = pair.Left;
+        currentlyClickedObjects = pair.Right;
 
+        if (currentlyClickedObjects.Count == 0) { slideIn(); }
+        if (currentlyClickedObjects.Count == 1)
+        {
+            deactivateOverlayButtons();
+        }
+        if (currentlyClickedObjects.Count > 1)
+        {
+            activateOverlayButtons();
+        }
+
+        currentlyShownObject = currentlyClickedObjects.Last();
+        renderThisObject(projectId, currentlyShownObject);
+
+    }
+
+    public void renderThisObject(long projectId, Pair<VerticeData, VerticeWrapper> objectToRender)
+    {
+        VerticeData verticeData1 = objectToRender.Left;
+        VerticeWrapper verticeWrapper2 = objectToRender.Right;
+        currentlyShownObject = objectToRender;
+
+        if (verticeData1 != null)
+        {
+            if (verticeData1.verticeType == VerticeType.Change) Debug.Log("show on CHANGE id " + verticeData1.id.ToString());
+            if (verticeData1.verticeType == VerticeType.Commit) Debug.Log("show on COMMIT id " + verticeData1.id.ToString());
+        }
+
+        else
+        {
+            if (verticeWrapper2.verticeData.verticeType == VerticeType.Ticket)
+            {
+                Debug.Log("show on TICKET " + verticeWrapper2.verticeData.id.ToString());
+                slideOut(projectId, verticeWrapper2.verticeData);
+            }
+            if (verticeWrapper2.verticeData.verticeType == VerticeType.Person)
+            {
+                Debug.Log("show on PERSON " + verticeWrapper2.verticeData.id.ToString());
+                slideOut(projectId, verticeWrapper2.verticeData);
+            }
+            if (verticeWrapper2.verticeData.verticeType == VerticeType.RepoFile) Debug.Log("show on REPOFILE " + verticeWrapper2.verticeData.id.ToString());
+            if (verticeWrapper2.verticeData.verticeType == VerticeType.File) Debug.Log("show on FILE " + verticeWrapper2.verticeData.id.ToString());
+            if (verticeWrapper2.verticeData.verticeType == VerticeType.Wiki) Debug.Log("show on WIKI " + verticeWrapper2.verticeData.id.ToString());
+        }
+    }
+
+    public void renderNextObject()
+    {
+        if (currentlyClickedObjects.Contains(currentlyShownObject))
+        {
+            int indexOfCurrent = currentlyClickedObjects.IndexOf(currentlyShownObject);
+            int indexOfNext = indexOfCurrent == currentlyClickedObjects.Count - 1 ? 0 : indexOfCurrent + 1;
+            // Debug.Log("RENDER NEXT ON INDEX " + indexOfNext.ToString());
+            renderThisObject(projectId, currentlyClickedObjects[indexOfNext]);
+        }
+    }
+
+    public void renderPrevObject()
+    {
+        if (currentlyClickedObjects.Contains(currentlyShownObject))
+        {
+            int indexOfCurrent = currentlyClickedObjects.IndexOf(currentlyShownObject);
+            int indexOfPrev = indexOfCurrent == 0 ? currentlyClickedObjects.Count - 1 : indexOfCurrent - 1;
+            // Debug.Log("RENDER PREV ON INDEX " + indexOfPrev.ToString());
+            renderThisObject(projectId, currentlyClickedObjects[indexOfPrev]);
+        }
     }
 
     // Open
@@ -132,4 +208,17 @@ public class SidebarController : MonoBehaviour
     {
 
     }
+
+    public void deactivateOverlayButtons()
+    {
+        nextDataOverlayBtn.gameObject.SetActive(false);
+        prevDataOverlayBtn.gameObject.SetActive(false);
+    }
+
+    public void activateOverlayButtons()
+    {
+        nextDataOverlayBtn.gameObject.SetActive(true);
+        prevDataOverlayBtn.gameObject.SetActive(true);
+    }
+
 }
