@@ -28,12 +28,12 @@ public class ArrowRenderer : MonoBehaviour
 
         // if (direction == Direction.DOWN)
         // {
-            // Calculate the rotation of the text based on the camera's position and direction
-            Vector3 directionToCamera = mainCamera.transform.position - lineText.transform.position;
-            Quaternion rotationToCamera = Quaternion.LookRotation(directionToCamera);
+        // Calculate the rotation of the text based on the camera's position and direction
+        Vector3 directionToCamera = mainCamera.transform.position - lineText.transform.position;
+        Quaternion rotationToCamera = Quaternion.LookRotation(directionToCamera);
 
-            // Apply the rotation to the text
-            lineText.transform.rotation = rotationToCamera * Quaternion.Euler(0, 180, 0);
+        // Apply the rotation to the text
+        lineText.transform.rotation = rotationToCamera * Quaternion.Euler(0, 180, 0);
         // }
     }
 
@@ -125,7 +125,7 @@ public class ArrowRenderer : MonoBehaviour
         main.endWidth = width;
         main.SetPosition(0, from);
         lineText.text = text;
-        lineText.transform.position = from + Vector3.right * 2f + Vector3.down * 3f;
+        lineText.transform.position = from + Vector3.right * 2f + Vector3.up * 3f;
     }
 
     private LineRenderer GetDefaultRenderer(int index, float width, Vector3 to)
