@@ -14,6 +14,12 @@ public class ColorMapping : ICloneable
     public static readonly ColorMapping WIKI = new(23, new Color32(30, 230, 30, 255), "Wiki vertice");
     public static readonly ColorMapping REPOFILE = new(25, new Color32(30, 30, 230, 255), "RepoFile vertice");
     public static readonly ColorMapping VERTICE_HOVER = new(26, new Color32(255, 255, 255, 255), "Vertice hover");
+    public static readonly ColorMapping TICKET_PLATFORM = new(30, new Color32(255, 255, 255, 120), "Ticket platform");
+    public static readonly ColorMapping PERSON_PLATFORM = new(31, new Color32(255, 255, 255, 120), "Person platform");
+    public static readonly ColorMapping FILE_PLATFORM = new(32, new Color32(255, 255, 255, 120), "File platform");
+    public static readonly ColorMapping WIKI_PLATFORM = new(33, new Color32(255, 255, 255, 120), "Wiki platform");
+    public static readonly ColorMapping REPOFILE_PLATFORM = new(35, new Color32(255, 255, 255, 120), "RepoFile platform");
+    public static readonly ColorMapping DATE_PLATFORM = new(36, new Color32(255, 255, 255, 120), "Date platform");
 
     public static IEnumerable<ColorMapping> Values
     {
@@ -28,6 +34,12 @@ public class ColorMapping : ICloneable
             yield return WIKI;
             yield return REPOFILE;
             yield return VERTICE_HOVER;
+            yield return TICKET_PLATFORM;
+            yield return PERSON_PLATFORM;
+            yield return FILE_PLATFORM;
+            yield return WIKI_PLATFORM;
+            yield return REPOFILE_PLATFORM;
+            yield return DATE_PLATFORM;
         }
     }
 

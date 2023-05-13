@@ -29,15 +29,15 @@ public class DataRenderer : MonoBehaviour
     private Dictionary<long, Pair<float, float>> projectSizesZ = new(); //Keeping min and max Z sizes for a project
     private Dictionary<long, Pair<float, float>> projectSizesX = new(); //Keeping min and max X sizes for a project
 
-    public Pair<DateTime, DateTime> dateFilter = new(DateTime.MinValue.Date,DateTime.MinValue.Date);
-    
-    
-    
-    
+    public Pair<DateTime, DateTime> dateFilter = new(DateTime.MinValue.Date, DateTime.MinValue.Date);
+
+
+
+
     // New variables
-    public Dictionary<long,Dictionary<VerticeType, GameObject>> platforms = new();
+    public Dictionary<long, Dictionary<VerticeType, GameObject>> platforms = new();
     private Dictionary<long, Dictionary<long, List<VerticeRenderer>>> verticesWithEdges = new();
-    private Dictionary<long, Dictionary<VerticeType,List<GameObject>>> verticePlatforms = new();
+    private Dictionary<long, Dictionary<VerticeType, List<GameObject>>> verticePlatforms = new();
     private Dictionary<long, DateTime> currentProjectDate = new();
     private Dictionary<long, GameObject> datePlatformTrackers = new();
     private DateTime lastDate = DateTime.MinValue.Date;
@@ -52,17 +52,16 @@ public class DataRenderer : MonoBehaviour
     public bool spawnTopOutlinesForSpiral = false;
     public long spaceBetweenWallObjs = 2;
     public long distanceFromMiddleGraph = 5;
-    
-    
+
+
     // New Properties
-    [Header("New props")] 
+    [Header("New props")]
     public long baseXPos = 0;
     public long baseZPos = 0;
     public long baseYPos = 0;
     public float platformHeight = 10f;
     public float platformDistanceBetween = 2f;
     public long spaceBetweenObjects = 2;
-    public byte platformAlpha = 100;
     public long helperDistanceFromGraph = 100;
     public float lineWidth = 2f;
     public long distanceBetweenProjects = 300;
@@ -77,7 +76,7 @@ public class DataRenderer : MonoBehaviour
     public GameObject arrowPrefab;
     public GameObject linePrefab;
     public GameObject projectNamePrefab;
-    
+
     [Header("References")]
 
     public Canvas hoverCanvas;
@@ -107,7 +106,7 @@ public class DataRenderer : MonoBehaviour
     public GameObject dateTrackerPrefab;
 
     private Transform mainCameraTransform;
-    
+
     private void Start()
     {
         SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
@@ -115,6 +114,7 @@ public class DataRenderer : MonoBehaviour
         SingletonManager.Instance.dataManager.DateRenderChangedEvent += OnDateRenderChanged;
         SingletonManager.Instance.dataManager.ResetEvent += OnReset;
         SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
+        SingletonManager.Instance.preferencesManager.MappingChangedEvent += OnMappingChanged;
         filterHolder = new();
         mainCameraTransform = Camera.main.transform;
     }
@@ -131,10 +131,47 @@ public class DataRenderer : MonoBehaviour
         }
     }
 
-    private void OnVerticeSelected(Pair<long,List<Pair<VerticeData,VerticeWrapper>>> pair)
+
+    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
+    {
+        foreach (var (pid, val) in verticePlatforms)
+        {
+            int index = 0;
+            foreach (var (key, value) in val)
+            {
+                Color32 color = colorMappings[SingletonManager.Instance.preferencesManager.GetColorMappingByType(key).id].color;
+
+                // verticePlatforms[val]
+                foreach (var obj in value)
+                {
+                    Color32 color2 = color;
+                    if (index % 2 == 1)
+                    {
+                        color2.r = (byte)Math.Clamp(color.r * 1.25f, 0, 255);
+                        color2.g = (byte)Math.Clamp(color.g * 1.25f, 0, 255);
+                        color2.b = (byte)Math.Clamp(color.b * 1.25f, 0, 255);
+                        color2.a = (byte)Math.Clamp(color.a * 1.25f, 0, 255);
+                    }
+                    Material newMat = new Material(transparentMaterial);
+                    newMat.color = color2;
+                    obj.GetComponent<MeshRenderer>().material = newMat;
+                    index++;
+                }
+            }
+        }
+
+        foreach (var (key, platform) in datePlatformTrackers)
+        {
+            Material newMat = new Material(transparentMaterial);
+            newMat.color = colorMappings[ColorMapping.DATE_PLATFORM.id].color;
+            platform.GetComponent<MeshRenderer>().material = newMat;
+        }
+    }
+
+    private void OnVerticeSelected(Pair<long, List<Pair<VerticeData, VerticeWrapper>>> pair)
     {
         PoolManager.Pools[PoolNames.LINES].DespawnAll();
-        if(linePosHolder.ContainsKey(pair.Left))
+        if (linePosHolder.ContainsKey(pair.Left))
             linePosHolder[pair.Left].Clear();
 
         // pair<Commit/Change, VErtice of commit>
@@ -177,7 +214,7 @@ public class DataRenderer : MonoBehaviour
         Transform t = PoolManager.Pools[PoolNames.LINES].Spawn(linePrefab);
         LineRenderer lr = t.GetComponent<LineRenderer>();
         lr.positionCount = 2;
-        
+
         lr.SetPosition(0, from.transform.position);
         lr.SetPosition(1, to.transform.position);
         lr.startWidth = lineWidth;
@@ -197,7 +234,7 @@ public class DataRenderer : MonoBehaviour
             linePosHolder.Clear();
         }
     }
-    
+
     private void OnDateRenderChanged(Pair<long, Pair<DateTime, DateTime>> pair)
     {
         lastDate = DateTime.MinValue.Date;
@@ -214,7 +251,7 @@ public class DataRenderer : MonoBehaviour
                     verticeRenderer.gameObject.SetActive(false);
                     continue;
                 }
-                verticeRenderer.gameObject.SetActive(verticeRenderer.commitOrChange?.IsDateBetween(pair.Right.Left,pair.Right.Right) ?? true);
+                verticeRenderer.gameObject.SetActive(verticeRenderer.commitOrChange?.IsDateBetween(pair.Right.Left, pair.Right.Right) ?? true);
             }
         }
 
@@ -233,13 +270,13 @@ public class DataRenderer : MonoBehaviour
                     verticeRenderer.gameObject.SetActive(false);
                     continue;
                 }
-                if(verticeRenderer.verticeWrapper.verticeData.verticeType != VerticeType.Person)
+                if (verticeRenderer.verticeWrapper.verticeData.verticeType != VerticeType.Person)
                     verticeRenderer.gameObject.SetActive(verticeRenderer.ContainsDate(date));
             }
         }
         currentProjectDate[projectId] = date;
         TimeSpan diff = lastDate != DateTime.MinValue.Date ? lastDate - currentProjectDate[projectId] : this.loadedProjects[projectId].startDate - currentProjectDate[projectId];
-        int days = (int)diff.TotalDays;    
+        int days = (int)diff.TotalDays;
         Vector3 platformPos = datePlatformTrackers[projectId].transform.position;
         platformPos.z -= (1 + spaceBetweenObjects) * days;
         datePlatformTrackers[projectId].transform.position = platformPos;
@@ -248,23 +285,23 @@ public class DataRenderer : MonoBehaviour
         {
             datePlatformTrackers[projectId].gameObject.SetActive(true);
         }
-        
+
         lastDate = date;
     }
-    
+
     private void OnDataFilter(FilterHolder f)
     {
         this.filterHolder = f;
-        
+
         // TODO move specific platforms up/down?
         foreach (var (projectId, ignored) in this.loadedProjects)
         {
-                    
+
             foreach (var (key, value) in platforms[projectId])
             {
                 value.SetActive(!f.disabledVertices.Contains(key));
             }
-        
+
             foreach (var (key, value) in verticePlatforms[projectId])
             {
                 if (f.disabledVertices.Contains(key))
@@ -282,7 +319,7 @@ public class DataRenderer : MonoBehaviour
                     }
                 }
             }
-        
+
             if (currentProjectDate[projectId] == DateTime.MinValue.Date)
             {
                 RenderAllDates();
@@ -293,14 +330,14 @@ public class DataRenderer : MonoBehaviour
             }
         }
 
-    } 
-    
+    }
+
     public void AddData(DataHolder dataHolder, bool rerender, bool renderFirst)
     {
         SetLoading(true);
         this.loadedProjects.Add(dataHolder.projectId, dataHolder);
         this.dateIndexTracker[dataHolder.projectId] = -1;
-        
+
         RenderDataNew(dataHolder.projectId);
     }
 
@@ -318,11 +355,11 @@ public class DataRenderer : MonoBehaviour
         wikiPosTracker.Clear();
         filePosTracker.Clear();
         repoPosTracker.Clear();
-        
+
         projectSizesX.Clear();
         projectSizesZ.Clear();
-        
-        
+
+
         // New things
         platforms.Clear();
         currentProjectDate.Clear();
@@ -339,7 +376,7 @@ public class DataRenderer : MonoBehaviour
         SpawnVerticesAndEdges(projectId);
         SpawnDateTrackerPlatform(projectId);
         SpawnHelper(projectId);
-        
+
         // Load viz techniques
         if (projectId == 1)
         {
@@ -355,32 +392,32 @@ public class DataRenderer : MonoBehaviour
 
     private void SpawnHelper(long projectId)
     {
-        SpawnHelperPlatformText(projectId,0, "Person");
-        SpawnHelperPlatformText(projectId,1, "Ticket");
-        SpawnHelperPlatformText(projectId,2,"Repository file");
-        SpawnHelperPlatformText(projectId,3,"File");
-        SpawnHelperPlatformText(projectId,4,"Wiki");
-        
-        
+        SpawnHelperPlatformText(projectId, 0, "Person");
+        SpawnHelperPlatformText(projectId, 1, "Ticket");
+        SpawnHelperPlatformText(projectId, 2, "Repository file");
+        SpawnHelperPlatformText(projectId, 3, "File");
+        SpawnHelperPlatformText(projectId, 4, "Wiki");
+
+
         TimeSpan diff = this.loadedProjects[projectId].maxDate - this.loadedProjects[projectId].minDate;
         int projectDays = (int)diff.TotalDays;
-        float platformWidth = projectDays*(spaceBetweenObjects+1);
-        
-        float maxCount = (this.loadedProjects[projectId].maxVerticeCount ) * (1 + spaceBetweenObjects);
-        
+        float platformWidth = projectDays * (spaceBetweenObjects + 1);
+
+        float maxCount = (this.loadedProjects[projectId].maxVerticeCount) * (1 + spaceBetweenObjects);
+
         GameObject go = Instantiate(arrowPrefab);
-        Vector3 from = new Vector3( - helperDistanceFromGraph, 0,  - helperDistanceFromGraph) + GetSpawnVector(projectId);
-        Vector3 to = new Vector3( - helperDistanceFromGraph, 0,  - helperDistanceFromGraph+ platformWidth) + GetSpawnVector(projectId);
-        go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f,"Changes",Direction.LEFT);
-        
-                
+        Vector3 from = new Vector3(-helperDistanceFromGraph, 0, -helperDistanceFromGraph) + GetSpawnVector(projectId);
+        Vector3 to = new Vector3(-helperDistanceFromGraph, 0, -helperDistanceFromGraph + platformWidth) + GetSpawnVector(projectId);
+        go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f, "Changes", Direction.LEFT);
+
+
         go = Instantiate(arrowPrefab);
-        from = new Vector3(- helperDistanceFromGraph, 0, - helperDistanceFromGraph) + GetSpawnVector(projectId);
-         to = new Vector3(- helperDistanceFromGraph+platformWidth, 0, - helperDistanceFromGraph) + GetSpawnVector(projectId);
-        go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f,"Elements",Direction.RIGHT);
+        from = new Vector3(-helperDistanceFromGraph, 0, -helperDistanceFromGraph) + GetSpawnVector(projectId);
+        to = new Vector3(-helperDistanceFromGraph + platformWidth, 0, -helperDistanceFromGraph) + GetSpawnVector(projectId);
+        go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f, "Elements", Direction.RIGHT);
 
 
-        go = Instantiate(projectNamePrefab, GetSpawnVector(projectId) + new Vector3(maxCount/2f,projectNameDistance,platformWidth/2f), Quaternion.identity);
+        go = Instantiate(projectNamePrefab, GetSpawnVector(projectId) + new Vector3(maxCount / 2f, projectNameDistance, platformWidth / 2f), Quaternion.identity);
         projectNamesObjects[projectId] = go;
         go.GetComponent<TMP_Text>().text = this.loadedProjects[projectId].projectName;
 
@@ -391,9 +428,9 @@ public class DataRenderer : MonoBehaviour
         GameObject go = Instantiate(arrowPrefab);
         // float maxCount = (this.loadedProjects[projectId].maxVerticeCount ) * (1 + spaceBetweenObjects);
         float height = platformHeight + platformDistanceBetween;
-        Vector3 from = new Vector3(- helperDistanceFromGraph, 0 -index*height, - helperDistanceFromGraph) + GetSpawnVector(projectId);
-        Vector3 to = new Vector3(- helperDistanceFromGraph, 0 - height - index*height, - helperDistanceFromGraph)+ GetSpawnVector(projectId);
-        go.GetComponent<ArrowRenderer>().SetUpNoArrows(from, to, 2f,text,Direction.DOWN);
+        Vector3 from = new Vector3(-helperDistanceFromGraph, 0 - index * height, -helperDistanceFromGraph) + GetSpawnVector(projectId);
+        Vector3 to = new Vector3(-helperDistanceFromGraph, 0 - height - index * height, -helperDistanceFromGraph) + GetSpawnVector(projectId);
+        go.GetComponent<ArrowRenderer>().SetUpNoArrows(from, to, 2f, text, Direction.DOWN);
     }
 
     private Vector3 GetSpawnVector(long projectId)
@@ -410,18 +447,17 @@ public class DataRenderer : MonoBehaviour
 
         return vector;
     }
-    
+
     public void SpawnPlatform(int index, VerticeType type, long projectId, float platformWidth, int alreadySpawnedCount)
     {
         Color32 color = SingletonManager.Instance.preferencesManager.GetColorMappingByType(type).color;
-        color.a = platformAlpha;
-        float maxCount = (this.loadedProjects[projectId].maxVerticeCount - alreadySpawnedCount ) * (1 + spaceBetweenObjects);
-        
-        Vector3 pos = new Vector3( (alreadySpawnedCount)* (1 + spaceBetweenObjects)+ maxCount/2f -1f,  (-index) * platformDistanceBetween,  platformWidth/2f) + GetSpawnVector(projectId);
+        float maxCount = (this.loadedProjects[projectId].maxVerticeCount - alreadySpawnedCount) * (1 + spaceBetweenObjects);
+
+        Vector3 pos = new Vector3((alreadySpawnedCount) * (1 + spaceBetweenObjects) + maxCount / 2f - 1f, (-index) * platformDistanceBetween, platformWidth / 2f) + GetSpawnVector(projectId);
 
         GameObject platform = Instantiate(platformPrefab, pos, Quaternion.identity);
-        platform.transform.localScale = new Vector3(maxCount+1, platformHeight, platformWidth+1f);
-        
+        platform.transform.localScale = new Vector3(maxCount + 1, platformHeight, platformWidth + 1f);
+
         Material newMat = new Material(transparentMaterial);
         newMat.color = color;
         platform.GetComponent<MeshRenderer>().material = newMat;
@@ -433,25 +469,24 @@ public class DataRenderer : MonoBehaviour
 
         platforms[projectId][type] = platform;
     }
-    
+
     public void SpawnVerticePlatform(int index, VerticeType type, long projectId, float platformWidth, Vector3 platformPos, VerticeWrapper v)
     {
         Color32 color = SingletonManager.Instance.preferencesManager.GetColorMappingByType(type).color;
-        color.a = platformAlpha;
         if (index % 2 == 1)
         {
-            color.r = (byte)Math.Clamp(color.r * 1.25f,0,255);
-            color.g = (byte)Math.Clamp(color.g * 1.25f,0,255);
-            color.b = (byte)Math.Clamp(color.b * 1.25f,0,255);
-            color.a = (byte)Math.Clamp(color.a * 1.25f,0,255);
+            color.r = (byte)Math.Clamp(color.r * 1.25f, 0, 255);
+            color.g = (byte)Math.Clamp(color.g * 1.25f, 0, 255);
+            color.b = (byte)Math.Clamp(color.b * 1.25f, 0, 255);
+            color.a = (byte)Math.Clamp(color.a * 1.25f, 0, 255);
         }
         GameObject platform = Instantiate(clickablePlatformPrefab, platformPos, Quaternion.identity);
-        platform.transform.localScale = new Vector3(spaceBetweenObjects+1f, platformHeight, platformWidth+1f);
-        
+        platform.transform.localScale = new Vector3(spaceBetweenObjects + 1f, platformHeight, platformWidth + 1f);
+
         Material newMat = new Material(transparentMaterial);
         newMat.color = color;
         platform.GetComponent<MeshRenderer>().material = newMat;
-        platform.GetComponent<VerticePlatformRenderer>().SetUp(projectId,v);
+        platform.GetComponent<VerticePlatformRenderer>().SetUp(projectId, v);
 
         if (!verticePlatforms.ContainsKey(projectId))
         {
@@ -471,34 +506,33 @@ public class DataRenderer : MonoBehaviour
         {
             currentProjectDate[projectId] = DateTime.MinValue.Date;
         }
-        
-        
-        float datePosAdd = (spaceBetweenObjects+1);
-        
+
+
+        float datePosAdd = (spaceBetweenObjects + 1);
+
         TimeSpan diff = this.loadedProjects[projectId].maxDate - this.loadedProjects[projectId].minDate;
         int projectDays = (int)diff.TotalDays;
-        
-        float platformWidth = projectDays*(spaceBetweenObjects+1);
-        
-        SpawnVerticeAndEdges(0,VerticeType.Person,projectId,datePosAdd,platformWidth);
-        SpawnVerticeAndEdges(1,VerticeType.Ticket,projectId,datePosAdd,platformWidth);
-        SpawnVerticeAndEdges(2,VerticeType.RepoFile,projectId,datePosAdd,platformWidth);
-        SpawnVerticeAndEdges(3,VerticeType.File,projectId,datePosAdd,platformWidth);
-        SpawnVerticeAndEdges(4,VerticeType.Wiki,projectId,datePosAdd,platformWidth);
+
+        float platformWidth = projectDays * (spaceBetweenObjects + 1);
+
+        SpawnVerticeAndEdges(0, VerticeType.Person, projectId, datePosAdd, platformWidth);
+        SpawnVerticeAndEdges(1, VerticeType.Ticket, projectId, datePosAdd, platformWidth);
+        SpawnVerticeAndEdges(2, VerticeType.RepoFile, projectId, datePosAdd, platformWidth);
+        SpawnVerticeAndEdges(3, VerticeType.File, projectId, datePosAdd, platformWidth);
+        SpawnVerticeAndEdges(4, VerticeType.Wiki, projectId, datePosAdd, platformWidth);
     }
 
     public void SpawnDateTrackerPlatform(long projectId)
     {
-        float maxCount = (this.loadedProjects[projectId].maxVerticeCount ) * (1 + spaceBetweenObjects);
-        
-        Color32 color = Color.magenta;
-        color.a = (byte)(platformAlpha*2);
+        float maxCount = (this.loadedProjects[projectId].maxVerticeCount) * (1 + spaceBetweenObjects);
+
+        Color32 color = ColorMapping.DATE_PLATFORM.color;
 
         float height = platformHeight * 4 - (4) * platformDistanceBetween;
 
         GameObject platform = Instantiate(dateTrackerPrefab, GetDefaultTrackerPlatformPos(projectId), Quaternion.identity);
-        platform.transform.localScale = new Vector3(maxCount+1, -height, 1f);
-        
+        platform.transform.localScale = new Vector3(maxCount + 1, -height, 1f);
+
         Material newMat = new Material(transparentMaterial);
         newMat.color = color;
         platform.GetComponent<MeshRenderer>().material = newMat;
@@ -509,9 +543,9 @@ public class DataRenderer : MonoBehaviour
 
     private Vector3 GetDefaultTrackerPlatformPos(long projectId)
     {
-        float maxCount = (this.loadedProjects[projectId].maxVerticeCount ) * (1 + spaceBetweenObjects);
+        float maxCount = (this.loadedProjects[projectId].maxVerticeCount) * (1 + spaceBetweenObjects);
         float height = platformHeight * 4 - (4) * platformDistanceBetween;
-        return new Vector3(maxCount / 2 -1,  height / 2f - platformDistanceBetween / 2f, 0) + GetSpawnVector(projectId);
+        return new Vector3(maxCount / 2 - 1, height / 2f - platformDistanceBetween / 2f, 0) + GetSpawnVector(projectId);
     }
 
     public void SpawnVerticeAndEdges(int index, VerticeType type, long projectId, float datePosAdd, float platformWidth)
@@ -581,7 +615,7 @@ public class DataRenderer : MonoBehaviour
         }
     }
 
-    private float GetVerticeHeight( Dictionary<long, Dictionary<DateTime, float>> heightTracker, Pair<VerticeData, VerticeWrapper> change)
+    private float GetVerticeHeight(Dictionary<long, Dictionary<DateTime, float>> heightTracker, Pair<VerticeData, VerticeWrapper> change)
     {
         DateTime current = (change.Left.created ?? change.Left.begin ?? DateTime.MinValue).Date;
         if (!heightTracker.ContainsKey(change.Right.verticeData.id))
@@ -605,7 +639,7 @@ public class DataRenderer : MonoBehaviour
         DateTime current = (changes[xIndex].Left.created ??
                            changes[xIndex].Left.begin ?? DateTime.MinValue).Date;
 
-        int tracker = xIndex - 1;    
+        int tracker = xIndex - 1;
         while (tracker > 0)
         {
             DateTime date = (changes[tracker].Left.created ??
@@ -621,8 +655,8 @@ public class DataRenderer : MonoBehaviour
                 break;
             }
         }
-        
-        tracker = xIndex + 1;    
+
+        tracker = xIndex + 1;
         while (tracker < changes.Count)
         {
             DateTime date = (changes[tracker].Left.created ??
@@ -641,7 +675,7 @@ public class DataRenderer : MonoBehaviour
 
         return pair;
     }
-    
+
     private Transform SpawnVerticeEdge(long projectId, Vector3 spawnPos, VerticeWrapper verticeWrapper, VerticeData changeOrCommit, Pair<DateTime, DateTime> pair)
     {
         Transform obj = PoolManager.Pools[PoolNames.VERTICE].Spawn(verticePrefab, spawnPos, Quaternion.identity);
@@ -672,7 +706,7 @@ public class DataRenderer : MonoBehaviour
             RenderNextDateForProject(key);
         }
     }
-    
+
     public void RenderNextDateForProject(long projectId)
     {
         previousDateBtn.interactable = true;
@@ -684,14 +718,14 @@ public class DataRenderer : MonoBehaviour
         DateTime newDate =
             loadedProjects[projectId].dates.Where(x => x > currentProjectDate[projectId]).Min();
         SingletonManager.Instance.dataManager.InvokeDateChangedEvent(projectId, newDate);
-        
-        
+
+
         if (currentProjectDate[projectId] >= loadedProjects[projectId].maxDate)
         {
-            nextDateBtn.interactable =false;
+            nextDateBtn.interactable = false;
         }
     }
-    
+
     // Called from UI
     public void RenderPreviousDate()
     {
@@ -700,7 +734,7 @@ public class DataRenderer : MonoBehaviour
             RenderPreviousDateForProject(key);
         }
     }
-    
+
     public void RenderPreviousDateForProject(long projectId)
     {
         nextDateBtn.interactable = true;
@@ -750,7 +784,7 @@ public class DataRenderer : MonoBehaviour
         datePlatformTrackers[projectId].gameObject.SetActive(false);
 
     }
-    
+
     // Manages loading screen
     public void SetLoading(bool status)
     {
@@ -758,7 +792,7 @@ public class DataRenderer : MonoBehaviour
         loadingBar.SetActive(status);
         loadBtn.SetActive(!status);
     }
-    
+
     public bool HasActiveDateFilter()
     {
         return this.dateFilter.Left != DateTime.MinValue.Date && this.dateFilter.Right != DateTime.MinValue.Date;

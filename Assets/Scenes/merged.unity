@@ -607,11 +607,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7a41157ca8cf4d42b855af0896674f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultPersonToggleElement: {fileID: 0}
-  personToggleElementHolder: {fileID: 0}
-  kiwiatDiagramArea: {fileID: 0}
-  kiviatDiagramMain: {fileID: 0}
-  e2chart: {fileID: 0}
+  defaultPersonToggleElement: {fileID: 780396176}
+  personToggleElementHolder: {fileID: 1618865388}
+  kiwiatDiagramArea: {fileID: 465499009}
+  kiviatDiagramMain: {fileID: 230056985}
+  e2chart: {fileID: 904221784}
 --- !u!1 &32772612
 GameObject:
   m_ObjectHideFlags: 0
@@ -32320,7 +32320,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 230056985}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
         m_MethodName: SetActive
         m_Mode: 6
@@ -41015,6 +41015,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 197790788, guid: 769e686060ce6494686489282cf10898, type: 3}
+      propertyPath: m_RootOrder
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 1246620051, guid: 769e686060ce6494686489282cf10898, type: 3}
       propertyPath: m_Name
       value: HighlightObjectPool
