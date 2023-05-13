@@ -9,11 +9,11 @@ public class VerticeData
     public long id { get; set; }
     public string text { get; set; }
     public string title { get; set; }
-    public VerticeType verticeType { get; set; }  
-    
+    public VerticeType verticeType { get; set; }
+
     // attributes
     public string eid { get; set; }
-    public string name  { get; set; }
+    public string name { get; set; }
     public string description { get; set; }
     public string comment { get; set; }
     public string message { get; set; }
@@ -56,7 +56,7 @@ public class VerticeData
     public string[] statusSuperClass { get; set; }
     public string[] resolutionClass { get; set; }
     public string[] resolutionSuperClass { get; set; }
-    
+
     public DateTime? begin { get; set; }
 
     // This is used to instantiate a "fake" person for tasks we dont have authorship for
@@ -64,7 +64,7 @@ public class VerticeData
     {
         this.id = id;
     }
-    
+
     public VerticeData(RawVerticeData rawVerticeData)
     {
         // System.Console.WriteLine(rawVerticeData.attributes["Created"]?.ToString());
@@ -81,23 +81,25 @@ public class VerticeData
             {
                 if (foundType == typeof(string).MakeArrayType())
                 {
-                    info.SetValue(this, ((Newtonsoft.Json.Linq.JArray)rawVerticeData.attributes[key]).ToObject<String[]>(),null);
-                } else if (foundType == typeof(long))
+                    info.SetValue(this, ((Newtonsoft.Json.Linq.JArray)rawVerticeData.attributes[key]).ToObject<String[]>(), null);
+                }
+                else if (foundType == typeof(long))
                 {
-                    info.SetValue(this, long.Parse((String)rawVerticeData.attributes[key]),null);
-                } else if (foundType == typeof(float))
+                    info.SetValue(this, long.Parse((String)rawVerticeData.attributes[key]), null);
+                }
+                else if (foundType == typeof(float))
                 {
                     info.SetValue(this, float.Parse((String)rawVerticeData.attributes[key], CultureInfo.InvariantCulture), null);
                 }
                 else if (foundType == typeof(DateTime) || foundType == typeof(DateTime?))
                 {
                     string format = "yyyy-MM-dd HH:mm:ss";
-                    info.SetValue(this, DateTime.ParseExact((String)rawVerticeData.attributes[key],format,CultureInfo.InvariantCulture, DateTimeStyles.None),null);
+                    info.SetValue(this, DateTime.ParseExact((String)rawVerticeData.attributes[key], format, CultureInfo.InvariantCulture, DateTimeStyles.None), null);
                 }
             }
             else
             {
-                info.SetValue(this, rawVerticeData.attributes[key],null);
+                info.SetValue(this, rawVerticeData.attributes[key], null);
             }
         }
     }
@@ -138,17 +140,17 @@ public class VerticeData
     {
         return GetTime() == date;
     }
-    
+
     public bool HasDateWithoutHours(DateTime date)
     {
         return GetTimeWithoutHours() == date;
     }
-    
+
     public bool HasDatesWithoutHours(List<DateTime> dates)
     {
         return dates.Contains(GetTimeWithoutHours());
     }
-    
+
     public bool IsDateBetween(DateTime from, DateTime to)
     {
         return from <= GetTimeWithoutHours() && GetTimeWithoutHours() <= to;

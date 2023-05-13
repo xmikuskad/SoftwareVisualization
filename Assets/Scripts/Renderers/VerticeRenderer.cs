@@ -11,7 +11,7 @@ public class VerticeRenderer : MouseOverRenderer
 {
 
     public bool isGhost = false;
-    private long projectId =-1;
+    private long projectId = -1;
     [CanBeNull] public VerticeData commitOrChange;
     public VerticeWrapper verticeWrapper;
     private MeshRenderer meshRenderer;
@@ -75,7 +75,7 @@ public class VerticeRenderer : MouseOverRenderer
             return;
         }
 
-        if (pair.Right.Any(x => this.verticeWrapper.IsConnected(x,this.commitOrChange)))
+        if (pair.Right.Any(x => this.verticeWrapper.IsConnected(x, this.commitOrChange)))
         {
             SetHighlighted(true);
             ChangeScale(false);
@@ -127,9 +127,9 @@ public class VerticeRenderer : MouseOverRenderer
 
     private void ChangeScale(bool makeBigger)
     {
-        if(this.verticeWrapper.verticeData.verticeType == VerticeType.Person)
+        if (this.verticeWrapper.verticeData.verticeType == VerticeType.Person)
             return;
-        this.transform.localScale = makeBigger ? new Vector3(2,2,2) : new Vector3(1, 1, 1);
+        this.transform.localScale = makeBigger ? new Vector3(2, 2, 2) : new Vector3(1, 1, 1);
     }
 
     private void OnSpecificVerticeSelected(long projectId, VerticeWrapper verticeWrapper)
@@ -140,7 +140,7 @@ public class VerticeRenderer : MouseOverRenderer
             ChangeScale(false);
             return;
         }
-        
+
         if (this.verticeWrapper.verticeData.id == verticeWrapper.verticeData.id)
         {
             SetHighlighted(true);
@@ -159,8 +159,8 @@ public class VerticeRenderer : MouseOverRenderer
             this.meshRenderer.material = nonHoverMaterial;
             return;
         }
-        
-        if (this.commitOrChange?.IsDateBetween(pair.Right[0],pair.Right[1]) ?? this.verticeWrapper.IsDateBetween(pair.Right[0],pair.Right[1]))
+
+        if (this.commitOrChange?.IsDateBetween(pair.Right[0], pair.Right[1]) ?? this.verticeWrapper.IsDateBetween(pair.Right[0], pair.Right[1]))
         {
             SetHighlighted(true);
         }
@@ -172,9 +172,9 @@ public class VerticeRenderer : MouseOverRenderer
 
     private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
     {
-        if(isLast)
+        if (isLast)
             return;
-        
+
         // TODO
         this.hightlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
         this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;
@@ -235,9 +235,9 @@ public class VerticeRenderer : MouseOverRenderer
         // {
         //     hoverText.text = verticeWrapper.verticeData.ToString();
         // }
-        
-        
-        hoverText.text = "Vertice ID: "+verticeWrapper.verticeData.id+" | Vertice: "+verticeWrapper.TmpGetDateNoHours()+" | Change ID: "+(commitOrChange?.id.ToString()??"???")+" | Change: "+(commitOrChange?.created ?? commitOrChange?.begin ?? DateTime.MinValue.Date);
+
+
+        hoverText.text = "Vertice ID: " + verticeWrapper.verticeData.id + " | Vertice: " + verticeWrapper.TmpGetDateNoHours() + " | Change ID: " + (commitOrChange?.id.ToString() ?? "???") + " | Change: " + (commitOrChange?.created ?? commitOrChange?.begin ?? DateTime.MinValue.Date);
 
         if (shouldHover)
             meshRenderer.material = hoverMaterial;
@@ -258,8 +258,8 @@ public class VerticeRenderer : MouseOverRenderer
     public override void OnClick()
     {
         if (!isLoaded) return;
-        sidebarScript.slideOut(projectId, verticeWrapper.verticeData);
-        SingletonManager.Instance.dataManager.ProcessVerticeClick(this.projectId, new Pair<VerticeData, VerticeWrapper>(this.commitOrChange,this.verticeWrapper));
+        sidebarScript.slideOut(projectId, verticeWrapper);
+        SingletonManager.Instance.dataManager.ProcessVerticeClick(this.projectId, new Pair<VerticeData, VerticeWrapper>(this.commitOrChange, this.verticeWrapper));
     }
 
     public void SetUpReferences(Canvas hoverCanvas, GameObject hoverElement, TMP_Text hoverText,
@@ -293,7 +293,7 @@ public class VerticeRenderer : MouseOverRenderer
         isLast = (changeOrCommit?.changes ?? "").Contains("-> Closed");
         // We need to duplicate material because otherwise all objects with that material will be changed
         Material newMat = new Material(material);
-        newMat.color = isLast ?  Color.black : GetColor();
+        newMat.color = isLast ? Color.black : GetColor();
         meshRenderer.material = newMat;
         this.nonHoverMaterial = newMat;
     }
@@ -321,7 +321,7 @@ public class VerticeRenderer : MouseOverRenderer
         {
             return (this.commitOrChange?.created ?? this.commitOrChange?.begin ?? DateTime.MaxValue).Date <= date;
         }
-        
+
         return this.beforeDate < date && this.afterDate > date &&
                (this.commitOrChange?.created ?? this.commitOrChange?.begin ?? DateTime.MaxValue).Date <= date;
     }

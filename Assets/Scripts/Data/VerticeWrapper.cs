@@ -64,13 +64,13 @@ namespace Data
             {
                 this.dates = this.relatedVertices[VerticeType.Change]
                     .Select(x => x.created ?? x.begin ?? DateTime.MinValue)
-                    .Select(x => x.Date).Distinct().Where(x => x > DateTime.MinValue.Date).OrderBy(x=>x).ToList();
+                    .Select(x => x.Date).Distinct().Where(x => x > DateTime.MinValue.Date).OrderBy(x => x).ToList();
             }
             else if (this.relatedVertices.ContainsKey(VerticeType.Commit))
             {
                 this.dates = this.relatedVertices[VerticeType.Commit]
                     .Select(x => x.created ?? x.begin ?? DateTime.MinValue)
-                    .Select(x => x.Date).Distinct().Where(x => x > DateTime.MinValue.Date).OrderBy(x=>x).ToList();
+                    .Select(x => x.Date).Distinct().Where(x => x > DateTime.MinValue.Date).OrderBy(x => x).ToList();
             }
             else
             {
@@ -83,7 +83,7 @@ namespace Data
         {
             this.relatedChangesOrCommits[v.verticeData.id] = v;
         }
-        
+
         // Change, RepoFile, Wiki can have null author!
         public long GetAuthorId()
         {
@@ -106,7 +106,7 @@ namespace Data
         {
             return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
         }
-        
+
         public DateTime TmpGetDateNoHours()
         {
             return TmpGetDate().Date;
@@ -124,7 +124,7 @@ namespace Data
             {
                 return verticeData.created ?? verticeData.begin ?? DateTime.MinValue;
             }
-           
+
             return DateTime.MinValue;
         }
 
@@ -143,8 +143,8 @@ namespace Data
         {
             return relatedVerticesById.Values.ToList();
         }
-        
-        public Dictionary<VerticeType,List<VerticeData>> GetRelatedVerticesDict()
+
+        public Dictionary<VerticeType, List<VerticeData>> GetRelatedVerticesDict()
         {
             return relatedVertices;
         }
@@ -152,7 +152,7 @@ namespace Data
         {
             if (relatedVertices.ContainsKey(type))
             {
-                return relatedVertices[type].OrderBy(x=>x.created ?? x.begin ?? DateTime.MinValue).ToList();
+                return relatedVertices[type].OrderBy(x => x.created ?? x.begin ?? DateTime.MinValue).ToList();
             }
 
             return new();
@@ -220,7 +220,7 @@ namespace Data
                            this.relatedChangesOrCommits[pair.Left.id].relatedVerticesById
                                .ContainsKey(this.verticeData.id);
                 }
-                
+
             }
 
             if (pair.Left?.id != null)
@@ -248,7 +248,7 @@ namespace Data
             }
             else
             {
-                return IsConnectedByChangeOrCommit(pair.Right.verticeData, (commitOrChange?.id??-1));
+                return IsConnectedByChangeOrCommit(pair.Right.verticeData, (commitOrChange?.id ?? -1));
             }
         }
 
@@ -256,8 +256,8 @@ namespace Data
         {
             if (this.verticeData.id == v.id) return true;
             if (this.verticeData.verticeType == VerticeType.Person) return false;
-            
-            if(commitOrChangeId <0)
+
+            if (commitOrChangeId < 0)
                 return this.relatedChangesOrCommits.Values.Any(x => x.IsDirectlyConnected(v));
             return (this.relatedChangesOrCommits.ContainsKey(commitOrChangeId) && this.relatedChangesOrCommits[commitOrChangeId].IsDirectlyConnected(v));
         }
@@ -280,7 +280,7 @@ namespace Data
                 // return this.relatedVerticesById.Values.Where(x => x.verticeType != VerticeType.Person).Select(x => x.id)
                 //     .Any(x => x == v.id);
             }
-            return this.verticeData.id == v.id || this.relatedVerticesById.Values.Select(x=>x.id).Any(x => x==v.id);
+            return this.verticeData.id == v.id || this.relatedVerticesById.Values.Select(x => x.id).Any(x => x == v.id);
         }
     }
 }

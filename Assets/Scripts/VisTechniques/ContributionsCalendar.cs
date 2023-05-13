@@ -94,7 +94,7 @@ public class ContributionsCalendar : MonoBehaviour
             DateTime tmp = date;
             newDateElement.GetComponentInChildren<Button>().onClick.AddListener(() =>
             {
-                timelineRenderer.OnBtnClick(tmp,dataHolder.projectId);
+                timelineRenderer.OnBtnClick(tmp, dataHolder.projectId);
                 defaultTileElementTooltip.text = dateTooltip;
             });
             newDateElement.gameObject.SetActive(true);

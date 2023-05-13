@@ -170,8 +170,8 @@ public class CollabMatrix : MonoBehaviour
 
     public void onClickPerson(VerticeWrapper verticeWrapper, long projectId)
     {
-        sidebarController.slideOutPersonSidebar(dataHolder.projectId, verticeWrapper.verticeData);
-        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData,VerticeWrapper>>(){new(null,verticeWrapper)}, projectId);
+        sidebarController.slideOutPersonSidebar(dataHolder.projectId, verticeWrapper);
+        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData, VerticeWrapper>>() { new(null, verticeWrapper) }, projectId);
     }
 
     public void onClickTicketList(List<VerticeWrapper> relatedTickets, string a, string b, long projectId)
@@ -187,13 +187,13 @@ public class CollabMatrix : MonoBehaviour
         ticketListView.ItemsEvents.PointerClick.AddListener((x, y, z) => onClickTicket(relatedTickets, x, projectId));
         ticketListViewHolder.SetActive(true);
 
-        SingletonManager.Instance.dataManager.InvokeVerticeSelect(relatedTickets.Select(x=>new Pair<VerticeData,VerticeWrapper>(null,x)).ToList(), projectId);
+        SingletonManager.Instance.dataManager.InvokeVerticeSelect(relatedTickets.Select(x => new Pair<VerticeData, VerticeWrapper>(null, x)).ToList(), projectId);
     }
 
     public void onClickTicket(List<VerticeWrapper> ticketsInList, int indexOfClicked, long projectId)
     {
-        sidebarController.slideOutTicketSidebar(dataHolder.projectId, ticketsInList[indexOfClicked].verticeData);
-        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData,VerticeWrapper>>(){ new(null,ticketsInList[indexOfClicked])}, projectId);
+        sidebarController.slideOutTicketSidebar(dataHolder.projectId, ticketsInList[indexOfClicked]);
+        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData, VerticeWrapper>>() { new(null, ticketsInList[indexOfClicked]) }, projectId);
     }
 
     public void writeDebugClicked()
