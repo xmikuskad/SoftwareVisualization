@@ -104,7 +104,7 @@ public class SidebarController : MonoBehaviour
         {
             if (verticeData1.verticeType == VerticeType.Change)
             {
-                slideOutChangeSidebar(projectId, objectToRender.Left, objectToRender.Right);
+                slideOutChangeSidebar(projectId, getWrapperForProjectVerticeId(projectId, objectToRender.Left.id));
             }
             if (verticeData1.verticeType == VerticeType.Commit)
             {
@@ -161,7 +161,7 @@ public class SidebarController : MonoBehaviour
         }
         else if (verticeWrapper.verticeData.verticeType == VerticeType.Change)
         {
-            slideOutChangeSidebar(projectId, verticeWrapper.verticeData, null);
+            slideOutChangeSidebar(projectId, verticeWrapper);
         }
         else if (verticeWrapper.verticeData.verticeType == VerticeType.Commit)
         {
@@ -195,31 +195,8 @@ public class SidebarController : MonoBehaviour
         if (verticeData.roleSuperClasses == null || verticeData.roleSuperClasses[0] == "") addContentWithText("NONE\n");
         else addContentWithText("" + string.Join(", ", verticeData.roleSuperClasses.Select(s => s)) + "\n");
 
-        addHeaderWithText("contributions");
-        foreach (VerticeWrapper relatedVerticeW in verticeWrapper.relatedChangesOrCommits.Values)
-        {
-            VerticeData relatedVerticeD = relatedVerticeW.verticeData;
-            if (relatedVerticeD.verticeType == VerticeType.Commit)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutCommitSidebar(projectId, verticeWrapper));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.Change)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
-                if (relatedVerticeW.GetRelatedVerticesDict().ContainsKey(VerticeType.Ticket))
-                {
-                    long relatedTicketId = relatedVerticeW.GetRelatedVerticesDict()[VerticeType.Ticket][0].id;
-                    newContent.GetComponent<Button>().onClick.AddListener(() => slideOutChangeSidebar(projectId, relatedVerticeD, getWrapperForProjectVerticeId(projectId, relatedTicketId)));
-                }
-                else
-                {
-                    newContent.GetComponent<Button>().onClick.AddListener(() => slideOutChangeSidebar(projectId, relatedVerticeD, null));
-                }
-                newContent.GetComponent<Button>().enabled = true;
-            }
-        }
+        addHeaderWithText("related artifacts");
+        addRelatedArtifactsToContent(projectId, verticeWrapper);
 
     }
 
@@ -262,143 +239,50 @@ public class SidebarController : MonoBehaviour
             VerticeWrapper relatedPerson = dataRenderer.loadedProjects[projectId].verticeWrappers[authorsList[0].id];
             newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedPerson));
         }
+
+        addHeaderWithText("related artifacts");
+        addRelatedArtifactsToContent(projectId, verticeWrapper);
+
     }
 
-    public void slideOutChangeSidebar(long projectId, VerticeData changeData, VerticeWrapper ticketData)
+    public void slideOutChangeSidebar(long projectId, VerticeWrapper verticeWrapper)
     {
-        VerticeWrapper changeWrapper = getWrapperForProjectVerticeId(projectId, changeData.id);
+        VerticeData verticeData = verticeWrapper.verticeData;
         setContentScrollRectHeight(950f);
         ticketCollabBarChart.gameObject.SetActive(false);
         clearInfoAllContentHolder();
         sidebar.Open();
 
-        verticeType.text = changeData.verticeType.ToString();
+        verticeType.text = verticeData.verticeType.ToString();
 
-        verticeId.text = "id: " + changeData.id.ToString();
+        verticeId.text = "id: " + verticeData.id.ToString();
 
         addHeaderWithText("title");
-        addContentWithText(changeData.title.ToString() + "\n");
+        addContentWithText(verticeData.title.ToString() + "\n");
 
-        addHeaderWithText("authors");
-        if (ticketData == null)
-        {
-            if (changeData.author == null || changeData.author[0] == null)
-                addContentWithText("NONE\n");
-            else
-            {
-                List<VerticeData> authorsList = changeWrapper.GetRelatedVerticesDict()[VerticeType.Person];
-                if (authorsList == null || authorsList.Count == 0 || authorsList[0] == null)
-                    addContentWithText("NONE\n");
-                else
-                {
-                    TMP_Text authorsContent = addContentWithText("" + string.Join(", ", authorsList.Select(s => s.name)) + "\n");
-                    authorsContent.GetComponent<Button>().enabled = true;
-                    authorsContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, getWrapperForProjectVerticeId(projectId, authorsList[0].id)));
-                }
-            }
-        }
-        else if (!ticketData.relatedChangesOrCommits[changeData.id].GetRelatedVerticesDict().ContainsKey(VerticeType.Person))
+        addHeaderWithText("contributors");
+        if (!verticeWrapper.GetRelatedVerticesDict().ContainsKey(VerticeType.Person))
             addContentWithText("NONE\n");
         else
         {
-            List<VerticeData> authorsList = ticketData.relatedChangesOrCommits[changeData.id].GetRelatedVerticesDict()[VerticeType.Person];
+            List<VerticeData> authorsList = verticeWrapper.GetRelatedVerticesDict()[VerticeType.Person];
             TMP_Text newContent = addContentWithText("" + string.Join(", ", authorsList.Select(s => s.name)) + "\n");
             newContent.GetComponent<Button>().enabled = true;
             VerticeWrapper relatedPerson = dataRenderer.loadedProjects[projectId].verticeWrappers[authorsList[0].id];
             newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedPerson));
         }
 
-        addHeaderWithText("parent ticket");
-        if (ticketData != null)
-        {
-            TMP_Text parentTicketText = addContentWithText("Ticket [" + ticketData.verticeData.id.ToString() + "] " + ticketData.verticeData.name.ToString() + "\n");
-            parentTicketText.GetComponent<Button>().onClick.AddListener(() => slideOutTicketSidebar(projectId, ticketData));
-            parentTicketText.GetComponent<Button>().enabled = true;
-        }
-        else
-        {
-            addContentWithText("NONE\n");
-        }
-
         addHeaderWithText("created date");
-        addContentWithText("" + changeData.created.ToString() + "\n");
+        addContentWithText("" + verticeData.created.ToString() + "\n");
 
         addHeaderWithText("description");
-        addContentWithText(changeData.changes.ToString());
+        addContentWithText(verticeData.changes.ToString());
 
         addHeaderWithText("comments");
-        addContentWithText(changeData.comment.ToString());
+        addContentWithText(verticeData.comment.ToString());
 
         addHeaderWithText("related artifacts");
-        if (ticketData != null)
-        {
-            foreach (VerticeData relatedVertice in ticketData.relatedChangesOrCommits[changeData.id].GetRelatedVertices())
-            {
-                if (relatedVertice.verticeType == VerticeType.Person)
-                {
-                    TMP_Text newContent = addContentWithText("" + relatedVertice.verticeType.ToString() + " [" + relatedVertice.id.ToString() + "] " + relatedVertice.name.ToString());
-                    VerticeWrapper relatedPerson = dataRenderer.loadedProjects[projectId].verticeWrappers[relatedVertice.id];
-                    newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedPerson));
-                    newContent.GetComponent<Button>().enabled = true;
-                }
-                if (relatedVertice.verticeType == VerticeType.Ticket)
-                {
-                    TMP_Text newContent = addContentWithText("" + relatedVertice.verticeType.ToString() + " [" + relatedVertice.id.ToString() + "] " + relatedVertice.name.ToString());
-                    newContent.GetComponent<Button>().onClick.AddListener(() => slideOutTicketSidebar(projectId, ticketData));
-                    newContent.GetComponent<Button>().enabled = true;
-                }
-                if (relatedVertice.verticeType == VerticeType.Change)
-                {
-                    TMP_Text newContent = addContentWithText("" + relatedVertice.verticeType.ToString() + " [" + relatedVertice.id.ToString() + "] " + relatedVertice.title.ToString());
-                    newContent.GetComponent<Button>().onClick.AddListener(() => slideOutChangeSidebar(projectId, relatedVertice, ticketData));
-                    newContent.GetComponent<Button>().enabled = true;
-                }
-                if (relatedVertice.verticeType == VerticeType.Commit)
-                {
-                    TMP_Text newContent = addContentWithText("" + relatedVertice.verticeType.ToString() + " [" + relatedVertice.id.ToString() + "] " + relatedVertice.title.ToString());
-                    newContent.GetComponent<Button>().onClick.AddListener(() => slideOutCommitSidebar(projectId, getWrapperForProjectVerticeId(projectId, relatedVertice.id)));
-                    newContent.GetComponent<Button>().enabled = true;
-                }
-            }
-        }
-        else
-        {
-            foreach (KeyValuePair<VerticeType, List<VerticeData>> relatedVerticePair in changeWrapper.GetRelatedVerticesDict())
-            {
-                VerticeType relatedVerticeType = relatedVerticePair.Key;
-                List<VerticeData> relatedVertices = relatedVerticePair.Value;
-                foreach (VerticeData relatedVertice in relatedVertices)
-                {
-                    if (relatedVertice.verticeType == VerticeType.Person)
-                    {
-                        TMP_Text newContent = addContentWithText("" + relatedVertice.verticeType.ToString() + " [" + relatedVertice.id.ToString() + "] " + relatedVertice.name.ToString());
-                        VerticeWrapper relatedPerson = dataRenderer.loadedProjects[projectId].verticeWrappers[relatedVertice.id];
-                        newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedPerson));
-                        newContent.GetComponent<Button>().enabled = true;
-                    }
-                    if (relatedVertice.verticeType == VerticeType.Ticket)
-                    {
-                        TMP_Text newContent = addContentWithText("" + relatedVertice.verticeType.ToString() + " [" + relatedVertice.id.ToString() + "] " + relatedVertice.name.ToString());
-                        newContent.GetComponent<Button>().onClick.AddListener(() => slideOutTicketSidebar(projectId, ticketData));
-                        newContent.GetComponent<Button>().enabled = true;
-                    }
-                    if (relatedVertice.verticeType == VerticeType.Change)
-                    {
-                        TMP_Text newContent = addContentWithText("" + relatedVertice.verticeType.ToString() + " [" + relatedVertice.id.ToString() + "] " + relatedVertice.title.ToString());
-                        newContent.GetComponent<Button>().onClick.AddListener(() => slideOutChangeSidebar(projectId, relatedVertice, ticketData));
-                        newContent.GetComponent<Button>().enabled = true;
-                    }
-                    if (relatedVertice.verticeType == VerticeType.Commit)
-                    {
-                        TMP_Text newContent = addContentWithText("" + relatedVertice.verticeType.ToString() + " [" + relatedVertice.id.ToString() + "] " + relatedVertice.title.ToString());
-                        newContent.GetComponent<Button>().onClick.AddListener(() => slideOutCommitSidebar(projectId, getWrapperForProjectVerticeId(projectId, relatedVertice.id)));
-                        newContent.GetComponent<Button>().enabled = true;
-                    }
-                }
-
-
-            }
-        }
+        addRelatedArtifactsToContent(projectId, verticeWrapper);
     }
 
     public void slideOutCommitSidebar(long projectId, VerticeWrapper verticeWrapper)
@@ -438,39 +322,100 @@ public class SidebarController : MonoBehaviour
         if (verticeData.branches != null && verticeData.branches.Length > 0) addContentWithText("" + string.Join(", ", verticeData.branches.Select(s => s)) + "\n");
         else addContentWithText("NONE\n");
 
-        addHeaderWithText("artifacts");
-        List<VerticeData> relatedVertices = verticeWrapper.GetRelatedVertices();
-        foreach (VerticeData relatedVerticeD in relatedVertices)
-        {
-            VerticeWrapper relatedVerticeW = getWrapperForProjectVerticeId(projectId, relatedVerticeD.id);
+        addHeaderWithText("related artifacts");
+        addRelatedArtifactsToContent(projectId, verticeWrapper);
+    }
 
-            if (relatedVerticeD.verticeType == VerticeType.Person)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.Ticket)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutTicketSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.Change)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutChangeSidebar(projectId, relatedVerticeW.verticeData, null));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.Commit)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutCommitSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
+    public void slideOutFileSidebar(long projectId, VerticeWrapper verticeWrapper)
+    {
+        VerticeData verticeData = verticeWrapper.verticeData;
+        setContentScrollRectHeight(950f);
+        ticketCollabBarChart.gameObject.SetActive(false);
+        clearInfoAllContentHolder();
+        sidebar.Open();
 
-        }
+        verticeType.text = verticeData.verticeType.ToString();
 
+        verticeId.text = "id: " + verticeData.id.ToString();
+
+        addHeaderWithText("title");
+        addContentWithText(verticeData.title.ToString() + "\n");
+
+        addHeaderWithText("name");
+        addContentWithText(verticeData.name.ToString() + "\n");
+
+        addHeaderWithText("created date");
+        addContentWithText("" + verticeData.created.ToString() + "\n");
+
+        addHeaderWithText("mime type");
+        if (verticeData.mime != null && verticeData.mime.Length > 0) addContentWithText("" + string.Join(", ", verticeData.mime.Select(s => s)) + "\n");
+        else addContentWithText("NONE\n");
+
+        addHeaderWithText("size");
+        addContentWithText("" + verticeData.size.ToString() + "\n");
+
+        addHeaderWithText("related artifacts");
+        addRelatedArtifactsToContent(projectId, verticeWrapper);
+    }
+
+    public void slideOutWikiSidebar(long projectId, VerticeWrapper verticeWrapper)
+    {
+        VerticeData verticeData = verticeWrapper.verticeData;
+        setContentScrollRectHeight(950f);
+        ticketCollabBarChart.gameObject.SetActive(false);
+        clearInfoAllContentHolder();
+        sidebar.Open();
+
+        verticeType.text = verticeData.verticeType.ToString();
+
+        verticeId.text = "id: " + verticeData.id.ToString();
+
+        addHeaderWithText("title");
+        addContentWithText(verticeData.title.ToString() + "\n");
+
+        addHeaderWithText("name");
+        addContentWithText(verticeData.name.ToString() + "\n");
+
+        addHeaderWithText("created date");
+        addContentWithText("" + verticeData.created.ToString() + "\n");
+
+        addHeaderWithText("url");
+        addContentWithText("" + verticeData.url.ToString() + "\n");
+
+        addHeaderWithText("related artifacts");
+        addRelatedArtifactsToContent(projectId, verticeWrapper);
+    }
+
+    public void slideOutRepoFileSidebar(long projectId, VerticeWrapper verticeWrapper)
+    {
+        VerticeData verticeData = verticeWrapper.verticeData;
+        setContentScrollRectHeight(950f);
+        ticketCollabBarChart.gameObject.SetActive(false);
+        clearInfoAllContentHolder();
+        sidebar.Open();
+
+        verticeType.text = verticeData.verticeType.ToString();
+
+        verticeId.text = "id: " + verticeData.id.ToString();
+
+        addHeaderWithText("title");
+        addContentWithText(verticeData.title.ToString() + "\n");
+
+        addHeaderWithText("name");
+        addContentWithText(verticeData.name.ToString() + "\n");
+
+        addHeaderWithText("url");
+        addContentWithText("" + verticeData.url.ToString() + "\n");
+
+        addHeaderWithText("mime type");
+        if (verticeData.mime != null && verticeData.mime.Length > 0) addContentWithText("" + string.Join(", ", verticeData.mime.Select(s => s)) + "\n");
+        else addContentWithText("NONE\n");
+
+        addHeaderWithText("size");
+        addContentWithText("" + verticeData.size.ToString() + "\n");
+
+        addHeaderWithText("related artifacts");
+        addRelatedArtifactsToContent(projectId, verticeWrapper);
     }
 
     // Close
@@ -524,6 +469,59 @@ public class SidebarController : MonoBehaviour
         if (text == null || text == "" || text == "\n") newContent.text = "NONE\n";
         else newContent.text = text;
         return newContent;
+    }
+
+    public void addRelatedArtifactsToContent(long projectId, VerticeWrapper verticeWrapper)
+    {
+        List<VerticeData> relatedVertices = verticeWrapper.GetRelatedVertices();
+        foreach (VerticeData relatedVerticeD in relatedVertices)
+        {
+            VerticeWrapper relatedVerticeW = getWrapperForProjectVerticeId(projectId, relatedVerticeD.id);
+
+            if (relatedVerticeD.verticeType == VerticeType.Person)
+            {
+                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
+                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedVerticeW));
+                newContent.GetComponent<Button>().enabled = true;
+            }
+            if (relatedVerticeD.verticeType == VerticeType.Ticket)
+            {
+                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
+                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutTicketSidebar(projectId, relatedVerticeW));
+                newContent.GetComponent<Button>().enabled = true;
+            }
+            if (relatedVerticeD.verticeType == VerticeType.Change)
+            {
+                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
+                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutChangeSidebar(projectId, relatedVerticeW));
+                newContent.GetComponent<Button>().enabled = true;
+            }
+            if (relatedVerticeD.verticeType == VerticeType.Commit)
+            {
+                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
+                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutCommitSidebar(projectId, relatedVerticeW));
+                newContent.GetComponent<Button>().enabled = true;
+            }
+            if (relatedVerticeD.verticeType == VerticeType.File)
+            {
+                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
+                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutFileSidebar(projectId, relatedVerticeW));
+                newContent.GetComponent<Button>().enabled = true;
+            }
+            if (relatedVerticeD.verticeType == VerticeType.RepoFile)
+            {
+                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
+                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutRepoFileSidebar(projectId, relatedVerticeW));
+                newContent.GetComponent<Button>().enabled = true;
+            }
+            if (relatedVerticeD.verticeType == VerticeType.Wiki)
+            {
+                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
+                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutWikiSidebar(projectId, relatedVerticeW));
+                newContent.GetComponent<Button>().enabled = true;
+            }
+
+        }
     }
 
     public VerticeWrapper getWrapperForProjectVerticeId(long projectId, long verticeId)
