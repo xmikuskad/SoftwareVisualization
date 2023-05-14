@@ -115,6 +115,7 @@ public class VerticeRenderer : MouseOverRenderer
         SingletonManager.Instance.dataManager.DatesSelectedEvent += OnDatesSelected;
         SingletonManager.Instance.dataManager.DatesRangeSelectedEvent += OnDateRangeSelected;
         SingletonManager.Instance.dataManager.SpecificVerticeSelected += OnSpecificVerticeSelected;
+        SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
     }
 
     public void OnDespawned()
@@ -125,6 +126,7 @@ public class VerticeRenderer : MouseOverRenderer
         SingletonManager.Instance.dataManager.DatesSelectedEvent -= OnDatesSelected;
         SingletonManager.Instance.dataManager.DatesRangeSelectedEvent -= OnDateRangeSelected;
         SingletonManager.Instance.dataManager.SpecificVerticeSelected -= OnSpecificVerticeSelected;
+        SingletonManager.Instance.dataManager.DataFilterEvent -= OnDataFilter;
     }
 
     private void ChangeScale(bool makeBigger)
@@ -134,6 +136,14 @@ public class VerticeRenderer : MouseOverRenderer
         this.transform.localScale = makeBigger ? new Vector3(2, 2, 2) : new Vector3(1, 1, 1);
     }
 
+    private void OnDataFilter(FilterHolder f)
+    {
+        if (f.disabledVertices.Contains(this.verticeWrapper.verticeData.verticeType))
+        {
+            this.gameObject.SetActive(false);
+        }
+    }
+    
     private void OnSpecificVerticeSelected(long projectId, VerticeWrapper verticeWrapper)
     {
         if (this.projectId != projectId)
@@ -350,8 +360,7 @@ public class VerticeRenderer : MouseOverRenderer
         meshRenderer.material = newMat;
         this.nonHoverMaterial = newMat;
 
-        this.meshFilter.mesh = GetShape() == VerticeShape.CUBE ? cubeMesh : sphereMesh;
-        Debug.Log("Setting "+GetShape().ToString());
+        this.meshFilter.mesh = GetShape() == VerticeShape.CUBE ? cubeMesh : sphereMesh; 
     }
 
     public void SetHighlighted(bool isHighlighted)

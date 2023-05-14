@@ -140,9 +140,10 @@ namespace UI
             if (tooltipObject!= null)
             {
                 tooltipObject.gameObject.SetActive(true);
-                Vector3 mousePos = Input.mousePosition;
-                tooltipObject.transform.position = mousePos;
-                // tooltipObject.transform.position = this.transform.position;
+                // Vector3 mousePos = Input.mousePosition;
+                // mousePos.z = -1;
+                // tooltipObject.transform.position = mousePos;
+                // tooltipObject.transform.position = this.transform.position+this.G;
                 tooltipObject.text = date.ToString("dd/MM/yyyy");
             }
         }

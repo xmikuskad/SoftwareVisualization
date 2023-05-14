@@ -6,15 +6,17 @@ public class MovementController : MonoBehaviour
     public float moveSpeed = -60.0f;
     public float zoomSpeed = 500.0f;
     public float rotateSpeed = -3.0f;
-    public Vector3 startingPosition = Vector3.zero;
+    private Vector3 startingPosition;
+    private Quaternion startingRotation;
 
     private Vector3 lastMousePosition;
     private Transform cameraTransform;
 
     void Start()
     {
-        startingPosition = transform.position;
         cameraTransform = mainCamera.transform;
+        startingPosition = cameraTransform.position;
+        startingRotation = cameraTransform.rotation;
     }
 
     void Update()
@@ -36,16 +38,6 @@ public class MovementController : MonoBehaviour
         float zoom = Input.GetAxis("Mouse ScrollWheel") * zoomSpeed * Time.deltaTime;
         cameraTransform.position += cameraTransform.forward * zoom;
 
-        // Rotate when the right mouse button is held down
-        // if (Input.GetMouseButton(1))
-        // {
-        //     Vector3 currentMousePosition = Input.mousePosition;
-        //     Vector3 mouseDelta = currentMousePosition - lastMousePosition;
-        //
-        //     cameraTransform.Rotate(Vector3.up, mouseDelta.x * rotateSpeed * Time.deltaTime, Space.World);
-        //     cameraTransform.Rotate(Vector3.right, -mouseDelta.y * rotateSpeed * Time.deltaTime, Space.Self);
-        // }
-        
         if(Input.GetMouseButton(1)) {
             cameraTransform.Rotate(new Vector3(Input.GetAxis("Mouse Y") * rotateSpeed * Time.deltaTime, -Input.GetAxis("Mouse X") * rotateSpeed * Time.deltaTime, 0));
             float x = cameraTransform.rotation.eulerAngles.x;
@@ -57,7 +49,7 @@ public class MovementController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             cameraTransform.position = startingPosition;
-            cameraTransform.rotation = Quaternion.identity;
+            cameraTransform.rotation = startingRotation;
         }
 
         lastMousePosition = Input.mousePosition;

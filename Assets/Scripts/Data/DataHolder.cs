@@ -25,17 +25,6 @@ public class DataHolder
     
     // WARNING: This uses key DateTime.MinValue as a null. REMOVE WHEN USING ONLY THE KEYS
     public Dictionary<DateTime, List<VerticeWrapper>> verticesByDate = new();
-    
-    // WARNING: This uses value DateTime.MinValue
-    private Dictionary<long, List<DateTime>> datesForVertice = new();
-
-    // This is only used for moving in time
-    // WARNING: This uses key DateTime.MinValue as a null. REMOVE WHEN USING ONLY THE KEYS
-    public Dictionary<DateTime, List<VerticeWrapper>> changesByDate = new();
-    // WARNING: This uses key DateTime.MinValue
-    public List<DateTime> orderedDates = new();
-
-    public List<VerticeWrapper> spawnAtStart = new();
 
     public long maxVerticeCount = 0;
     public long maxEdgeCount = 0;
