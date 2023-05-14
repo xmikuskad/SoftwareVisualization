@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Data;
 using Helpers;
@@ -12,12 +13,31 @@ namespace UI
 {
     public class SearchController : MonoBehaviour
     {
+        private long projectId = -1;
+        private FilterHolder f = new();
+        
         [Header("References")] public GameObject dialog;
         [FormerlySerializedAs("colorListItem")] public GameObject listItem;
         [FormerlySerializedAs("colorListItemHolder")] public GameObject listItemHolder;
 
         public TMP_InputField inputField;
         public DataRenderer dataRenderer;
+
+        private void Start()
+        {
+            SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
+            SingletonManager.Instance.dataManager.SelectedProjectChanged += OnSelectedProjectChanged;
+        }
+
+        private void OnDataFilter(FilterHolder f)
+        {
+            this.f = f;
+        }
+
+        private void OnSelectedProjectChanged(DataHolder dataHolder)
+        {
+            this.projectId = dataHolder.projectId;
+        }
 
         public void OpenDialog()
         {
@@ -36,7 +56,7 @@ namespace UI
 
         private void Search(VerticeWrapper v)
         {
-            SingletonManager.Instance.dataManager.InvokeSpecificVerticeSelected(1L,v);
+            SingletonManager.Instance.dataManager.InvokeSpecificVerticeSelected(projectId,v);
             CloseDialog();
         }
 
@@ -47,20 +67,25 @@ namespace UI
             {
                 return;
             }
-            
-            foreach (var val in dataRenderer.loadedProjects[1L].verticeWrappers.Values
-                         .Where(x=>!dataRenderer.filterHolder.disabledVertices.Contains(x.verticeData.verticeType) && 
-                                   x.verticeData.verticeType != VerticeType.Change && x.verticeData.verticeType != VerticeType.Commit))
+
+            foreach (var val in dataRenderer.loadedProjects[projectId].verticeWrappers.Values
+                         .Where(x => !dataRenderer.filterHolder.disabledVertices.Contains(x.verticeData.verticeType) &&
+                                     x.verticeData.verticeType != VerticeType.Change &&
+                                     x.verticeData.verticeType != VerticeType.Commit &&
+                                     !f.disabledVertices.Contains(x.verticeData.verticeType)))
             {
-                if (!val.verticeData.name.ToLower().Contains(typed.ToLower()) && !val.verticeData.id.ToString().Contains(typed.ToLower()))
+                if (!val.verticeData.name.ToLower().Contains(typed.ToLower()) &&
+                    !val.verticeData.title.ToLower().Contains(typed.ToLower()) &&
+                    !val.verticeData.id.ToString().Contains(typed.ToLower()))
                 {
                     continue;
                 }
-                
+
                 GameObject go = Instantiate(listItem, listItemHolder.transform);
-                go.GetComponentInChildren<TMP_Text>().text = "<b>["+val.verticeData.verticeType+" "+val.verticeData.id+"]</b> "+val.verticeData.name;
+                go.GetComponentInChildren<TMP_Text>().text = "<b>[" + val.verticeData.verticeType + " " +
+                                                             val.verticeData.id + "]</b> " + val.verticeData.name;
                 VerticeWrapper tmp = val;
-                go.GetComponentInChildren<Button>().onClick.AddListener(() =>Search(tmp));
+                go.GetComponentInChildren<Button>().onClick.AddListener(() => Search(tmp));
             }
         }
 

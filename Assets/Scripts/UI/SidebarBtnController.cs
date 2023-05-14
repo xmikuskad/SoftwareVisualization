@@ -4,12 +4,16 @@ using Helpers;
 using TMPro;
 using UIWidgets;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SidebarBtnController : MonoBehaviour
 {
     [Header("References")] public GameObject panelForProject;
     public TMP_Text projectName;
     public TMP_Text projectDate;
+
+    public Button previousProjectBtn;
+    public Button nextProjectBtn;
     
     public Sidebar sidebar;
 
@@ -46,18 +50,18 @@ public class SidebarBtnController : MonoBehaviour
 
     public void AddProject(DataHolder dataHolder)
     {
-        this.activeProject = dataHolder.projectId;
         this.projects[dataHolder.projectId] = dataHolder;
-        SetProject(this.activeProject);
+        SetProject(dataHolder.projectId);
         if(!sidebar.IsOpen)
             sidebar.Open();
-    }
 
-    public void OnProjectSelected(int index)
-    {
-        SingletonManager.Instance.dataManager.InvokeResetEvent(ResetEventReason.PROJECT_CHANGED);
-        SingletonManager.Instance.dataManager.InvokeSelectedProjectChange(projects[index-1]);
-        
+        if (projects.Count > 1)
+        {
+            this.previousProjectBtn.gameObject.SetActive(true);
+            this.previousProjectBtn.onClick.AddListener(MoveProjectBack);
+            this.nextProjectBtn.gameObject.SetActive(true);
+            this.nextProjectBtn.onClick.AddListener(MoveProjectNext);
+        }
     }
 
     public void MoveProjectNext()
@@ -75,8 +79,11 @@ public class SidebarBtnController : MonoBehaviour
         if(!projects.ContainsKey(id))
             return;
 
+        this.activeProject = id;
         this.projectName.text = projects[id].projectName;
         this.projectDate.text = projects[id].minDate.ToString("dd/MM/yyyy") + " - "+projects[id].maxDate.ToString("dd/MM/yyyy");
+        SingletonManager.Instance.dataManager.InvokeResetEvent(ResetEventReason.PROJECT_CHANGED);
+        SingletonManager.Instance.dataManager.InvokeSelectedProjectChange(projects[id]);
     }
 
     private void OnDateRenderChanged(Pair<long, Pair<DateTime, DateTime>> pair)

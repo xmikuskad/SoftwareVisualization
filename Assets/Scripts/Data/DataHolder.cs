@@ -106,7 +106,7 @@ public class DataHolder
         // Load vertices
         foreach (var (key, value) in verticeData)
         {
-            verticeWrappers[key] = new VerticeWrapper();
+            verticeWrappers[key] = new VerticeWrapper(projectId);
             verticeWrappers[key].verticeData = value;
         }
         

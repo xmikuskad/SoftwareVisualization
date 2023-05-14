@@ -132,23 +132,23 @@ namespace Renderers
         public void OnBtnClick(DateTime date, long projectIdTmp)
         {
             bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
-            if (ctrlPressed && dataRenderer.dateFilter.Left != DateTime.MinValue.Date)
+            if (ctrlPressed && dataRenderer.dateFilter[projectIdTmp].Left != DateTime.MinValue.Date)
             {
-                dataRenderer.dateFilter.Right = date;
-                if (dataRenderer.dateFilter.Right < dataRenderer.dateFilter.Left)
+                dataRenderer.dateFilter[projectIdTmp].Right = date;
+                if (dataRenderer.dateFilter[projectIdTmp].Right < dataRenderer.dateFilter[projectIdTmp].Left)
                 {
-                    var tmp = dataRenderer.dateFilter.Left;
-                    dataRenderer.dateFilter.Left = date;
-                    dataRenderer.dateFilter.Right = tmp;
+                    var tmp = dataRenderer.dateFilter[projectIdTmp].Left;
+                    dataRenderer.dateFilter[projectIdTmp].Left = date;
+                    dataRenderer.dateFilter[projectIdTmp].Right = tmp;
                 }
                 
-                ColorTimelineBtnRange(dataRenderer.dateFilter);
-                SingletonManager.Instance.dataManager.InvokeRenderDateEvent(projectIdTmp,dataRenderer.dateFilter);
+                ColorTimelineBtnRange(dataRenderer.dateFilter[projectIdTmp]);
+                SingletonManager.Instance.dataManager.InvokeRenderDateEvent(projectIdTmp,dataRenderer.dateFilter[projectIdTmp]);
             }
             else
             {
                 ColorTimelineBtn(date);
-                dataRenderer.dateFilter.Left = date;
+                dataRenderer.dateFilter[projectIdTmp].Left = date;
                 SingletonManager.Instance.dataManager.InvokeDateChangedEvent(projectIdTmp,date);
             }
         }
@@ -196,6 +196,12 @@ namespace Renderers
                 Destroy(child.gameObject);
             }
 
+            foreach (var (key, value) in btnObjects)
+            {
+                Destroy(value.gameObject);
+            }
+            
+            btnObjects.Clear();
             barObjects.Clear();
         }
 

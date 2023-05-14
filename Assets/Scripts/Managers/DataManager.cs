@@ -19,7 +19,7 @@ public class DataManager: MonoBehaviour
     public event Action<ResetEventReason> ResetEvent;   // Called for clearings
     public event Action<Pair<long,List<DateTime>>> DatesSelectedEvent;  // Called on calendar clicked
     public event Action<Pair<long,List<DateTime>>> DatesRangeSelectedEvent; // Called on calendar clicked
-    public event Action<Pair<long,List<Pair<VerticeData,VerticeWrapper>>>> VerticesSelectedEvent;   // Called on vertice click
+    public event Action<List<Pair<VerticeData,VerticeWrapper>>> VerticesSelectedEvent;   // Called on vertice click
     public event Action<Pair<long,Pair<DateTime,DateTime>>> DateRenderChangedEvent; 
     public event Action<FilterHolder> DataFilterEvent;  // When filter is applied
 
@@ -71,7 +71,7 @@ public class DataManager: MonoBehaviour
         SelectedProjectChanged?.Invoke(dataHolder);
     }
 
-    public void ProcessVerticeClick(long projectId, Pair<VerticeData,VerticeWrapper> pair)
+    public void ProcessVerticeClick(Pair<VerticeData,VerticeWrapper> pair)
     {
         bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
 
@@ -88,21 +88,21 @@ public class DataManager: MonoBehaviour
                 }
                 else
                     VerticesSelectedEvent?.Invoke(
-                        new Pair<long, List<Pair<VerticeData,VerticeWrapper>>>(this.selectedProjectId, this.selectedVertices));
+                        new List<Pair<VerticeData,VerticeWrapper>>(this.selectedVertices));
             }
             // Clicking new, adding and changing filter
             else
             {
                 this.selectedVertices.Add(pair);
                 VerticesSelectedEvent?.Invoke(
-                    new Pair<long, List<Pair<VerticeData,VerticeWrapper>>>(this.selectedProjectId, this.selectedVertices));
+                    new List<Pair<VerticeData,VerticeWrapper>>(this.selectedVertices));
             }
         }
         else
         {
             this.selectedVertices = new List<Pair<VerticeData,VerticeWrapper>>() { pair };
             VerticesSelectedEvent?.Invoke(
-                new Pair<long, List<Pair<VerticeData,VerticeWrapper>>>(this.selectedProjectId, this.selectedVertices));
+                new List<Pair<VerticeData,VerticeWrapper>>(this.selectedVertices));
 
         }
     }
@@ -120,6 +120,7 @@ public class DataManager: MonoBehaviour
 
     public void ProcessDateClick(long projectId, DateTime date)
     {
+        Debug.Log("Selecting "+date);
         bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
         bool shiftPressed = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
 
@@ -137,7 +138,7 @@ public class DataManager: MonoBehaviour
             this.selectedDates.Clear();
             // this.selectedDates.AddRange(unchangedDataHolders[projectId].verticesByDate.Keys.Where(x=>x>=tmp[0] && x<=tmp[1]));
 
-            DatesRangeSelectedEvent?.Invoke(new Pair<long, List<DateTime>>(projectId,tmp.OrderBy(x=>x).ToList()));
+            DatesRangeSelectedEvent?.Invoke(new Pair<long, List<DateTime>>(this.selectedProjectId,tmp.OrderBy(x=>x).ToList()));
         }
         else if (!ctrlPressed && !shiftPressed)
         {
@@ -182,9 +183,9 @@ public class DataManager: MonoBehaviour
         DateRenderChangedEvent?.Invoke(new Pair<long, Pair<DateTime, DateTime>>(projectId, pair));
     }
 
-    public void InvokeVerticeSelect(List<Pair<VerticeData,VerticeWrapper>> v, long projectId)
+    public void InvokeVerticeSelect(List<Pair<VerticeData,VerticeWrapper>> v)
     {
-        VerticesSelectedEvent?.Invoke(new Pair<long, List<Pair<VerticeData,VerticeWrapper>>>(projectId,v));
+        VerticesSelectedEvent?.Invoke(v);
     }
 
     public void InvokeDateChangedEvent(long projectId, DateTime date)

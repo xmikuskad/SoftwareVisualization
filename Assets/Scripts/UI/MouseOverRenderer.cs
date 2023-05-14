@@ -25,8 +25,8 @@ using UnityEngine;
 [RequireComponent(typeof(MeshRenderer))]
 public abstract class MouseOverRenderer : MonoBehaviour
 {
-    [Header("Properties")] [SerializeField]
-    private float offsetY = 1.5f;
+    [Header("Properties")]
+    private float offsetY = 10f;
 
     private Canvas canvas;
 
@@ -59,9 +59,6 @@ public abstract class MouseOverRenderer : MonoBehaviour
         {
             return;
         }
-
-        // TODO show window in click?
-        // Debug.Log("CLICKED");
         OnClick();
     }
 

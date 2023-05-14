@@ -29,7 +29,8 @@ public class DataRenderer : MonoBehaviour
     private Dictionary<long, Pair<float, float>> projectSizesZ = new(); //Keeping min and max Z sizes for a project
     private Dictionary<long, Pair<float, float>> projectSizesX = new(); //Keeping min and max X sizes for a project
 
-    public Pair<DateTime, DateTime> dateFilter = new(DateTime.MinValue.Date, DateTime.MinValue.Date);
+    // public Pair<DateTime, DateTime> dateFilter = new(DateTime.MinValue.Date, DateTime.MinValue.Date);
+    public Dictionary<long, Pair<DateTime, DateTime>> dateFilter = new();
 
 
 
@@ -40,11 +41,12 @@ public class DataRenderer : MonoBehaviour
     private Dictionary<long, Dictionary<VerticeType, List<GameObject>>> verticePlatforms = new();
     private Dictionary<long, DateTime> currentProjectDate = new();
     private Dictionary<long, GameObject> datePlatformTrackers = new();
-    private DateTime lastDate = DateTime.MinValue.Date;
+    private Dictionary<long,DateTime> lastDate = new();
 
-    public Dictionary<long, Dictionary<long, Vector3>> linePosHolder = new();
     public Dictionary<long, GameObject> projectNamesObjects = new();
-
+    private long activeProjectId = -1;
+    private List<LineRenderer> spawnedLines = new();
+    
     [Header("Properties")]
 
     public float renderDistanceBetweenObjs = 3;
@@ -76,7 +78,8 @@ public class DataRenderer : MonoBehaviour
     public GameObject arrowPrefab;
     public GameObject linePrefab;
     public GameObject projectNamePrefab;
-
+    public Material lineRendererMaterial;
+    
     [Header("References")]
 
     public Canvas hoverCanvas;
@@ -100,9 +103,6 @@ public class DataRenderer : MonoBehaviour
     public KiviatDiagram kiviatDiagram;
 
     public FilterHolder filterHolder;
-
-    public Button nextDateBtn;
-    public Button previousDateBtn;
     public GameObject dateTrackerPrefab;
 
     private Transform mainCameraTransform;
@@ -115,6 +115,7 @@ public class DataRenderer : MonoBehaviour
         SingletonManager.Instance.dataManager.ResetEvent += OnReset;
         SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
         SingletonManager.Instance.preferencesManager.MappingChangedEvent += OnMappingChanged;
+        SingletonManager.Instance.dataManager.SelectedProjectChanged += OnSelectedProjectChanged;
         filterHolder = new();
         mainCameraTransform = Camera.main.transform;
     }
@@ -129,6 +130,27 @@ public class DataRenderer : MonoBehaviour
             // Apply the rotation to the text
             value.transform.rotation = rotationToCamera * Quaternion.Euler(0, 180, 0);
         }
+    }
+
+    private void OnSelectedProjectChanged(DataHolder dataHolder)
+    {
+        this.activeProjectId = dataHolder.projectId;
+        if (!lastDate.ContainsKey(activeProjectId))
+        {
+            lastDate[activeProjectId] = DateTime.MinValue.Date;
+        }
+        
+        foreach (var (key, value) in projectNamesObjects)
+        {
+            value.GetComponent<TMP_Text>().color = key == activeProjectId ? Color.red : Color.black;
+        }
+
+        dateFilter[activeProjectId] = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
+        // Load viz techniques
+        collabMatrix.fillMatrix(dataHolder);
+        contributionsCalendar.fillContributionsCalendar(dataHolder, dataHolder.startDate.Year);
+        timelineRenderer.LoadTimeline(dataHolder);
+        kiviatDiagram.initiateKiviat(dataHolder);
     }
 
 
@@ -162,85 +184,110 @@ public class DataRenderer : MonoBehaviour
 
         foreach (var (key, platform) in datePlatformTrackers)
         {
-            Material newMat = new Material(transparentMaterial);
+            Material newMat = new Material(verticeMaterial);
             newMat.color = colorMappings[ColorMapping.DATE_PLATFORM.id].color;
             platform.GetComponent<MeshRenderer>().material = newMat;
         }
+        
+        foreach (var spawnedLine in spawnedLines)
+        {
+            Material lrMaterial = new Material(lineRendererMaterial);
+            lrMaterial.color = colorMappings[ColorMapping.LINE_COLOR.id].color;
+            spawnedLine.startColor = colorMappings[ColorMapping.LINE_COLOR.id].color;
+            spawnedLine.endColor = colorMappings[ColorMapping.LINE_COLOR.id].color;
+            spawnedLine.material = lrMaterial;
+        }
     }
 
-    private void OnVerticeSelected(Pair<long, List<Pair<VerticeData, VerticeWrapper>>> pair)
+    private void OnVerticeSelected(List<Pair<VerticeData, VerticeWrapper>> list )
     {
         PoolManager.Pools[PoolNames.LINES].DespawnAll();
-        if (linePosHolder.ContainsKey(pair.Left))
-            linePosHolder[pair.Left].Clear();
 
         // pair<Commit/Change, VErtice of commit>
-        foreach (Pair<VerticeData, VerticeWrapper> p in pair.Right)
+        foreach (Pair<VerticeData, VerticeWrapper> p in list)
         {
-            if (p.Left == null) // No commit = no lines
+            if (p.Left == null || p.Right.verticeData.verticeType == VerticeType.Change || p.Right.verticeData.verticeType == VerticeType.Commit) // No commit/change = no lines
                 continue;
 
-            VerticeRenderer from = verticesWithEdges[pair.Left][p.Right.verticeData.id]
+            VerticeRenderer from = verticesWithEdges[p.Right.projectId][p.Right.verticeData.id]
                 .Where(x => x.commitOrChange?.id == p.Left.id).ToList()[0];
+            
+            if (filterHolder.disabledVertices.Contains(from.verticeWrapper.verticeData.verticeType))
+            {
+                continue;
+            }
 
             // Related vertices of commit/changes
             foreach (var verticeData in p.Right.relatedChangesOrCommits[p.Left.id].GetRelatedVertices().Where(x =>
                          x.id != p.Right.verticeData.id && x.verticeType != VerticeType.Change &&
                          x.verticeType != VerticeType.Commit))
             {
-                List<VerticeRenderer> to = verticesWithEdges[pair.Left][verticeData.id]
+                List<VerticeRenderer> to = verticesWithEdges[p.Right.projectId][verticeData.id]
                     .Where(x => (x.commitOrChange ?? p.Left).id == p.Left.id).ToList();
 
                 if (to.Count == 0)
                 {
                     continue;
                 }
-
-                if (to.Count > 1)
-                {
-                    Debug.LogError("Found multiple TO`s");
-                }
-
                 foreach (var t in to)
                 {
-                    CreatePath(from, t, pair.Left);
+                    if (filterHolder.disabledVertices.Contains(t.verticeWrapper.verticeData.verticeType) || !t.gameObject.activeInHierarchy)
+                    {
+                        continue;
+                    }
+                    CreatePath(from, t);
                 }
             }
         }
     }
 
-    private void CreatePath(VerticeRenderer from, VerticeRenderer to, long projectId)
+    private void CreatePath(VerticeRenderer from, VerticeRenderer to)
     {
         Transform t = PoolManager.Pools[PoolNames.LINES].Spawn(linePrefab);
         LineRenderer lr = t.GetComponent<LineRenderer>();
         lr.positionCount = 2;
 
+        Material lrMaterial = new Material(lineRendererMaterial);
+        lrMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.LINE_COLOR).color;
+        lr.material = lrMaterial;
+
+        lr.startColor = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.LINE_COLOR).color;
+        lr.endColor = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.LINE_COLOR).color;
+
         lr.SetPosition(0, from.transform.position);
         lr.SetPosition(1, to.transform.position);
         lr.startWidth = lineWidth;
         lr.endWidth = lineWidth;
+        
+        spawnedLines.Add(lr);
     }
 
     private void OnReset(ResetEventReason reason)
     {
         if (reason == ResetEventReason.CLICK_OUTSIDE)
         {
-            if (dateFilter.Right != DateTime.MinValue.Date)
+            if (dateFilter[activeProjectId].Right != DateTime.MinValue.Date)
             {
-                dateFilter = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
+                dateFilter[activeProjectId] = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
                 RenderAllDates();
             }
-            PoolManager.Pools[PoolNames.LINES].DespawnAll();
-            linePosHolder.Clear();
+            ClearLines();
+        } else if (reason == ResetEventReason.FILTER)
+        {
+           ClearLines();
         }
+    }
+
+    private void ClearLines()
+    {
+        spawnedLines.Clear();
+        PoolManager.Pools[PoolNames.LINES].DespawnAll();
     }
 
     private void OnDateRenderChanged(Pair<long, Pair<DateTime, DateTime>> pair)
     {
-        lastDate = DateTime.MinValue.Date;
+        lastDate[pair.Left] = DateTime.MinValue.Date;
         currentProjectDate[pair.Left] = DateTime.MinValue.Date;
-        nextDateBtn.interactable = true;
-        previousDateBtn.interactable = true;
 
         foreach (var (key, value) in verticesWithEdges[pair.Left])
         {
@@ -275,18 +322,22 @@ public class DataRenderer : MonoBehaviour
             }
         }
         currentProjectDate[projectId] = date;
-        TimeSpan diff = lastDate != DateTime.MinValue.Date ? lastDate - currentProjectDate[projectId] : this.loadedProjects[projectId].startDate - currentProjectDate[projectId];
+        TimeSpan diff = lastDate[projectId] != DateTime.MinValue.Date ? lastDate[projectId] - currentProjectDate[projectId] : this.loadedProjects[projectId].startDate - currentProjectDate[projectId];
         int days = (int)diff.TotalDays;
         Vector3 platformPos = datePlatformTrackers[projectId].transform.position;
         platformPos.z -= (1 + spaceBetweenObjects) * days;
+        
+        Debug.Log("Changing pos for "+projectId+" from "+datePlatformTrackers[projectId].transform.position+" to "+platformPos+ " | Last date "+lastDate[projectId]+" Current date "+currentProjectDate[projectId]);
+
         datePlatformTrackers[projectId].transform.position = platformPos;
 
-        if (lastDate == DateTime.MinValue.Date)
+        if (lastDate[projectId] == DateTime.MinValue.Date)
         {
+            SingletonManager.Instance.dataManager.InvokeResetEvent(ResetEventReason.CLEAR_LINES);
             datePlatformTrackers[projectId].gameObject.SetActive(true);
         }
 
-        lastDate = date;
+        lastDate[projectId] = date;
     }
 
     private void OnDataFilter(FilterHolder f)
@@ -341,34 +392,34 @@ public class DataRenderer : MonoBehaviour
         RenderDataNew(dataHolder.projectId);
     }
 
-    public void ResetData(bool resetAll)
-    {
-        this.spawnTheta.Clear();
-        this.loadedProjects.Clear();
-        PoolManager.Pools[PoolNames.VERTICE].DespawnAll(); // This removes all vertices from scene :)
-        PoolManager.Pools[PoolNames.VERTICE_OUTLINE].DespawnAll(); // This removes all outline vertices from scene :)
-        PoolManager.Pools[PoolNames.HIGHLIGHT_OBJECTS].DespawnAll(); // This removes all outline vertices from scene :)
-
-        vertices = new();
-        this.dateIndexTracker.Clear();
-        commitPosTracker.Clear();
-        wikiPosTracker.Clear();
-        filePosTracker.Clear();
-        repoPosTracker.Clear();
-
-        projectSizesX.Clear();
-        projectSizesZ.Clear();
-
-
-        // New things
-        platforms.Clear();
-        currentProjectDate.Clear();
-
-        if (resetAll)
-            this.dateFilter = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
-
-        DOTween.Clear();
-    }
+    // public void ResetData(bool resetAll)
+    // {
+    //     this.spawnTheta.Clear();
+    //     this.loadedProjects.Clear();
+    //     PoolManager.Pools[PoolNames.VERTICE].DespawnAll(); // This removes all vertices from scene :)
+    //     PoolManager.Pools[PoolNames.VERTICE_OUTLINE].DespawnAll(); // This removes all outline vertices from scene :)
+    //     PoolManager.Pools[PoolNames.HIGHLIGHT_OBJECTS].DespawnAll(); // This removes all outline vertices from scene :)
+    //
+    //     vertices = new();
+    //     this.dateIndexTracker.Clear();
+    //     commitPosTracker.Clear();
+    //     wikiPosTracker.Clear();
+    //     filePosTracker.Clear();
+    //     repoPosTracker.Clear();
+    //
+    //     projectSizesX.Clear();
+    //     projectSizesZ.Clear();
+    //
+    //
+    //     // New things
+    //     platforms.Clear();
+    //     currentProjectDate.Clear();
+    //
+    //     if (resetAll)
+    //         this.dateFilter = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
+    //
+    //     DOTween.Clear();
+    // }
 
     public void RenderDataNew(long projectId)
     {
@@ -376,17 +427,6 @@ public class DataRenderer : MonoBehaviour
         SpawnVerticesAndEdges(projectId);
         SpawnDateTrackerPlatform(projectId);
         SpawnHelper(projectId);
-
-        // Load viz techniques
-        if (projectId == 1)
-        {
-            collabMatrix.fillMatrix(this.loadedProjects[projectId]);
-            contributionsCalendar.fillContributionsCalendar(this.loadedProjects[projectId],
-                this.loadedProjects[projectId].startDate.Year);
-            timelineRenderer.LoadTimeline(this.loadedProjects[projectId]);
-            kiviatDiagram.initiateKiviat(this.loadedProjects[projectId]);
-        }
-
         SetLoading(false);
     }
 
@@ -451,9 +491,12 @@ public class DataRenderer : MonoBehaviour
     public void SpawnPlatform(int index, VerticeType type, long projectId, float platformWidth, int alreadySpawnedCount)
     {
         Color32 color = SingletonManager.Instance.preferencesManager.GetColorMappingByType(type).color;
-        float maxCount = (this.loadedProjects[projectId].maxVerticeCount - alreadySpawnedCount) * (1 + spaceBetweenObjects);
+        float maxCount = (this.loadedProjects[projectId].maxVerticeCount - alreadySpawnedCount) *
+                         (1 + spaceBetweenObjects);
 
-        Vector3 pos = new Vector3((alreadySpawnedCount) * (1 + spaceBetweenObjects) + maxCount / 2f - 1f, (-index) * platformDistanceBetween, platformWidth / 2f) + GetSpawnVector(projectId);
+        Vector3 pos =
+            new Vector3((alreadySpawnedCount) * (1 + spaceBetweenObjects) + maxCount / 2f - 1f,
+                (-index) * platformDistanceBetween, platformWidth / 2f) + GetSpawnVector(projectId);
 
         GameObject platform = Instantiate(platformPrefab, pos, Quaternion.identity);
         platform.transform.localScale = new Vector3(maxCount + 1, platformHeight, platformWidth + 1f);
@@ -526,14 +569,14 @@ public class DataRenderer : MonoBehaviour
     {
         float maxCount = (this.loadedProjects[projectId].maxVerticeCount) * (1 + spaceBetweenObjects);
 
-        Color32 color = ColorMapping.DATE_PLATFORM.color;
+        Color32 color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.DATE_PLATFORM).color;
 
         float height = platformHeight * 4 - (4) * platformDistanceBetween;
 
         GameObject platform = Instantiate(dateTrackerPrefab, GetDefaultTrackerPlatformPos(projectId), Quaternion.identity);
-        platform.transform.localScale = new Vector3(maxCount + 1, -height, 1f);
+        platform.transform.localScale = new Vector3(maxCount + 1, -height, 1.01f);
 
-        Material newMat = new Material(transparentMaterial);
+        Material newMat = new Material(verticeMaterial);
         newMat.color = color;
         platform.GetComponent<MeshRenderer>().material = newMat;
 
@@ -545,7 +588,7 @@ public class DataRenderer : MonoBehaviour
     {
         float maxCount = (this.loadedProjects[projectId].maxVerticeCount) * (1 + spaceBetweenObjects);
         float height = platformHeight * 4 - (4) * platformDistanceBetween;
-        return new Vector3(maxCount / 2 - 1, height / 2f - platformDistanceBetween / 2f, 0) + GetSpawnVector(projectId);
+        return new Vector3(maxCount / 2 - 1, height / 2f - platformDistanceBetween / 2f, 1f) + GetSpawnVector(projectId);
     }
 
     public void SpawnVerticeAndEdges(int index, VerticeType type, long projectId, float datePosAdd, float platformWidth)
@@ -603,13 +646,13 @@ public class DataRenderer : MonoBehaviour
             if (type != VerticeType.Person)
             {
                 SpawnVerticePlatform(zIndex, type, projectId, platformWidth, new Vector3(
-                        zIndex * (1 + spaceBetweenObjects),
+                        zIndex * (1 + spaceBetweenObjects)+0.5f,
                         (-index) * platformDistanceBetween, platformWidth / 2f) + GetSpawnVector(projectId),
                     changes[0].Right);
             }
         }
 
-        if (list.Count < this.loadedProjects[1].maxVerticeCount && type != VerticeType.Person)
+        if (list.Count < this.loadedProjects[projectId].maxVerticeCount && type != VerticeType.Person)
         {
             SpawnPlatform(index, type, projectId, platformWidth, list.Count);
         }
@@ -693,7 +736,6 @@ public class DataRenderer : MonoBehaviour
             verticesWithEdges[projectId][verticeWrapper.verticeData.id] = new();
         }
         verticesWithEdges[projectId][verticeWrapper.verticeData.id].Add(verticeRenderer);
-        // CheckAndApplyHighlight(projectId, verticeId); //TODO return
         verticeRenderer.SetIsLoaded(true);
         return obj;
     }
@@ -701,15 +743,11 @@ public class DataRenderer : MonoBehaviour
     // Called from UI
     public void RenderNextDate()
     {
-        foreach (var (key, value) in this.loadedProjects)
-        {
-            RenderNextDateForProject(key);
-        }
+        RenderNextDateForProject(this.activeProjectId);
     }
 
     public void RenderNextDateForProject(long projectId)
     {
-        previousDateBtn.interactable = true;
         if (currentProjectDate[projectId] >= loadedProjects[projectId].maxDate)
         {
             return;
@@ -718,26 +756,16 @@ public class DataRenderer : MonoBehaviour
         DateTime newDate =
             loadedProjects[projectId].dates.Where(x => x > currentProjectDate[projectId]).Min();
         SingletonManager.Instance.dataManager.InvokeDateChangedEvent(projectId, newDate);
-
-
-        if (currentProjectDate[projectId] >= loadedProjects[projectId].maxDate)
-        {
-            nextDateBtn.interactable = false;
-        }
     }
 
     // Called from UI
     public void RenderPreviousDate()
     {
-        foreach (var (key, value) in this.loadedProjects)
-        {
-            RenderPreviousDateForProject(key);
-        }
+        RenderPreviousDateForProject(this.activeProjectId);
     }
 
     public void RenderPreviousDateForProject(long projectId)
     {
-        nextDateBtn.interactable = true;
         if (currentProjectDate[projectId] <= loadedProjects[projectId].minDate)
         {
             return;
@@ -745,27 +773,18 @@ public class DataRenderer : MonoBehaviour
 
         DateTime newDate = loadedProjects[projectId].dates.Where(x => x < currentProjectDate[projectId]).Max();
         SingletonManager.Instance.dataManager.InvokeDateChangedEvent(projectId, newDate);
-        if (currentProjectDate[projectId] <= loadedProjects[projectId].minDate)
-        {
-            previousDateBtn.interactable = false;
-        }
     }
 
     public void RenderAllDates()
     {
         SingletonManager.Instance.dataManager.InvokeResetEvent(ResetEventReason.RERENDER);
-        foreach (var (key, value) in this.loadedProjects)
-        {
-            ShowAllDatesForProject(key);
-        }
+        ShowAllDatesForProject(this.activeProjectId);
     }
 
     public void ShowAllDatesForProject(long projectId)
     {
-        lastDate = DateTime.MinValue.Date;
+        lastDate[projectId] = DateTime.MinValue.Date;
         currentProjectDate[projectId] = DateTime.MinValue.Date;
-        nextDateBtn.interactable = true;
-        previousDateBtn.interactable = true;
 
         foreach (var (key, value) in verticesWithEdges[projectId])
         {
@@ -791,11 +810,6 @@ public class DataRenderer : MonoBehaviour
         SingletonManager.Instance.pauseManager.SetInteractionPaused(status);
         loadingBar.SetActive(status);
         loadBtn.SetActive(!status);
-    }
-
-    public bool HasActiveDateFilter()
-    {
-        return this.dateFilter.Left != DateTime.MinValue.Date && this.dateFilter.Right != DateTime.MinValue.Date;
     }
 
     // public void CheckAndApplyHighlight(long projectId, long verticeId)

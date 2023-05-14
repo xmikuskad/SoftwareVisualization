@@ -66,16 +66,9 @@ public class VerticeRenderer : MouseOverRenderer
         ChangeScale(false);
     }
 
-    private void OnVerticeSelected(Pair<long, List<Pair<VerticeData, VerticeWrapper>>> pair)
+    private void OnVerticeSelected(List<Pair<VerticeData, VerticeWrapper>> list)
     {
-        if (this.projectId != pair.Left)
-        {
-            this.meshRenderer.material = nonHoverMaterial;
-            ChangeScale(false);
-            return;
-        }
-
-        if (pair.Right.Any(x => this.verticeWrapper.IsConnected(x, this.commitOrChange)))
+        if (list.Any(x => this.verticeWrapper.IsConnected(x, this.commitOrChange)))
         {
             SetHighlighted(true);
             ChangeScale(false);
@@ -172,13 +165,12 @@ public class VerticeRenderer : MouseOverRenderer
 
     private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
     {
-        if (isLast)
-            return;
-
         // TODO
         this.hightlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
         this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;
 
+        if (isLast)
+            return;
         switch (this.verticeWrapper.verticeData.verticeType)
         {
             case VerticeType.Person:
@@ -227,17 +219,9 @@ public class VerticeRenderer : MouseOverRenderer
             return;
         }
 
-        // if (verticeWrapper.verticeData.verticeType == VerticeType.Ticket)
-        // {
-        //     hoverText.text = completedCount + " / " + taskCount;
-        // }
-        // else
-        // {
-        //     hoverText.text = verticeWrapper.verticeData.ToString();
-        // }
-
-
-        hoverText.text = "Vertice ID: " + verticeWrapper.verticeData.id + " | Vertice: " + verticeWrapper.TmpGetDateNoHours() + " | Change ID: " + (commitOrChange?.id.ToString() ?? "???") + " | Change: " + (commitOrChange?.created ?? commitOrChange?.begin ?? DateTime.MinValue.Date);
+        string commitPart = (commitOrChange?.id ?? -1) <0 ? "" : ("["+commitOrChange?.verticeType+"]"+commitOrChange?.title+"+\n");
+        hoverText.text = commitPart + "[" + verticeWrapper.verticeData.verticeType + "]" + verticeWrapper.verticeData.title;
+        // hoverText.text = "Vertice ID: " + verticeWrapper.verticeData.id + " | Vertice: " + verticeWrapper.TmpGetDateNoHours() + " | Change ID: " + (commitOrChange?.id.ToString() ?? "???") + " | Change: " + (commitOrChange?.created ?? commitOrChange?.begin ?? DateTime.MinValue.Date);
 
         if (shouldHover)
             meshRenderer.material = hoverMaterial;
@@ -259,7 +243,7 @@ public class VerticeRenderer : MouseOverRenderer
     {
         if (!isLoaded) return;
         sidebarScript.slideOut(projectId, verticeWrapper);
-        SingletonManager.Instance.dataManager.ProcessVerticeClick(this.projectId, new Pair<VerticeData, VerticeWrapper>(this.commitOrChange, this.verticeWrapper));
+        SingletonManager.Instance.dataManager.ProcessVerticeClick(new Pair<VerticeData, VerticeWrapper>(this.commitOrChange, this.verticeWrapper));
     }
 
     public void SetUpReferences(Canvas hoverCanvas, GameObject hoverElement, TMP_Text hoverText,

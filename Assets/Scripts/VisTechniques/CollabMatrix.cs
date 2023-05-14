@@ -34,10 +34,27 @@ public class CollabMatrix : MonoBehaviour
         collabMatrix = this.gameObject;
     }
 
+    private void removeCurrentMatrix()
+    {
+        for (int i = 0; i < matrixArea.transform.childCount; i++)
+        {
+            if (i > 1)
+            {
+                GameObject.Destroy(matrixArea.transform.GetChild(i).gameObject);
+            }
+        }
+        
+        // foreach (Transform child in matrixArea.transform)
+        // {
+        //     GameObject.Destroy(child.gameObject);
+        // }
+    }
+
 
     public void fillMatrix(DataHolder dataHolder)
     {
-
+    
+        removeCurrentMatrix();
         this.dataHolder = dataHolder;
 
         // Get list of collaborants
@@ -67,14 +84,14 @@ public class CollabMatrix : MonoBehaviour
             // newText.text = collaborant.name;
             newText.text = DataUtils.PersonNameToInitials(collaborant.name);
             if (collaborant.name == "unknown") newText.text = "??";
-            newText.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2], dataHolder.projectId));
+            newText.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2]));
 
             pos = matrixDefaultTextElement.transform.position;
             pos.y = pos.y + yOffset * helpIndex + yOffset;
             TMP_Text newText2 = Instantiate(matrixDefaultTextElement, pos, Quaternion.identity, matrixArea.transform);
             newText2.text = DataUtils.PersonNameToInitials(collaborant.name);
             if (collaborant.name == "unknown") newText2.text = "??";
-            newText2.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2], dataHolder.projectId));
+            newText2.GetComponent<Button>().onClick.AddListener(() => onClickPerson(dataHolder.verticeWrappers[helpIndex2]));
 
             helpIndex++;
         }
@@ -168,10 +185,10 @@ public class CollabMatrix : MonoBehaviour
         ticketListViewHolder.SetActive(false);
     }
 
-    public void onClickPerson(VerticeWrapper verticeWrapper, long projectId)
+    public void onClickPerson(VerticeWrapper verticeWrapper)
     {
         sidebarController.slideOutPersonSidebar(dataHolder.projectId, verticeWrapper);
-        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData, VerticeWrapper>>() { new(null, verticeWrapper) }, projectId);
+        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData, VerticeWrapper>>() { new(null, verticeWrapper) });
     }
 
     public void onClickTicketList(List<VerticeWrapper> relatedTickets, string a, string b, long projectId)
@@ -184,16 +201,16 @@ public class CollabMatrix : MonoBehaviour
             ticketListView.Add(relatedTicket.verticeData.id + " " + relatedTicket.verticeData.name);
         }
         ticketListView.ItemsEvents.PointerClick.RemoveAllListeners();
-        ticketListView.ItemsEvents.PointerClick.AddListener((x, y, z) => onClickTicket(relatedTickets, x, projectId));
+        ticketListView.ItemsEvents.PointerClick.AddListener((x, y, z) => onClickTicket(relatedTickets, x));
         ticketListViewHolder.SetActive(true);
 
-        SingletonManager.Instance.dataManager.InvokeVerticeSelect(relatedTickets.Select(x => new Pair<VerticeData, VerticeWrapper>(null, x)).ToList(), projectId);
+        SingletonManager.Instance.dataManager.InvokeVerticeSelect(relatedTickets.Select(x => new Pair<VerticeData, VerticeWrapper>(null, x)).ToList());
     }
 
-    public void onClickTicket(List<VerticeWrapper> ticketsInList, int indexOfClicked, long projectId)
+    public void onClickTicket(List<VerticeWrapper> ticketsInList, int indexOfClicked)
     {
         sidebarController.slideOutTicketSidebar(dataHolder.projectId, ticketsInList[indexOfClicked]);
-        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData, VerticeWrapper>>() { new(null, ticketsInList[indexOfClicked]) }, projectId);
+        SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData, VerticeWrapper>>() { new(null, ticketsInList[indexOfClicked]) });
     }
 
     public void writeDebugClicked()
