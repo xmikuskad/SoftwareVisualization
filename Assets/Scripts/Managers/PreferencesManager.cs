@@ -1,13 +1,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Helpers;
 using UnityEngine;
 
 public class PreferencesManager : MonoBehaviour
 {
     private Dictionary<long, ColorMapping> colorMappings = new();
+    private Dictionary<long, ShapeMapping> shapeMappings = new();
 
-    public event Action<Dictionary<long, ColorMapping>> MappingChangedEvent;
+    public event Action<Dictionary<long, ColorMapping>,Dictionary<long, ShapeMapping>> MappingChangedEvent;
 
 
     public void Awake()
@@ -16,21 +19,36 @@ public class PreferencesManager : MonoBehaviour
         {
             colorMappings[colorMapping.id] = colorMapping;
         }
+        
+        foreach (var shapeMapping in ShapeMapping.Values)
+        {
+            shapeMappings[shapeMapping.id] = shapeMapping;
+        }
     }
 
-    public void SetColorMappings(List<ColorMapping> newMapping)
+    public void SetMappings(List<ColorMapping> newMapping, List<ShapeMapping> newShapes)
     {
         foreach (var colorMapping in newMapping)
         {
             colorMappings[colorMapping.id] = colorMapping;
         }
+        
+        foreach (var shapeMapping in newShapes)
+        {
+            shapeMappings[shapeMapping.id] = shapeMapping;
+        }
 
-        MappingChangedEvent?.Invoke(colorMappings);
+        MappingChangedEvent?.Invoke(colorMappings,shapeMappings);
     }
 
     public ColorMapping GetColorMapping(ColorMapping c)
     {
         return colorMappings[c.id];
+    }
+    
+    public ShapeMapping GetShapeMapping(ShapeMapping s)
+    {
+        return shapeMappings[s.id];
     }
 
     public ColorMapping GetColorMappingByType(VerticeType verticeType)
@@ -52,12 +70,23 @@ public class PreferencesManager : MonoBehaviour
         return ColorMapping.PERSON;
     }
 
-    public Dictionary<long, ColorMapping> GetMappings()
+    public Dictionary<long, ColorMapping> GetColorMappings()
     {
         Dictionary<long, ColorMapping> copy = new();
         foreach (var val in colorMappings.Values)
         {
             copy[val.id] = (ColorMapping)val.Clone();
+        }
+
+        return copy;
+    }
+    
+    public Dictionary<long, ShapeMapping> GetShapeMappings()
+    {
+        Dictionary<long, ShapeMapping> copy = new();
+        foreach (var val in shapeMappings.Values)
+        {
+            copy[val.id] = (ShapeMapping)val.Clone();
         }
 
         return copy;
