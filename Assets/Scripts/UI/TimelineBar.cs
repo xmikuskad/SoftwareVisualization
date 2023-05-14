@@ -74,7 +74,7 @@ namespace UI
             }
         }
         
-        private void OnMappingChanged(Dictionary<long,ColorMapping> colorMappings)
+        private void OnMappingChanged(Dictionary<long,ColorMapping> colorMappings,Dictionary<long,ShapeMapping> shapeMappings)
         {
             this.highlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
             this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;

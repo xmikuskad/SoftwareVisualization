@@ -154,7 +154,7 @@ public class DataRenderer : MonoBehaviour
     }
 
 
-    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
+    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings,Dictionary<long,ShapeMapping> shapeMappings)
     {
         foreach (var (pid, val) in verticePlatforms)
         {

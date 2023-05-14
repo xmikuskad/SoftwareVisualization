@@ -110,7 +110,7 @@ public class ContributionsCalendar : MonoBehaviour
         }
     }
 
-    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
+    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings,Dictionary<long,ShapeMapping> shapeMappings)
     {
         if (dataHolder != null) fillContributionsCalendar(dataHolder, dataHolder.startDate.Year);
     }

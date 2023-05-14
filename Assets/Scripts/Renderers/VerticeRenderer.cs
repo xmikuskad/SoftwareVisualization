@@ -30,6 +30,11 @@ public class VerticeRenderer : MouseOverRenderer
     public Material hightlightMaterial;
     public Material hiddenMaterial;
 
+    public Mesh cubeMesh;
+    public Mesh sphereMesh;
+    public Mesh capsuleMesh;
+    public Mesh cylinderMesh;
+
     private Vector3 offPosition = new(2000, 20000, 2000);
 
     private SidebarController sidebarScript;
@@ -40,9 +45,13 @@ public class VerticeRenderer : MouseOverRenderer
 
     private bool isLast = false;
 
+    private MeshFilter meshFilter;
+    private VerticeShape shape;
+
     protected void Awake()
     {
         meshRenderer = GetComponent<MeshRenderer>();
+        meshFilter = GetComponent<MeshFilter>();
         this.transform.localScale = new Vector3(1, 1, 1);
     }
 
@@ -163,13 +172,54 @@ public class VerticeRenderer : MouseOverRenderer
         }
     }
 
-    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings)
+    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings,Dictionary<long, ShapeMapping> shapeMappings )
     {
-        // TODO
         this.hightlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
         this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;
 
-        if (isLast)
+        VerticeShape newShape = VerticeShape.CUBE;  
+        switch (this.verticeWrapper.verticeData.verticeType)
+        {
+            case VerticeType.Person:
+                newShape= shapeMappings[ShapeMapping.PERSON.id].shape;
+                break;
+            case VerticeType.Ticket:
+                newShape= shapeMappings[ShapeMapping.TICKET.id].shape;
+                break;
+            case VerticeType.File:
+                newShape= shapeMappings[ShapeMapping.FILE.id].shape;
+                break;
+            case VerticeType.Wiki:
+                newShape= shapeMappings[ShapeMapping.WIKI.id].shape;
+                break;
+            case VerticeType.RepoFile:
+                newShape= shapeMappings[ShapeMapping.REPOFILE.id].shape;
+                break;
+            default:
+                break;
+        }
+
+        if (newShape != shape)
+        {
+            shape = newShape;
+            switch (shape)
+            {
+                case VerticeShape.CUBE:
+                    this.meshFilter.mesh = cubeMesh;
+                    break;
+                case VerticeShape.SPHERE:
+                    this.meshFilter.mesh = sphereMesh;
+                    break;
+                // case VerticeShape.CYLINDER:
+                //     this.meshFilter.mesh = cylinderMesh;
+                //     break;
+                // case VerticeShape.CAPSULE:
+                //     this.meshFilter.mesh = capsuleMesh;
+                //     break;
+            }
+        }
+        
+        if (isLast) // Dont change color if it is last, we want it to be black
             return;
         switch (this.verticeWrapper.verticeData.verticeType)
         {
@@ -209,6 +259,25 @@ public class VerticeRenderer : MouseOverRenderer
                 return SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.REPOFILE).color;
             default:
                 return new Color32(0, 0, 0, 0);
+        }
+    }
+    
+    private VerticeShape GetShape()
+    {
+        switch (this.verticeWrapper.verticeData.verticeType)
+        {
+            case VerticeType.Person:
+                return SingletonManager.Instance.preferencesManager.GetShapeMapping(ShapeMapping.PERSON).shape;
+            case VerticeType.Ticket:
+                return SingletonManager.Instance.preferencesManager.GetShapeMapping(ShapeMapping.TICKET).shape; ;
+            case VerticeType.File:
+                return SingletonManager.Instance.preferencesManager.GetShapeMapping(ShapeMapping.FILE).shape;
+            case VerticeType.Wiki:
+                return SingletonManager.Instance.preferencesManager.GetShapeMapping(ShapeMapping.WIKI).shape;
+            case VerticeType.RepoFile:
+                return SingletonManager.Instance.preferencesManager.GetShapeMapping(ShapeMapping.REPOFILE).shape;
+            default:
+                return VerticeShape.CUBE;
         }
     }
 
@@ -280,6 +349,9 @@ public class VerticeRenderer : MouseOverRenderer
         newMat.color = isLast ? Color.black : GetColor();
         meshRenderer.material = newMat;
         this.nonHoverMaterial = newMat;
+
+        this.meshFilter.mesh = GetShape() == VerticeShape.CUBE ? cubeMesh : sphereMesh;
+        Debug.Log("Setting "+GetShape().ToString());
     }
 
     public void SetHighlighted(bool isHighlighted)
