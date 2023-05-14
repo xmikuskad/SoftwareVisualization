@@ -43,8 +43,6 @@ public class KiviatDiagram : MonoBehaviour
         Dictionary<long, List<float>> metrics = computeMetrics(dataHolder);
 
         e2chart.chartData.categoriesX = new List<string>();
-        // e2chart.chartData.categoriesX = new List<string>(){"changes", "commits", "repos", "files", "wikis"};
-        // e2chart.chartData.categoriesY = new List<string>(){"changes", "commits", "repos", "files", "wikis"};
         e2chart.chartData.categoriesY = new List<string>();
 
         if (!filterHolder.disabledVertices.Contains(VerticeType.Change))
@@ -102,9 +100,8 @@ public class KiviatDiagram : MonoBehaviour
             E2ChartData.Series newSeries = new E2ChartData.Series();
             newSeries.name = dataHolder.verticeWrappers[key].verticeData.name;
             newSeries.show = true;
-            newSeries.dataY = value;
+            newSeries.dataY = filteredMetrics;
             e2chart.chartData.series.Add(newSeries);
-            Debug.Log("ADDING " + dataHolder.verticeWrappers[key].verticeData.name);
         }
 
         e2chart.UpdateChart();

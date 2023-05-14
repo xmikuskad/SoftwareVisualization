@@ -230,7 +230,7 @@ public class SidebarController : MonoBehaviour
         verticeId.text = "id: " + verticeData.id.ToString();
 
         addHeaderWithText("name");
-        addContentWithText(verticeData.name.ToString() + "\n");
+        addContentWithText(verticeData.name + "\n");
 
         addHeaderWithText("roles");
         if (verticeData.roles == null || verticeData.roles[0] == "") addContentWithText("NONE\n");
@@ -260,22 +260,22 @@ public class SidebarController : MonoBehaviour
 
         verticeType.text = verticeData.verticeType.ToString();
 
-        verticeId.text = "id: " + verticeData.id.ToString();
+        verticeId.text = "id: " + verticeData.id;
 
         addHeaderWithText("title");
-        addContentWithText(verticeData.title.ToString() + "\n");
+        addContentWithText(verticeData.title + "\n");
 
         addHeaderWithText("name");
-        addContentWithText(verticeData.name.ToString() + "\n");
+        addContentWithText(verticeData.name + "\n");
 
         addHeaderWithText("description");
-        addContentWithText(verticeData.description.ToString() + "\n");
+        addContentWithText(verticeData.description + "\n");
 
         addHeaderWithText("created date");
-        addContentWithText(verticeData.created.ToString() + "\n");
+        addContentWithText((verticeData.created ?? verticeData.begin) + "\n");
 
         addHeaderWithText("type");
-        addContentWithText((verticeData.type == null ? "NONE" : verticeData.type[0].ToString()) + "\n");
+        addContentWithText((verticeData.type == null ? "NONE" : verticeData.type[0]) + "\n");
 
         addHeaderWithText("contributors");
         if (!verticeWrapper.GetRelatedVerticesDict().ContainsKey(VerticeType.Person))
@@ -305,10 +305,10 @@ public class SidebarController : MonoBehaviour
 
         verticeType.text = verticeData.verticeType.ToString();
 
-        verticeId.text = "id: " + verticeData.id.ToString();
+        verticeId.text = "id: " + verticeData.id;
 
         addHeaderWithText("title");
-        addContentWithText(verticeData.title.ToString() + "\n");
+        addContentWithText(verticeData.title + "\n");
 
         addHeaderWithText("contributors");
         if (!verticeWrapper.GetRelatedVerticesDict().ContainsKey(VerticeType.Person))
@@ -324,13 +324,13 @@ public class SidebarController : MonoBehaviour
         }
 
         addHeaderWithText("created date");
-        addContentWithText("" + verticeData.created.ToString() + "\n");
+        addContentWithText((verticeData.created ?? verticeData.begin) + "\n");
 
         addHeaderWithText("description");
-        addContentWithText(verticeData.changes.ToString());
+        addContentWithText(verticeData.changes);
 
         addHeaderWithText("comments");
-        addContentWithText(verticeData.comment.ToString());
+        addContentWithText(verticeData.comment);
 
         addHeaderWithText("related artifacts");
         addRelatedArtifactsToContent(projectId, verticeWrapper);
@@ -346,28 +346,28 @@ public class SidebarController : MonoBehaviour
 
         verticeType.text = verticeData.verticeType.ToString();
 
-        verticeId.text = "id: " + verticeData.id.ToString();
+        verticeId.text = "id: " + verticeData.id;
 
         addHeaderWithText("title");
-        addContentWithText(verticeData.title.ToString() + "\n");
+        addContentWithText(verticeData.title + "\n");
 
         addHeaderWithText("name");
-        addContentWithText(verticeData.name.ToString() + "\n");
+        addContentWithText(verticeData.name+ "\n");
 
         addHeaderWithText("message");
-        addContentWithText(verticeData.message.ToString() + "\n");
+        addContentWithText(verticeData.message + "\n");
 
         addHeaderWithText("identifier");
-        addContentWithText("" + verticeData.identifier.ToString() + "\n");
+        addContentWithText("" + verticeData.identifier + "\n");
 
         addHeaderWithText("created date");
-        addContentWithText("" + verticeData.created.ToString() + "\n");
+        addContentWithText("" + (verticeData.created ?? verticeData.begin) + "\n");
 
         addHeaderWithText("committed date");
-        addContentWithText("" + verticeData.committed.ToString() + "\n");
+        addContentWithText("" + verticeData.committed + "\n");
 
         addHeaderWithText("changes description");
-        addContentWithText("" + verticeData.changes.ToString() + "\n");
+        addContentWithText("" + verticeData.changes + "\n");
 
         addHeaderWithText("branches");
         if (verticeData.branches != null && verticeData.branches.Length > 0) addContentWithText("" + string.Join(", ", verticeData.branches.Select(s => s)) + "\n");
@@ -387,23 +387,23 @@ public class SidebarController : MonoBehaviour
 
         verticeType.text = verticeData.verticeType.ToString();
 
-        verticeId.text = "id: " + verticeData.id.ToString();
+        verticeId.text = "id: " + verticeData.id;
 
         addHeaderWithText("title");
-        addContentWithText(verticeData.title.ToString() + "\n");
+        addContentWithText(verticeData.title + "\n");
 
         addHeaderWithText("name");
-        addContentWithText(verticeData.name.ToString() + "\n");
+        addContentWithText(verticeData.name + "\n");
 
         addHeaderWithText("created date");
-        addContentWithText("" + verticeData.created.ToString() + "\n");
+        addContentWithText("" + (verticeData.created ?? verticeData.begin) + "\n");
 
         addHeaderWithText("mime type");
         if (verticeData.mime != null && verticeData.mime.Length > 0) addContentWithText("" + string.Join(", ", verticeData.mime.Select(s => s)) + "\n");
         else addContentWithText("NONE\n");
 
         addHeaderWithText("size");
-        addContentWithText("" + verticeData.size.ToString() + "\n");
+        addContentWithText("" + verticeData.size + "\n");
 
         addHeaderWithText("related artifacts");
         addRelatedArtifactsToContent(projectId, verticeWrapper);
@@ -419,19 +419,19 @@ public class SidebarController : MonoBehaviour
 
         verticeType.text = verticeData.verticeType.ToString();
 
-        verticeId.text = "id: " + verticeData.id.ToString();
+        verticeId.text = "id: " + verticeData.id;
 
         addHeaderWithText("title");
-        addContentWithText(verticeData.title.ToString() + "\n");
+        addContentWithText(verticeData.title + "\n");
 
         addHeaderWithText("name");
-        addContentWithText(verticeData.name.ToString() + "\n");
+        addContentWithText(verticeData.name + "\n");
 
         addHeaderWithText("created date");
-        addContentWithText("" + verticeData.created.ToString() + "\n");
+        addContentWithText("" + (verticeData.created ?? verticeData.begin) + "\n");
 
         addHeaderWithText("url");
-        addContentWithText("" + verticeData.url.ToString() + "\n");
+        addContentWithText("" + verticeData.url + "\n");
 
         addHeaderWithText("related artifacts");
         addRelatedArtifactsToContent(projectId, verticeWrapper);
@@ -447,23 +447,23 @@ public class SidebarController : MonoBehaviour
 
         verticeType.text = verticeData.verticeType.ToString();
 
-        verticeId.text = "id: " + verticeData.id.ToString();
+        verticeId.text = "id: " + verticeData.id;
 
         addHeaderWithText("title");
-        addContentWithText(verticeData.title.ToString() + "\n");
+        addContentWithText(verticeData.title + "\n");
 
         addHeaderWithText("name");
-        addContentWithText(verticeData.name.ToString() + "\n");
+        addContentWithText(verticeData.name + "\n");
 
         addHeaderWithText("url");
-        addContentWithText("" + verticeData.url.ToString() + "\n");
+        addContentWithText("" + verticeData.url + "\n");
 
         addHeaderWithText("mime type");
         if (verticeData.mime != null && verticeData.mime.Length > 0) addContentWithText("" + string.Join(", ", verticeData.mime.Select(s => s)) + "\n");
         else addContentWithText("NONE\n");
 
         addHeaderWithText("size");
-        addContentWithText("" + verticeData.size.ToString() + "\n");
+        addContentWithText("" + verticeData.size + "\n");
 
         addHeaderWithText("related artifacts");
         addRelatedArtifactsToContent(projectId, verticeWrapper);

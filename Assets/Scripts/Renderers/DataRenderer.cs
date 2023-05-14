@@ -132,6 +132,20 @@ public class DataRenderer : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if(this.loadedProjects.Count == 0)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            RenderNextDate();
+        } else if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            RenderPreviousDate();
+        }
+    }
+
     private void OnSelectedProjectChanged(DataHolder dataHolder)
     {
         this.activeProjectId = dataHolder.projectId;
@@ -264,6 +278,8 @@ public class DataRenderer : MonoBehaviour
 
     private void OnReset(ResetEventReason reason)
     {
+        if(loadedProjects.Count == 0)
+            return;
         if (reason == ResetEventReason.CLICK_OUTSIDE)
         {
             if (dateFilter[activeProjectId].Right != DateTime.MinValue.Date)
@@ -390,6 +406,9 @@ public class DataRenderer : MonoBehaviour
         this.dateIndexTracker[dataHolder.projectId] = -1;
 
         RenderDataNew(dataHolder.projectId);
+        
+        if(this.filterHolder.disabledVertices.Count > 0)
+            SingletonManager.Instance.dataManager.InvokeDataFilterEvent(filterHolder);
     }
 
     // public void ResetData(bool resetAll)

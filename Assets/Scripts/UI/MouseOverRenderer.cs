@@ -26,7 +26,7 @@ using UnityEngine;
 public abstract class MouseOverRenderer : MonoBehaviour
 {
     [Header("Properties")]
-    private float offsetY = 10f;
+    private float offsetY = -1f;
 
     private Canvas canvas;
 

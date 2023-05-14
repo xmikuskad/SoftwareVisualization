@@ -55,7 +55,7 @@ public class SidebarBtnController : MonoBehaviour
         if(!sidebar.IsOpen)
             sidebar.Open();
 
-        if (projects.Count > 1)
+        if (projects.Count == 2)
         {
             this.previousProjectBtn.gameObject.SetActive(true);
             this.previousProjectBtn.onClick.AddListener(MoveProjectBack);

@@ -239,6 +239,8 @@ namespace Data
                 }
                 else
                 {
+                    if (!selectedVertice.relatedChangesOrCommits.ContainsKey(selectedChange.id))    // Happened at least once
+                        return false;
                     VerticeWrapper selectedChangeWrapper = selectedVertice.relatedChangesOrCommits[selectedChange.id];
                     return selectedChangeWrapper.relatedVertices.ContainsKey(currentVertice.verticeData.verticeType) && 
                            selectedChangeWrapper.relatedVertices[currentVertice.verticeData.verticeType].Any(x => x.id == currentVertice.verticeData.id);
