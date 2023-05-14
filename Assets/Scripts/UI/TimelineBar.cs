@@ -34,7 +34,8 @@ namespace UI
             SingletonManager.Instance.dataManager.DatesSelectedEvent += OnDatesSelected;
             SingletonManager.Instance.dataManager.DatesRangeSelectedEvent += OnDatesRangeSelectedSelected;
             SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
-            // SingletonManager.Instance.dataManager.DateChangeEvent += OnDateChanged;
+            SingletonManager.Instance.dataManager.DateChangeEvent += OnDateChanged;
+            SingletonManager.Instance.dataManager.DateRenderChangedEvent += OnDateRenderChanged;
             this.highlightMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIGHLIGHTED).color;
             this.hiddenMaterial.color = SingletonManager.Instance.preferencesManager.GetColorMapping(ColorMapping.HIDDEN).color;
         }
@@ -46,26 +47,32 @@ namespace UI
             SingletonManager.Instance.dataManager.DatesSelectedEvent -= OnDatesSelected;
             SingletonManager.Instance.dataManager.DatesRangeSelectedEvent -= OnDatesRangeSelectedSelected;
             SingletonManager.Instance.dataManager.VerticesSelectedEvent -= OnVerticeSelected;
-            // SingletonManager.Instance.dataManager.DateChangeEvent -= OnDateChanged;
+            SingletonManager.Instance.dataManager.DateChangeEvent -= OnDateChanged;
+            SingletonManager.Instance.dataManager.DateRenderChangedEvent += OnDateRenderChanged;
         }
 
-        // private void OnDateChanged(long projectId, DateTime date)
-        // {
-        //     if (this.projectId != projectId)
-        //     {
-        //         this.image.material = originalMaterial;
-        //         return;
-        //     }
-        //
-        //     if (this.date == date)
-        //     {
-        //         SetHighlighted(true);
-        //     }
-        //     else
-        //     {
-        //         SetHidden(true);
-        //     }
-        // }
+        public void OnDateRenderChanged(Pair<long, Pair<DateTime, DateTime>> pair)
+        {
+            SetHidden(true);
+        }
+
+        private void OnDateChanged(long projectId, DateTime date)
+        {
+            if (this.projectId != projectId)
+            {
+                this.image.material = originalMaterial;
+                return;
+            }
+        
+            if (this.date == date)
+            {
+                SetHighlighted(true);
+            }
+            else
+            {
+                SetHidden(true);
+            }
+        }
         
         private void OnMappingChanged(Dictionary<long,ColorMapping> colorMappings)
         {
@@ -114,15 +121,9 @@ namespace UI
             }
         }
         
-        private void OnVerticeSelected(Pair<long, List<Pair<VerticeData,VerticeWrapper>>> pair)
+        private void OnVerticeSelected(List<Pair<VerticeData,VerticeWrapper>> list)
         {
-            if (pair.Left != projectId)
-            {
-                SetHighlighted(false);
-                return;
-            }
-
-            foreach (var val in pair.Right)
+            foreach (var val in list)
             {
                 if ((val.Left != null && val.Left.HasDateWithoutHours(this.date)) || (val.Left == null && val.Right.ContainsDate(this.date)))
                 {

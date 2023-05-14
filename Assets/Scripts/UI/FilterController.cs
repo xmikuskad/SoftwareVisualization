@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Helpers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,8 +31,8 @@ public class FilterController : MonoBehaviour
         
         foreach (VerticeType type in (VerticeType[]) Enum.GetValues(typeof(VerticeType)))
         {
-            if(type == VerticeType.Change) continue;
-            if(type == VerticeType.Commit) continue;
+            // if(type == VerticeType.Change) continue;
+            // if(type == VerticeType.Commit) continue;
             GameObject verticeCheckbox = Instantiate(checkboxPrefab, Vector3.zero, Quaternion.identity, verticeSpawn.transform);
             verticeCheckbox.GetComponentInChildren<TMP_Text>().text = type.ToString();
             Toggle t = verticeCheckbox.GetComponent<Toggle>();
@@ -42,6 +43,7 @@ public class FilterController : MonoBehaviour
 
     public void SaveFilter()
     {
+        SingletonManager.Instance.dataManager.InvokeResetEvent(ResetEventReason.FILTER);
         SingletonManager.Instance.dataManager.InvokeDataFilterEvent(new FilterHolder(
             edgeFilter.Where(i=>!i.Value.isOn).Select(pair=>pair.Key).ToHashSet(),
             verticeFilter.Where(i=>!i.Value.isOn).Select(pair=>pair.Key).ToHashSet()));

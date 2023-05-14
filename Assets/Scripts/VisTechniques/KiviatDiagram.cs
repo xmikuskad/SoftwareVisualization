@@ -21,25 +21,90 @@ public class KiviatDiagram : MonoBehaviour
 
     private E2ChartData e2ChartData;
 
+    private FilterHolder filterHolder = new();
+
+    private DataHolder currentDataHolder;
 
     // Start is called before the first frame update
     void Start()
     {
-
+        SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
+    }
+    private void OnDataFilter(FilterHolder f)
+    {
+        this.filterHolder = f;
+        initiateKiviat(currentDataHolder);
     }
 
     public void initiateKiviat(DataHolder dataHolder)
     {
+        currentDataHolder = dataHolder;
         e2chart.chartData.series.Clear();
         Dictionary<long, List<float>> metrics = computeMetrics(dataHolder);
-        foreach (KeyValuePair<long, List<float>> personIdToMetrics in metrics)
+
+        e2chart.chartData.categoriesX = new List<string>();
+        // e2chart.chartData.categoriesX = new List<string>(){"changes", "commits", "repos", "files", "wikis"};
+        // e2chart.chartData.categoriesY = new List<string>(){"changes", "commits", "repos", "files", "wikis"};
+        e2chart.chartData.categoriesY = new List<string>();
+
+        if (!filterHolder.disabledVertices.Contains(VerticeType.Change))
         {
+            e2chart.chartData.categoriesX.Add("changes");  
+            e2chart.chartData.categoriesY.Add("changes");  
+        }
+        
+        if (!filterHolder.disabledVertices.Contains(VerticeType.Commit))
+        {
+            e2chart.chartData.categoriesX.Add("commits");  
+            e2chart.chartData.categoriesY.Add("commits");  
+        }
+        if (!filterHolder.disabledVertices.Contains(VerticeType.RepoFile))
+        {
+            e2chart.chartData.categoriesX.Add("repos");  
+            e2chart.chartData.categoriesY.Add("repos");  
+        }
+        if (!filterHolder.disabledVertices.Contains(VerticeType.File))
+        {
+            e2chart.chartData.categoriesX.Add("files");  
+            e2chart.chartData.categoriesY.Add("files");  
+        }
+        if (!filterHolder.disabledVertices.Contains(VerticeType.Wiki))
+        {
+            e2chart.chartData.categoriesX.Add("wikis");  
+            e2chart.chartData.categoriesY.Add("wikis");  
+        }
+
+        foreach (var (key, value) in metrics)
+        {
+            List<float> filteredMetrics = new();
+            if (!filterHolder.disabledVertices.Contains(VerticeType.Change))
+            {
+                filteredMetrics.Add(value[0]);
+            }
+        
+            if (!filterHolder.disabledVertices.Contains(VerticeType.Commit))
+            {
+                filteredMetrics.Add(value[1]); 
+            }
+            if (!filterHolder.disabledVertices.Contains(VerticeType.RepoFile))
+            {
+                filteredMetrics.Add(value[2]);
+            }
+            if (!filterHolder.disabledVertices.Contains(VerticeType.File))
+            {
+                filteredMetrics.Add(value[3]);
+            }
+            if (!filterHolder.disabledVertices.Contains(VerticeType.Wiki))
+            {
+                filteredMetrics.Add(value[4]);
+            }
+            
             E2ChartData.Series newSeries = new E2ChartData.Series();
-            newSeries.name = dataHolder.verticeWrappers[personIdToMetrics.Key].verticeData.name;
+            newSeries.name = dataHolder.verticeWrappers[key].verticeData.name;
             newSeries.show = true;
-            newSeries.dataY = personIdToMetrics.Value;
+            newSeries.dataY = value;
             e2chart.chartData.series.Add(newSeries);
-            Debug.Log("ADDING " + dataHolder.verticeWrappers[personIdToMetrics.Key].verticeData.name);
+            Debug.Log("ADDING " + dataHolder.verticeWrappers[key].verticeData.name);
         }
 
         e2chart.UpdateChart();

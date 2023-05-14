@@ -40,11 +40,14 @@ public class SidebarController : MonoBehaviour
 
     public GameObject contentScrollArea;
 
+    private FilterHolder filterHolder = new();
+    private List<Pair<VerticeData, VerticeWrapper>> unfilteredCurrentlyClickedObjects = new();
 
     private void Start()
     {
         SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
         SingletonManager.Instance.dataManager.ResetEvent += OnAllVerticesDeselected;
+        SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
     }
     void Update()
     {
@@ -66,18 +69,13 @@ public class SidebarController : MonoBehaviour
             }
         }
     }
-
-
-    private void OnAllVerticesDeselected(ResetEventReason reason)
+    
+    private void OnDataFilter(FilterHolder f)
     {
-        slideIn();
-    }
+        this.filterHolder = f;
+        if(unfilteredCurrentlyClickedObjects.Count == 0) return;
 
-    // project ID, list vsetkych objektov ktore su oznacene <commit/change/null, ticket/person/repo/file/wiki>
-    private void OnVerticeSelected(Pair<long, List<Pair<VerticeData, VerticeWrapper>>> pair)
-    {
-        projectId = pair.Left;
-        currentlyClickedObjects = pair.Right;
+        currentlyClickedObjects = unfilteredCurrentlyClickedObjects.Where(x=>!filterHolder.disabledVertices.Contains(x.Right.verticeData.verticeType)).ToList();
 
         if (currentlyClickedObjects.Count == 0) { slideIn(); }
         if (currentlyClickedObjects.Count == 1)
@@ -90,7 +88,33 @@ public class SidebarController : MonoBehaviour
         }
 
         currentlyShownObject = currentlyClickedObjects.Last();
-        renderThisObject(projectId, currentlyShownObject);
+        renderThisObject(currentlyClickedObjects[0].Right.projectId, currentlyShownObject);
+    }
+
+
+    private void OnAllVerticesDeselected(ResetEventReason reason)
+    {
+        slideIn();
+    }
+
+    // project ID, list vsetkych objektov ktore su oznacene <commit/change/null, ticket/person/repo/file/wiki>
+    private void OnVerticeSelected(List<Pair<VerticeData, VerticeWrapper>> list)
+    {
+        unfilteredCurrentlyClickedObjects = list;
+        currentlyClickedObjects = list.Where(x=>!filterHolder.disabledVertices.Contains(x.Right.verticeData.verticeType)).ToList();
+
+        if (currentlyClickedObjects.Count == 0) { slideIn(); }
+        if (currentlyClickedObjects.Count == 1)
+        {
+            deactivateOverlayButtons();
+        }
+        if (currentlyClickedObjects.Count > 1)
+        {
+            activateOverlayButtons();
+        }
+
+        currentlyShownObject = currentlyClickedObjects.Last();
+        renderThisObject(currentlyClickedObjects[0].Right.projectId, currentlyShownObject);
 
     }
 
@@ -114,17 +138,42 @@ public class SidebarController : MonoBehaviour
 
         else
         {
-            if (verticeWrapper2.verticeData.verticeType == VerticeType.Ticket)
+            switch (verticeWrapper2.verticeData.verticeType)
             {
-                slideOutTicketSidebar(projectId, verticeWrapper2);
+                case VerticeType.Change:
+                    slideOutChangeSidebar(projectId,verticeWrapper2);
+                    break;
+                case VerticeType.Ticket:
+                    slideOutTicketSidebar(projectId,verticeWrapper2);
+                    break;
+                case VerticeType.Person:
+                    slideOutPersonSidebar(projectId,verticeWrapper2);
+                    break;
+                case VerticeType.RepoFile:
+                    slideOutRepoFileSidebar(projectId,verticeWrapper2);
+                    break;
+                case VerticeType.Wiki:
+                    slideOutWikiSidebar(projectId,verticeWrapper2);
+                    break;
+                case VerticeType.Commit:
+                    slideOutCommitSidebar(projectId,verticeWrapper2);
+                    break;
+                case VerticeType.File:
+                    slideOutFileSidebar(projectId,verticeWrapper2);
+                    break;
             }
-            if (verticeWrapper2.verticeData.verticeType == VerticeType.Person)
-            {
-                slideOutPersonSidebar(projectId, verticeWrapper2);
-            }
-            if (verticeWrapper2.verticeData.verticeType == VerticeType.RepoFile) Debug.Log("show on REPOFILE " + verticeWrapper2.verticeData.id.ToString());
-            if (verticeWrapper2.verticeData.verticeType == VerticeType.File) Debug.Log("show on FILE " + verticeWrapper2.verticeData.id.ToString());
-            if (verticeWrapper2.verticeData.verticeType == VerticeType.Wiki) Debug.Log("show on WIKI " + verticeWrapper2.verticeData.id.ToString());
+            
+            // if (verticeWrapper2.verticeData.verticeType == VerticeType.Ticket)
+            // {
+            //     slideOutTicketSidebar(projectId, verticeWrapper2);
+            // }
+            // if (verticeWrapper2.verticeData.verticeType == VerticeType.Person)
+            // {
+            //     slideOutPersonSidebar(projectId, verticeWrapper2);
+            // }
+            // if (verticeWrapper2.verticeData.verticeType == VerticeType.RepoFile) Debug.Log("show on REPOFILE " + verticeWrapper2.verticeData.id.ToString());
+            // if (verticeWrapper2.verticeData.verticeType == VerticeType.File) Debug.Log("show on FILE " + verticeWrapper2.verticeData.id.ToString());
+            // if (verticeWrapper2.verticeData.verticeType == VerticeType.Wiki) Debug.Log("show on WIKI " + verticeWrapper2.verticeData.id.ToString());
         }
     }
 
@@ -237,7 +286,8 @@ public class SidebarController : MonoBehaviour
             TMP_Text newContent = addContentWithText("" + string.Join(", ", authorsList.Select(s => s.name)) + "\n");
             newContent.GetComponent<Button>().enabled = true;
             VerticeWrapper relatedPerson = dataRenderer.loadedProjects[projectId].verticeWrappers[authorsList[0].id];
-            newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedPerson));
+            newContent.GetComponent<Button>().onClick.AddListener(() => SingletonManager.Instance.dataManager.ProcessVerticeClick(new Pair<VerticeData, VerticeWrapper>(null,relatedPerson)));
+            // newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedPerson));
         }
 
         addHeaderWithText("related artifacts");
@@ -269,7 +319,8 @@ public class SidebarController : MonoBehaviour
             TMP_Text newContent = addContentWithText("" + string.Join(", ", authorsList.Select(s => s.name)) + "\n");
             newContent.GetComponent<Button>().enabled = true;
             VerticeWrapper relatedPerson = dataRenderer.loadedProjects[projectId].verticeWrappers[authorsList[0].id];
-            newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedPerson));
+            newContent.GetComponent<Button>().onClick.AddListener(() => SingletonManager.Instance.dataManager.ProcessVerticeClick(new Pair<VerticeData, VerticeWrapper>(null,relatedPerson)));
+            // newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedPerson));
         }
 
         addHeaderWithText("created date");
@@ -422,6 +473,7 @@ public class SidebarController : MonoBehaviour
     public void slideIn()
     {
         sidebar.Close();
+        this.unfilteredCurrentlyClickedObjects = new();
     }
 
     public void showCollabMatrix()
@@ -471,55 +523,66 @@ public class SidebarController : MonoBehaviour
         return newContent;
     }
 
-    public void addRelatedArtifactsToContent(long projectId, VerticeWrapper verticeWrapper)
+    public void addRelatedArtifactsToContent(long _projectId, VerticeWrapper verticeWrapper)
     {
-        List<VerticeData> relatedVertices = verticeWrapper.GetRelatedVertices();
+        List<VerticeData> relatedVertices = verticeWrapper.GetRelatedVertices().OrderBy(x=>x.verticeType.ToString()).ThenBy(x=>x.title).ToList();
         foreach (VerticeData relatedVerticeD in relatedVertices)
         {
-            VerticeWrapper relatedVerticeW = getWrapperForProjectVerticeId(projectId, relatedVerticeD.id);
+            if (relatedVerticeD.id == -1)
+                continue;
+            if(filterHolder.disabledVertices.Contains(relatedVerticeD.verticeType))
+                continue;
 
-            if (relatedVerticeD.verticeType == VerticeType.Person)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.Ticket)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutTicketSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.Change)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutChangeSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.Commit)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutCommitSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.File)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutFileSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.RepoFile)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutRepoFileSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
-            if (relatedVerticeD.verticeType == VerticeType.Wiki)
-            {
-                TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
-                newContent.GetComponent<Button>().onClick.AddListener(() => slideOutWikiSidebar(projectId, relatedVerticeW));
-                newContent.GetComponent<Button>().enabled = true;
-            }
+            long projectId = _projectId;
+            VerticeWrapper relatedVerticeW = getWrapperForProjectVerticeId(projectId, relatedVerticeD.id);
+            
+            TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
+            newContent.GetComponent<Button>().onClick.AddListener(() => SingletonManager.Instance.dataManager.ProcessVerticeClick(new Pair<VerticeData, VerticeWrapper>(
+                (relatedVerticeW.verticeData.verticeType == VerticeType.Change || relatedVerticeW.verticeData.verticeType == VerticeType.Commit) ? relatedVerticeW.verticeData : null,relatedVerticeW)));
+            newContent.GetComponent<Button>().enabled = true;
+
+            // if (relatedVerticeD.verticeType == VerticeType.Person)
+            // {
+            //     TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
+            //     newContent.GetComponent<Button>().onClick.AddListener(() => slideOutPersonSidebar(projectId, relatedVerticeW));
+            //     newContent.GetComponent<Button>().enabled = true;
+            // }
+            // if (relatedVerticeD.verticeType == VerticeType.Ticket)
+            // {
+            //     TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
+            //     newContent.GetComponent<Button>().onClick.AddListener(() => slideOutTicketSidebar(projectId, relatedVerticeW));
+            //     newContent.GetComponent<Button>().enabled = true;
+            // }
+            // if (relatedVerticeD.verticeType == VerticeType.Change)
+            // {
+            //     TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
+            //     newContent.GetComponent<Button>().onClick.AddListener(() => slideOutChangeSidebar(projectId, relatedVerticeW));
+            //     newContent.GetComponent<Button>().enabled = true;
+            // }
+            // if (relatedVerticeD.verticeType == VerticeType.Commit)
+            // {
+            //     TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.name.ToString());
+            //     newContent.GetComponent<Button>().onClick.AddListener(() => slideOutCommitSidebar(projectId, relatedVerticeW));
+            //     newContent.GetComponent<Button>().enabled = true;
+            // }
+            // if (relatedVerticeD.verticeType == VerticeType.File)
+            // {
+            //     TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
+            //     newContent.GetComponent<Button>().onClick.AddListener(() => slideOutFileSidebar(projectId, relatedVerticeW));
+            //     newContent.GetComponent<Button>().enabled = true;
+            // }
+            // if (relatedVerticeD.verticeType == VerticeType.RepoFile)
+            // {
+            //     TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
+            //     newContent.GetComponent<Button>().onClick.AddListener(() => slideOutRepoFileSidebar(projectId, relatedVerticeW));
+            //     newContent.GetComponent<Button>().enabled = true;
+            // }
+            // if (relatedVerticeD.verticeType == VerticeType.Wiki)
+            // {
+            //     TMP_Text newContent = addContentWithText("" + relatedVerticeD.verticeType.ToString() + " [" + relatedVerticeD.id.ToString() + "] " + relatedVerticeD.title.ToString());
+            //     newContent.GetComponent<Button>().onClick.AddListener(() => slideOutWikiSidebar(projectId, relatedVerticeW));
+            //     newContent.GetComponent<Button>().enabled = true;
+            // }
 
         }
     }

@@ -55,10 +55,10 @@ MonoBehaviour:
   platformHeight: 2
   platformDistanceBetween: 50
   spaceBetweenObjects: 3
-  platformAlpha: 40
   helperDistanceFromGraph: 25
-  lineWidth: 2
+  lineWidth: 0.5
   distanceBetweenProjects: 150
+  projectNameDistance: 50
   verticePrefab: {fileID: 2515161177860733246, guid: 6a13776bb2538424eb1e08420dacdda0, type: 3}
   verticeMaterial: {fileID: 2100000, guid: c6312456935fb7645aa9d5a684d6bace, type: 2}
   platformPrefab: {fileID: 2515161177860733246, guid: de7c4edd37a47c84ba9685d147ecfa36, type: 3}
@@ -66,6 +66,8 @@ MonoBehaviour:
   transparentMaterial: {fileID: 2100000, guid: 7e969c91817a9824e94513fb6aa176bb, type: 2}
   arrowPrefab: {fileID: 2742218351095386164, guid: 00c547efbbdd51b40a4ee77465d1860c, type: 3}
   linePrefab: {fileID: 2723466005977160117, guid: 9903f576e2b8fcf439a5baa1311cac49, type: 3}
+  projectNamePrefab: {fileID: 5016916375157260301, guid: a4fe960d0af7cce42a05e755d253b16b, type: 3}
+  lineRendererMaterial: {fileID: 2100000, guid: 36b124f629ffefe43a4ca6841b0f11d0, type: 2}
   hoverCanvas: {fileID: 0}
   hoverElement: {fileID: 0}
   hoverText: {fileID: 0}
@@ -79,6 +81,4 @@ MonoBehaviour:
   timelineRenderer: {fileID: 0}
   contributionsCalendar: {fileID: 0}
   kiviatDiagram: {fileID: 0}
-  nextDateBtn: {fileID: 0}
-  previousDateBtn: {fileID: 0}
   dateTrackerPrefab: {fileID: 2515161177860733246, guid: f34673e03fa8f8a4a883e45c726a27aa, type: 3}

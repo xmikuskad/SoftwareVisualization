@@ -8,6 +8,7 @@ namespace Data
 {
     public class VerticeWrapper
     {
+        public long projectId = -1;
         public VerticeData verticeData;
         private Dictionary<VerticeType, List<VerticeData>> relatedVertices = new();
         private Dictionary<EdgeType, List<EdgeData>> relatedEdges = new();
@@ -19,6 +20,11 @@ namespace Data
 
         private List<DateTime> dates = new();
         public long updateCount = 1;
+
+        public VerticeWrapper(long projectId)
+        {
+            this.projectId = projectId;
+        }
 
         public void AddData(VerticeData vertice, EdgeData edge)
         {
@@ -194,93 +200,158 @@ namespace Data
             return DateTime.MinValue;
         }
 
-        public bool IsConnected(Pair<VerticeData, VerticeWrapper> pair, VerticeData commitOrChange)
+        public bool IsConnected(Pair<VerticeData, VerticeWrapper> selected, VerticeData commitOrChange)
         {
-            // This is only person
-            if ((commitOrChange?.id ?? -1) < 0)
+            VerticeData selectedChange = selected.Left;
+            VerticeWrapper selectedVertice = selected.Right;
+
+            VerticeData currentChange = commitOrChange;
+            VerticeWrapper currentVertice = this;
+            
+            if (selectedVertice.projectId != currentVertice.projectId)
+                return false;
+
+            // We can just compare two changes
+            if (Exists(selectedChange) && Exists(currentChange))
             {
-                if (pair.Left?.id == null)
+                return selectedChange.id == currentChange.id;
+            }
+            
+            // We are selecting the whole vertice so we need to compare
+            if (!Exists(selectedChange) && Exists(currentChange))
+            {
+                VerticeWrapper currentChangeWrapper = currentVertice.relatedChangesOrCommits[currentChange.id];
+                return currentChangeWrapper.relatedVertices.ContainsKey(selectedVertice.verticeData.verticeType) &&
+                       currentChangeWrapper.relatedVertices[selectedVertice.verticeData.verticeType].Any(x => x.id == selectedVertice.verticeData.id);
+            }
+            
+            // Only person doesnt have a change/commit attached
+            if (Exists(selectedChange) && !Exists(currentChange))
+            {
+                if (currentVertice.verticeData.verticeType != VerticeType.Person)
                 {
-                    if (pair.Right.verticeData.verticeType == VerticeType.Person)
-                    {
-                        // Do not show other person when clicking on person
-                        return pair.Right.verticeData.id == this.verticeData.id;
-                    }
-                    else
-                    {
-                        // If the ticket contains reference to this then show it
-                        return pair.Right.relatedVertices.ContainsKey(VerticeType.Person) && pair.Right
-                            .relatedVertices[VerticeType.Person].Any(x => x.id == this.verticeData.id);
-                    }
+                    Debug.LogError("VERTICE WITHOUT CHANGE OR TICKET !! PLS 1 REPORT "+currentVertice.verticeData.id);
+                }
+
+                if (selectedVertice.verticeData.verticeType == VerticeType.Person && currentVertice.verticeData.verticeType == VerticeType.Person)
+                {
+                    return selectedVertice.verticeData.id == currentVertice.verticeData.id;
                 }
                 else
                 {
-                    // Check if person is mentioned in a commit
-                    return this.relatedChangesOrCommits.ContainsKey(pair.Left.id) &&
-                           this.relatedChangesOrCommits[pair.Left.id].relatedVerticesById
-                               .ContainsKey(this.verticeData.id);
+                    VerticeWrapper selectedChangeWrapper = selectedVertice.relatedChangesOrCommits[selectedChange.id];
+                    return selectedChangeWrapper.relatedVertices.ContainsKey(currentVertice.verticeData.verticeType) && 
+                           selectedChangeWrapper.relatedVertices[currentVertice.verticeData.verticeType].Any(x => x.id == currentVertice.verticeData.id);
+                }
+            }
+            
+            // 
+            if (!Exists(selectedChange) && !Exists(currentChange))
+            {
+                if (currentVertice.verticeData.verticeType != VerticeType.Person)
+                {
+                    Debug.LogError("VERTICE WITHOUT CHANGE OR TICKET !! PLS 2 REPORT "+currentVertice.verticeData.id);
                 }
 
+                if (selectedVertice.verticeData.verticeType == VerticeType.Person && currentVertice.verticeData.verticeType == VerticeType.Person)
+                {
+                    return selectedVertice.verticeData.id == currentVertice.verticeData.id;
+                }
+                else
+                {
+                    return selectedVertice.relatedVertices.ContainsKey(currentVertice.verticeData.verticeType) && 
+                           selectedVertice.relatedVertices[currentVertice.verticeData.verticeType].Any(x => x.id == currentVertice.verticeData.id);
+                }
             }
 
-            if (pair.Left?.id != null)
-            {
-                return commitOrChange.id == pair.Left.id;
-            }
-            else
-            {
-                return pair.Right.relatedVerticesById.ContainsKey(this.verticeData.id);
-            }
+            Debug.LogError("??? !");
+            return false;
 
 
+            // // This is only person
+            // if ((commitOrChange?.id ?? -1) < 0)
+            // {
+            //     if (pair.Left?.id == null)
+            //     {
+            //         if (pair.Right.verticeData.verticeType == VerticeType.Person)
+            //         {
+            //             // Do not show other person when clicking on person
+            //             return pair.Right.verticeData.id == this.verticeData.id;
+            //         }
+            //         else
+            //         {
+            //             // If the ticket contains reference to this then show it
+            //             return pair.Right.relatedVertices.ContainsKey(pair.Right.verticeData.verticeType) && pair.Right
+            //                 .relatedVertices[pair.Right.verticeData.verticeType].Any(x => x.id == this.verticeData.id);
+            //         }
+            //     }
+            //     else
+            //     {
+            //         // Check if person is mentioned in a commit
+            //         return this.relatedChangesOrCommits.ContainsKey(pair.Left.id) &&
+            //                this.relatedChangesOrCommits[pair.Left.id].relatedVerticesById
+            //                    .ContainsKey(this.verticeData.id);
+            //     }
+            //
+            // }
+            //
+            // if (pair.Left?.id != null)
+            // {
+            //     return commitOrChange.id == pair.Left.id;
+            // }
+            // else
+            // {
+            //     return pair.Right.relatedVerticesById.ContainsKey(this.verticeData.id);
+            // }
 
-            // Ehm this will never happen
-            if (this.verticeData.verticeType == VerticeType.Change ||
-                this.verticeData.verticeType == VerticeType.Commit)
-            {
-                Debug.Log("Happened?");
-                return IsDirectlyConnected(pair.Left ?? pair.Right.verticeData);
-            }
-
-            if (pair.Left != null)
-            {
-                return pair.Left.id == commitOrChange?.id || (this.verticeData.verticeType == VerticeType.Person && (this.relatedChangesOrCommits.ContainsKey(pair.Left.id)));
-            }
-            else
-            {
-                return IsConnectedByChangeOrCommit(pair.Right.verticeData, (commitOrChange?.id ?? -1));
-            }
         }
 
-        public bool IsConnectedByChangeOrCommit(VerticeData v, long commitOrChangeId)
+        private bool Exists(VerticeData v)
         {
-            if (this.verticeData.id == v.id) return true;
-            if (this.verticeData.verticeType == VerticeType.Person) return false;
-
-            if (commitOrChangeId < 0)
-                return this.relatedChangesOrCommits.Values.Any(x => x.IsDirectlyConnected(v));
-            return (this.relatedChangesOrCommits.ContainsKey(commitOrChangeId) && this.relatedChangesOrCommits[commitOrChangeId].IsDirectlyConnected(v));
+            return (v?.id ?? -1) > 0;
         }
-
-        // public bool ContainsChangeOrCommit(long verticeId, long commitOrChangeIdFrom,long commitOrChangeIdTo)
+        
+        // public bool IsConnected(Pair<VerticeData, VerticeWrapper> pair, VerticeData commitOrChange)
         // {
-        //     if(commitOrChangeIdTo <0)
-        //         return this.verticeData.id == verticeId || this.relatedChangesOrCommits.ContainsKey(commitOrChangeIdFrom);
-        //     if (this.verticeData.id == verticeId && commitOrChangeIdFrom == commitOrChangeIdTo)
-        //         return true;
-        //     return this.relatedChangesOrCommits.ContainsKey(commitOrChangeIdFrom);
+        //     if (pair.Right.projectId != this.projectId)
+        //         return false;
+        //     
+        //     // This is only person
+        //     if ((commitOrChange?.id ?? -1) < 0)
+        //     {
+        //         if (pair.Left?.id == null)
+        //         {
+        //             if (pair.Right.verticeData.verticeType == VerticeType.Person)
+        //             {
+        //                 // Do not show other person when clicking on person
+        //                 return pair.Right.verticeData.id == this.verticeData.id;
+        //             }
+        //             else
+        //             {
+        //                 // If the ticket contains reference to this then show it
+        //                 return pair.Right.relatedVertices.ContainsKey(pair.Right.verticeData.verticeType) && pair.Right
+        //                     .relatedVertices[pair.Right.verticeData.verticeType].Any(x => x.id == this.verticeData.id);
+        //             }
+        //         }
+        //         else
+        //         {
+        //             // Check if person is mentioned in a commit
+        //             return this.relatedChangesOrCommits.ContainsKey(pair.Left.id) &&
+        //                    this.relatedChangesOrCommits[pair.Left.id].relatedVerticesById
+        //                        .ContainsKey(this.verticeData.id);
+        //         }
+        //
+        //     }
+        //
+        //     if (pair.Left?.id != null)
+        //     {
+        //         return commitOrChange.id == pair.Left.id;
+        //     }
+        //     else
+        //     {
+        //         return pair.Right.relatedVerticesById.ContainsKey(this.verticeData.id);
+        //     }
+        //
         // }
-
-        public bool IsDirectlyConnected(VerticeData v)
-        {
-            if (this.verticeData.id == v.id) return true;
-            if (this.verticeData.verticeType == VerticeType.Person)
-            {
-                return false;
-                // return this.relatedVerticesById.Values.Where(x => x.verticeType != VerticeType.Person).Select(x => x.id)
-                //     .Any(x => x == v.id);
-            }
-            return this.verticeData.id == v.id || this.relatedVerticesById.Values.Select(x => x.id).Any(x => x == v.id);
-        }
     }
 }
