@@ -10,6 +10,7 @@ public class SidebarBtnController : MonoBehaviour
     [Header("References")] public GameObject panelForProject;
     public TMP_Text projectName;
     public TMP_Text projectDate;
+    
     public Sidebar sidebar;
 
     public Dictionary<long, DataHolder> projects = new ();
@@ -50,6 +51,13 @@ public class SidebarBtnController : MonoBehaviour
         SetProject(this.activeProject);
         if(!sidebar.IsOpen)
             sidebar.Open();
+    }
+
+    public void OnProjectSelected(int index)
+    {
+        SingletonManager.Instance.dataManager.InvokeResetEvent(ResetEventReason.PROJECT_CHANGED);
+        SingletonManager.Instance.dataManager.InvokeSelectedProjectChange(projects[index-1]);
+        
     }
 
     public void MoveProjectNext()

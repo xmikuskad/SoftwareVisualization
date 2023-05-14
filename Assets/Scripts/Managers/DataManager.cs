@@ -25,11 +25,12 @@ public class DataManager: MonoBehaviour
 
     public event Action<long, DateTime> DateChangeEvent;    // When moving forward/backwards with dates
     public event Action<long, VerticeWrapper> SpecificVerticeSelected;    // When moving forward/backwards with dates
+    public event Action<DataHolder> SelectedProjectChanged;    // When moving forward/backwards with dates
     
     // Other
     public List<DateTime> selectedDates = new();
     public List<Pair<VerticeData,VerticeWrapper>> selectedVertices = new();
-    public long selectedProjectId = -1;
+    public long selectedProjectId = 1;
     
     [Header("References")]
     private DataRenderer dataRenderer;
@@ -44,6 +45,7 @@ public class DataManager: MonoBehaviour
         timelineRenderer = FindObjectOfType<TimelineRenderer>();
         sidebarBtnController = FindObjectOfType<SidebarBtnController>();
         ResetEvent += OnResetEvent;
+        SelectedProjectChanged += OnSelectedProjectChanged;
     }
 
     public void LoadData(DataHolder holder)
@@ -64,15 +66,13 @@ public class DataManager: MonoBehaviour
         DataFilterEvent?.Invoke(f);
     }
 
+    public void InvokeSelectedProjectChange(DataHolder dataHolder)
+    {
+        SelectedProjectChanged?.Invoke(dataHolder);
+    }
+
     public void ProcessVerticeClick(long projectId, Pair<VerticeData,VerticeWrapper> pair)
     {
-        if (this.selectedProjectId != projectId)
-        {
-            this.ResetEvent?.Invoke(ResetEventReason.PROJECT_CHANGED);
-        }
-
-        this.selectedProjectId = projectId;
-
         bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
 
         // Adding single items
@@ -107,22 +107,19 @@ public class DataManager: MonoBehaviour
         }
     }
 
+    public void OnSelectedProjectChanged(DataHolder dataHolder)
+    {
+        this.selectedProjectId = dataHolder.projectId;
+    }
+
     public void OnResetEvent(ResetEventReason reason)
     {
         this.selectedDates.Clear();
         this.selectedVertices.Clear();
-        this.selectedProjectId = -1;
     }
 
     public void ProcessDateClick(long projectId, DateTime date)
     {
-        if (this.selectedProjectId != projectId)
-        {
-            this.ResetEvent?.Invoke(ResetEventReason.PROJECT_CHANGED);
-        }
-
-        this.selectedProjectId = projectId;
-
         bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
         bool shiftPressed = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
 
