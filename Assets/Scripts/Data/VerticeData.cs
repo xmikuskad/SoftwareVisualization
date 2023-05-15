@@ -155,4 +155,9 @@ public class VerticeData
     {
         return from <= GetTimeWithoutHours() && GetTimeWithoutHours() <= to;
     }
+    
+    public bool IsDateAfter(DateTime from)
+    {
+        return from <= GetTimeWithoutHours();
+    }
 }

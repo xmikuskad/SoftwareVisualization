@@ -28,9 +28,24 @@ namespace Renderers
 
         public DataRenderer dataRenderer;
 
-        private void Awake()
+        private void Start()
         {
             SingletonManager.Instance.dataManager.ResetEvent += OnResetEvent;
+            SingletonManager.Instance.dataManager.SelectedProjectChanged += OnSelectedProjectChanged;
+        }
+        
+        private void OnSelectedProjectChanged(DataHolder dataHolder)
+        {
+            // Filter is active
+            if (dataRenderer.dateFilter.ContainsKey(dataHolder.projectId) && dataRenderer.dateFilter[dataHolder.projectId].Right != DateTime.MinValue.Date)
+            {
+                DateTime min = dataRenderer.dateFilter[dataHolder.projectId].Left;
+                DateTime max = dataRenderer.dateFilter[dataHolder.projectId].Right;
+                foreach (var (key, value) in btnObjects)
+                {
+                    value.GetComponent<Image>().color = min <= key && key <= max ? Color.red : Color.white;
+                }
+            }
         }
 
         private void OnResetEvent(ResetEventReason reason)
@@ -184,7 +199,7 @@ namespace Renderers
             rectTransform.pivot = new Vector2(.5f, 0f);
 
             TimelineBar timelineBar = rectTransform.GetComponent<TimelineBar>();
-            timelineBar.SetUp(dateTime, tooltipPrefab, material, highlightMaterial, hiddenMaterial, this, projectId);
+            timelineBar.SetUp(dateTime, tooltipPrefab, material, highlightMaterial, hiddenMaterial, this, projectId, dataRenderer);
             rectTransform.GetComponent<Image>().material = material;
             return timelineBar;
         }

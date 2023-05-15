@@ -28,7 +28,7 @@ public class CollabMatrix : MonoBehaviour
 
     private DataHolder currentDataHolder;
 
-    private long currentProjectId;
+    private long currentProjectId = -1;
 
     private Dictionary<long, Pair<DateTime, DateTime>> projectIdToDateFilters = new Dictionary<long, Pair<DateTime, DateTime>>();
 
@@ -43,6 +43,8 @@ public class CollabMatrix : MonoBehaviour
 
     private void OnResetEvent(ResetEventReason reason)
     {
+        if (currentProjectId < 0)
+            return;
         if (reason != ResetEventReason.DATES_UNSELECTED && reason != ResetEventReason.CLICK_OUTSIDE && reason != ResetEventReason.CLEARING_DATES) return;
         projectIdToDateFilters[currentProjectId].Left = DateTime.MinValue;
         projectIdToDateFilters[currentProjectId].Right = DateTime.MaxValue;
@@ -141,7 +143,7 @@ public class CollabMatrix : MonoBehaviour
             VerticeData ticket = dataHolder.verticeData[edge.from];
             VerticeData change = dataHolder.verticeData[edge.to];
             // If either change or ticket should be filtered out, just filter it out
-            if (!ticket.IsDateBetween(projectIdToDateFilters[dataHolder.projectId].Left, projectIdToDateFilters[dataHolder.projectId].Right)) continue;
+            if (!ticket.IsDateAfter(projectIdToDateFilters[dataHolder.projectId].Left)) continue;
             if (!change.IsDateBetween(projectIdToDateFilters[dataHolder.projectId].Left, projectIdToDateFilters[dataHolder.projectId].Right)) continue;
             // If change ID not yet logged, log it in ticketChangesIDs
             if (!ticketChangesIDs[ticket.id].Contains(change.id)) ticketChangesIDs[ticket.id].Add(change.id);
@@ -173,6 +175,7 @@ public class CollabMatrix : MonoBehaviour
         }
         int min = matrixValues.Cast<int>().Min();
         int max = matrixValues.Cast<int>().Max();
+        if(max == 0) max = Int32.MaxValue-2;
 
         // Generate conf matrix representation in canvas
         for (int i = 0; i < matrixValues.GetLength(0); i++)
