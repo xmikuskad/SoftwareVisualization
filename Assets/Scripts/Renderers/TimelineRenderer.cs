@@ -159,7 +159,8 @@ namespace Renderers
             {
                 value.GetComponent<Image>().color = Color.white;
             }
-            btnObjects[date].GetComponent<Image>().color = Color.red;
+            if(btnObjects.ContainsKey(date))
+                btnObjects[date].GetComponent<Image>().color = Color.red;
         }
         
         public void ColorTimelineBtnRange(Pair<DateTime,DateTime> pair)
