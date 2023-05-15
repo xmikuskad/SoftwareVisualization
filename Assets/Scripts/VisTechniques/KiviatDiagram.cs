@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System;
 using E2C;
 using Data;
+using Helpers;
 
 public class KiviatDiagram : MonoBehaviour
 {
@@ -25,11 +26,33 @@ public class KiviatDiagram : MonoBehaviour
 
     private DataHolder currentDataHolder;
 
+    private long currentProjectId;
+
+    private Dictionary<long, Pair<DateTime, DateTime>> projectIdToDateFilters = new Dictionary<long, Pair<DateTime, DateTime>>();
+
     // Start is called before the first frame update
     void Start()
     {
         SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
+        SingletonManager.Instance.dataManager.DateRenderChangedEvent += OnDateRenderChanged;
+        SingletonManager.Instance.dataManager.ResetEvent += OnResetEvent;
     }
+
+    private void OnResetEvent(ResetEventReason reason)
+    {
+        if (reason != ResetEventReason.DATES_UNSELECTED && reason != ResetEventReason.CLICK_OUTSIDE && reason != ResetEventReason.CLEARING_DATES) return;
+        projectIdToDateFilters[currentProjectId].Left = DateTime.MinValue;
+        projectIdToDateFilters[currentProjectId].Right = DateTime.MaxValue;
+        initiateKiviat(this.currentDataHolder);
+    }
+
+    public void OnDateRenderChanged(Pair<long, Pair<DateTime, DateTime>> pair)
+    {
+        projectIdToDateFilters[currentProjectId].Left = pair.Right.Left;
+        projectIdToDateFilters[currentProjectId].Right = pair.Right.Right;
+        initiateKiviat(this.currentDataHolder);
+    }
+
     private void OnDataFilter(FilterHolder f)
     {
         this.filterHolder = f;
@@ -38,7 +61,11 @@ public class KiviatDiagram : MonoBehaviour
 
     public void initiateKiviat(DataHolder dataHolder)
     {
-        currentDataHolder = dataHolder;
+        this.currentDataHolder = dataHolder;
+        this.currentProjectId = dataHolder.projectId;
+        if (!projectIdToDateFilters.ContainsKey(dataHolder.projectId))
+            projectIdToDateFilters[dataHolder.projectId] = new Pair<DateTime, DateTime>(DateTime.MinValue, DateTime.MaxValue);
+
         e2chart.chartData.series.Clear();
         Dictionary<long, List<float>> metrics = computeMetrics(dataHolder);
 
@@ -109,6 +136,7 @@ public class KiviatDiagram : MonoBehaviour
 
     public Dictionary<long, List<float>> computeMetrics(DataHolder dataHolder)
     {
+        allPersons.Clear();
         foreach (VerticeData vertice in dataHolder.verticeData.Values) if (vertice.verticeType == VerticeType.Person) allPersons[vertice.id] = vertice;
 
         Dictionary<long, List<float>> metrics = new Dictionary<long, List<float>>();
@@ -121,6 +149,7 @@ public class KiviatDiagram : MonoBehaviour
             if (personRelatedVerticesDict.ContainsKey(VerticeType.Change))
             {
                 List<VerticeData> personRelatedChanges = personRelatedVerticesDict[VerticeType.Change];
+                personRelatedChanges = filterVerticeDataListByDates(personRelatedChanges);
                 metricz[0] += (personRelatedChanges.Count);
                 foreach (VerticeData personRelatedChange in personRelatedChanges)
                 {
@@ -140,6 +169,7 @@ public class KiviatDiagram : MonoBehaviour
             if (personRelatedVerticesDict.ContainsKey(VerticeType.Commit))
             {
                 List<VerticeData> personRelatedCommits = personRelatedVerticesDict[VerticeType.Commit];
+                personRelatedCommits = filterVerticeDataListByDates(personRelatedCommits);
                 metricz[1] += (personRelatedCommits.Count);
                 foreach (VerticeData personRelatedCommit in personRelatedCommits)
                 {
@@ -191,6 +221,17 @@ public class KiviatDiagram : MonoBehaviour
             // metrics[person.Value.id] = new List<float>() { 1, 2, 3, 4, 5 };
         }
         return metrics;
+    }
+
+    private List<VerticeData> filterVerticeDataListByDates(List<VerticeData> verticeDatas)
+    {
+        List<VerticeData> filteredVerticeDatas = new();
+        foreach (VerticeData verticeData in verticeDatas)
+        {
+            if (verticeData.IsDateBetween(projectIdToDateFilters[currentProjectId].Left, projectIdToDateFilters[currentProjectId].Right))
+                filteredVerticeDatas.Add(verticeData);
+        }
+        return filteredVerticeDatas;
     }
 
 }

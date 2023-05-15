@@ -43,7 +43,7 @@ public class CollabMatrix : MonoBehaviour
 
     private void OnResetEvent(ResetEventReason reason)
     {
-        if (reason != ResetEventReason.DATES_UNSELECTED || reason != ResetEventReason.CLICK_OUTSIDE || reason != ResetEventReason.CLEARING_DATES) return;
+        if (reason != ResetEventReason.DATES_UNSELECTED && reason != ResetEventReason.CLICK_OUTSIDE && reason != ResetEventReason.CLEARING_DATES) return;
         projectIdToDateFilters[currentProjectId].Left = DateTime.MinValue;
         projectIdToDateFilters[currentProjectId].Right = DateTime.MaxValue;
         fillMatrix(this.currentDataHolder);
