@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Data;
@@ -25,13 +26,34 @@ public class CollabMatrix : MonoBehaviour
 
     public Image matrixDefaultColorElement;
 
-    private DataHolder dataHolder;
+    private DataHolder currentDataHolder;
+
+    private long currentProjectId;
+
+    private Dictionary<long, Pair<DateTime, DateTime>> projectIdToDateFilters = new Dictionary<long, Pair<DateTime, DateTime>>();
 
 
     // Start is called before the first frame update
     void Start()
     {
         collabMatrix = this.gameObject;
+        SingletonManager.Instance.dataManager.DateRenderChangedEvent += OnDateRenderChanged;
+        SingletonManager.Instance.dataManager.ResetEvent += OnResetEvent;
+    }
+
+    private void OnResetEvent(ResetEventReason reason)
+    {
+        if (reason != ResetEventReason.DATES_UNSELECTED && reason != ResetEventReason.CLICK_OUTSIDE && reason != ResetEventReason.CLEARING_DATES) return;
+        projectIdToDateFilters[currentProjectId].Left = DateTime.MinValue;
+        projectIdToDateFilters[currentProjectId].Right = DateTime.MaxValue;
+        fillMatrix(this.currentDataHolder);
+    }
+
+    public void OnDateRenderChanged(Pair<long, Pair<DateTime, DateTime>> pair)
+    {
+        projectIdToDateFilters[currentProjectId].Left = pair.Right.Left;
+        projectIdToDateFilters[currentProjectId].Right = pair.Right.Right;
+        fillMatrix(this.currentDataHolder);
     }
 
     private void removeCurrentMatrix()
@@ -43,7 +65,7 @@ public class CollabMatrix : MonoBehaviour
                 GameObject.Destroy(matrixArea.transform.GetChild(i).gameObject);
             }
         }
-        
+
         // foreach (Transform child in matrixArea.transform)
         // {
         //     GameObject.Destroy(child.gameObject);
@@ -53,9 +75,12 @@ public class CollabMatrix : MonoBehaviour
 
     public void fillMatrix(DataHolder dataHolder)
     {
-    
+        currentProjectId = dataHolder.projectId;
+        if (!projectIdToDateFilters.ContainsKey(dataHolder.projectId))
+            projectIdToDateFilters[dataHolder.projectId] = new Pair<DateTime, DateTime>(DateTime.MinValue, DateTime.MaxValue);
+
         removeCurrentMatrix();
-        this.dataHolder = dataHolder;
+        this.currentDataHolder = dataHolder;
 
         // Get list of collaborants
         List<string> collaborants = new List<string>();
@@ -115,6 +140,9 @@ public class CollabMatrix : MonoBehaviour
             if (dataHolder.verticeData[edge.to].verticeType != VerticeType.Change) continue;
             VerticeData ticket = dataHolder.verticeData[edge.from];
             VerticeData change = dataHolder.verticeData[edge.to];
+            // If either change or ticket should be filtered out, just filter it out
+            if (!ticket.IsDateBetween(projectIdToDateFilters[dataHolder.projectId].Left, projectIdToDateFilters[dataHolder.projectId].Right)) continue;
+            if (!change.IsDateBetween(projectIdToDateFilters[dataHolder.projectId].Left, projectIdToDateFilters[dataHolder.projectId].Right)) continue;
             // If change ID not yet logged, log it in ticketChangesIDs
             if (!ticketChangesIDs[ticket.id].Contains(change.id)) ticketChangesIDs[ticket.id].Add(change.id);
             // If author is unknown and is not yet logged, log it in ticketContributors as ?
@@ -169,6 +197,7 @@ public class CollabMatrix : MonoBehaviour
                 int l = j;
                 foreach (KeyValuePair<long, List<string>> ticketCon in ticketContributorsStrs)
                 {
+                    // TODO filter aj zde
                     if (ticketCon.Value.Contains(collaborants[k]) && ticketCon.Value.Contains(collaborants[l]))
                     {
                         relatedTickets.Add(dataHolder.verticeWrappers[ticketCon.Key]);
@@ -187,7 +216,7 @@ public class CollabMatrix : MonoBehaviour
 
     public void onClickPerson(VerticeWrapper verticeWrapper)
     {
-        sidebarController.slideOutPersonSidebar(dataHolder.projectId, verticeWrapper);
+        sidebarController.slideOutPersonSidebar(currentDataHolder.projectId, verticeWrapper);
         SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData, VerticeWrapper>>() { new(null, verticeWrapper) });
     }
 
@@ -209,7 +238,7 @@ public class CollabMatrix : MonoBehaviour
 
     public void onClickTicket(List<VerticeWrapper> ticketsInList, int indexOfClicked)
     {
-        sidebarController.slideOutTicketSidebar(dataHolder.projectId, ticketsInList[indexOfClicked]);
+        sidebarController.slideOutTicketSidebar(currentDataHolder.projectId, ticketsInList[indexOfClicked]);
         SingletonManager.Instance.dataManager.InvokeVerticeSelect(new List<Pair<VerticeData, VerticeWrapper>>() { new(null, ticketsInList[indexOfClicked]) });
     }
 
