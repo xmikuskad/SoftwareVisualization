@@ -26,7 +26,7 @@ public class KiviatDiagram : MonoBehaviour
 
     private DataHolder currentDataHolder;
 
-    private long currentProjectId;
+    private long currentProjectId = -1;
 
     private Dictionary<long, Pair<DateTime, DateTime>> projectIdToDateFilters = new Dictionary<long, Pair<DateTime, DateTime>>();
 
@@ -40,6 +40,8 @@ public class KiviatDiagram : MonoBehaviour
 
     private void OnResetEvent(ResetEventReason reason)
     {
+        if (currentProjectId < 0)
+            return;
         if (reason != ResetEventReason.DATES_UNSELECTED && reason != ResetEventReason.CLICK_OUTSIDE && reason != ResetEventReason.CLEARING_DATES) return;
         projectIdToDateFilters[currentProjectId].Left = DateTime.MinValue;
         projectIdToDateFilters[currentProjectId].Right = DateTime.MaxValue;

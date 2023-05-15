@@ -107,7 +107,7 @@ public class DataRenderer : MonoBehaviour
 
     private Transform mainCameraTransform;
 
-    private void Start()
+    private void Awake()
     {
         SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
         SingletonManager.Instance.dataManager.DateChangeEvent += OnDateChangeEvent;
@@ -160,7 +160,8 @@ public class DataRenderer : MonoBehaviour
             value.GetComponent<TMP_Text>().color = key == activeProjectId ? Color.red : Color.black;
         }
 
-        dateFilter[activeProjectId] = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
+        if(!dateFilter.ContainsKey(activeProjectId))
+            dateFilter[activeProjectId] = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
         // Load viz techniques
         collabMatrix.fillMatrix(dataHolder); // <-- subscribed in collabMatrix to project change
         contributionsCalendar.fillContributionsCalendar(dataHolder, dataHolder.startDate.Year);

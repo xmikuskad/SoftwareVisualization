@@ -21,6 +21,7 @@ namespace UI
         public Image image;
 
         public TimelineRenderer timelineRenderer;
+        public DataRenderer dataRenderer;
 
         private void Awake()
         {
@@ -50,7 +51,6 @@ namespace UI
             SingletonManager.Instance.dataManager.DateChangeEvent -= OnDateChanged;
             SingletonManager.Instance.dataManager.DateRenderChangedEvent -= OnDateRenderChanged;
         }
-
         public void OnDateRenderChanged(Pair<long, Pair<DateTime, DateTime>> pair)
         {
             SetHidden(true);
@@ -156,7 +156,7 @@ namespace UI
             }
         }
 
-        public void SetUp(DateTime date, TMP_Text tooltipObject, Material originalMaterial, Material highlightMaterial, Material hiddenMaterial, TimelineRenderer timelineRenderer, long projectId)
+        public void SetUp(DateTime date, TMP_Text tooltipObject, Material originalMaterial, Material highlightMaterial, Material hiddenMaterial, TimelineRenderer timelineRenderer, long projectId, DataRenderer dataRenderer)
         {
             this.date = date;
             this.tooltipObject = tooltipObject;
@@ -165,6 +165,7 @@ namespace UI
             this.hiddenMaterial = new Material(hiddenMaterial);
             this.timelineRenderer = timelineRenderer;
             this.projectId = projectId;
+            this.dataRenderer = dataRenderer;
         }
 
         public void OnPointerUp(PointerEventData eventData)
