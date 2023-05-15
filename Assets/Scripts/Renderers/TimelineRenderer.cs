@@ -146,6 +146,11 @@ namespace Renderers
 
         public void OnBtnClick(DateTime date, long projectIdTmp)
         {
+            DateTime min = dataRenderer.loadedProjects[projectIdTmp].minDate;
+            DateTime max = dataRenderer.loadedProjects[projectIdTmp].maxDate;
+            if(date < min || date > max)
+                return;
+
             bool ctrlPressed = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
             if (ctrlPressed && dataRenderer.dateFilter[projectIdTmp].Left != DateTime.MinValue.Date)
             {
@@ -174,7 +179,8 @@ namespace Renderers
             {
                 value.GetComponent<Image>().color = Color.white;
             }
-            btnObjects[date].GetComponent<Image>().color = Color.red;
+            if(btnObjects.ContainsKey(date))
+                btnObjects[date].GetComponent<Image>().color = Color.red;
         }
         
         public void ColorTimelineBtnRange(Pair<DateTime,DateTime> pair)

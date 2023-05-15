@@ -235,7 +235,7 @@ public class CollabMatrix : MonoBehaviour
         ticketListView.ItemsEvents.PointerClick.RemoveAllListeners();
         ticketListView.ItemsEvents.PointerClick.AddListener((x, y, z) => onClickTicket(relatedTickets, x));
         ticketListViewHolder.SetActive(true);
-
+        
         SingletonManager.Instance.dataManager.InvokeVerticeSelect(relatedTickets.Select(x => new Pair<VerticeData, VerticeWrapper>(null, x)).ToList());
     }
 
