@@ -47,29 +47,29 @@ public class KiviatDiagram : MonoBehaviour
 
         if (!filterHolder.disabledVertices.Contains(VerticeType.Change))
         {
-            e2chart.chartData.categoriesX.Add("changes");  
-            e2chart.chartData.categoriesY.Add("changes");  
+            e2chart.chartData.categoriesX.Add("changes");
+            e2chart.chartData.categoriesY.Add("changes");
         }
-        
+
         if (!filterHolder.disabledVertices.Contains(VerticeType.Commit))
         {
-            e2chart.chartData.categoriesX.Add("commits");  
-            e2chart.chartData.categoriesY.Add("commits");  
+            e2chart.chartData.categoriesX.Add("commits");
+            e2chart.chartData.categoriesY.Add("commits");
         }
         if (!filterHolder.disabledVertices.Contains(VerticeType.RepoFile))
         {
-            e2chart.chartData.categoriesX.Add("repos");  
-            e2chart.chartData.categoriesY.Add("repos");  
+            e2chart.chartData.categoriesX.Add("repos");
+            e2chart.chartData.categoriesY.Add("repos");
         }
         if (!filterHolder.disabledVertices.Contains(VerticeType.File))
         {
-            e2chart.chartData.categoriesX.Add("files");  
-            e2chart.chartData.categoriesY.Add("files");  
+            e2chart.chartData.categoriesX.Add("files");
+            e2chart.chartData.categoriesY.Add("files");
         }
         if (!filterHolder.disabledVertices.Contains(VerticeType.Wiki))
         {
-            e2chart.chartData.categoriesX.Add("wikis");  
-            e2chart.chartData.categoriesY.Add("wikis");  
+            e2chart.chartData.categoriesX.Add("wikis");
+            e2chart.chartData.categoriesY.Add("wikis");
         }
 
         foreach (var (key, value) in metrics)
@@ -79,10 +79,10 @@ public class KiviatDiagram : MonoBehaviour
             {
                 filteredMetrics.Add(value[0]);
             }
-        
+
             if (!filterHolder.disabledVertices.Contains(VerticeType.Commit))
             {
-                filteredMetrics.Add(value[1]); 
+                filteredMetrics.Add(value[1]);
             }
             if (!filterHolder.disabledVertices.Contains(VerticeType.RepoFile))
             {
@@ -96,7 +96,7 @@ public class KiviatDiagram : MonoBehaviour
             {
                 filteredMetrics.Add(value[4]);
             }
-            
+
             E2ChartData.Series newSeries = new E2ChartData.Series();
             newSeries.name = dataHolder.verticeWrappers[key].verticeData.name;
             newSeries.show = true;
@@ -185,7 +185,6 @@ public class KiviatDiagram : MonoBehaviour
             if (sum > 0.05f)
                 metrics[person.Value.id] = metricz;
             // else { Debug.Log("ignoring " + person.Value.name + "cuz its all 0"); }
-
 
             // Debug.Log("-------");
 

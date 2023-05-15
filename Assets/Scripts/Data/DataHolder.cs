@@ -13,7 +13,7 @@ public class DataHolder
     public long projectId;
     public Dictionary<long, EdgeData> edgeData;
     public Dictionary<long, VerticeData> verticeData;
-    
+
     public Dictionary<String, long> personIds = new();
     public DateTime startDate;
 
@@ -22,7 +22,7 @@ public class DataHolder
 
     // New data structure
     public Dictionary<long, VerticeWrapper> verticeWrappers = new();
-    
+
     // WARNING: This uses key DateTime.MinValue as a null. REMOVE WHEN USING ONLY THE KEYS
     public Dictionary<DateTime, List<VerticeWrapper>> verticesByDate = new();
 
@@ -32,8 +32,6 @@ public class DataHolder
     public DateTime minDate = DateTime.MaxValue.Date;
     public DateTime maxDate = DateTime.MinValue.Date;
     public List<DateTime> dates = new();
-
-    // TODO This function needs a rework. I know that data are only loading for tickets.
     public void LoadData()
     {
         // Create a map so we can get personId from personString
@@ -54,7 +52,7 @@ public class DataHolder
 
     private void fillTicketToChangeListPerAuthor()
     {
-        
+
         foreach (VerticeData vertice in verticeData.Values)
         {
             if (vertice.verticeType == VerticeType.Ticket) ticketToChangeListPerAuthor[vertice.id] = new();
@@ -71,7 +69,7 @@ public class DataHolder
             {
                 ticketToChangeListPerAuthor[ticket.id][changeAuthorId] = new();
             }
-            if(!ticketToChangeListPerAuthor[ticket.id][changeAuthorId].Contains(change.verticeData))
+            if (!ticketToChangeListPerAuthor[ticket.id][changeAuthorId].Contains(change.verticeData))
                 ticketToChangeListPerAuthor[ticket.id][changeAuthorId].Add(change.verticeData);
         }
     }
@@ -98,15 +96,15 @@ public class DataHolder
             verticeWrappers[key] = new VerticeWrapper(projectId);
             verticeWrappers[key].verticeData = value;
         }
-        
+
         // Load edges
         foreach (var (key, value) in edgeData)
         {
             verticeWrappers[value.from].AddData(verticeData[value.to], value);
         }
-        
+
         // Group vertices by type and find the most occurring type
-        var mostOccurringType = verticeWrappers.Values.Where(x=>x.verticeData.verticeType!= VerticeType.Change && x.verticeData.verticeType != VerticeType.Commit)
+        var mostOccurringType = verticeWrappers.Values.Where(x => x.verticeData.verticeType != VerticeType.Change && x.verticeData.verticeType != VerticeType.Commit)
             .GroupBy(v => v.verticeData.verticeType)
             .OrderByDescending(g => g.Count())
             .Select(g => g.Key)
@@ -115,16 +113,16 @@ public class DataHolder
         // Count the most occurring type
         maxVerticeCount = verticeWrappers.Values.Count(v => v.verticeData.verticeType == mostOccurringType);
 
-        foreach (VerticeType t in (VerticeType[]) Enum.GetValues(typeof(VerticeType)))
+        foreach (VerticeType t in (VerticeType[])Enum.GetValues(typeof(VerticeType)))
         {
-            foreach (List<Pair<VerticeData,VerticeWrapper>> pairs in GetVerticesForPlatform(t))
+            foreach (List<Pair<VerticeData, VerticeWrapper>> pairs in GetVerticesForPlatform(t))
             {
                 if (pairs.Count > maxEdgeCount)
                     maxEdgeCount = pairs.Count;
             }
         }
-        
-        
+
+
         foreach (var (key, value) in verticeWrappers)
         {
             if (value.verticeData.verticeType == VerticeType.Change ||
@@ -135,7 +133,7 @@ public class DataHolder
                 // {
                 //     Debug.Log("id: "+value.verticeData.id+" = "+value.GetRelatedVertices().Count);
                 // }
-                
+
                 DateTime dateTime = value.GetTimeWithoutHours();
                 if (dateTime != DateTime.MinValue.Date)
                 {
@@ -160,7 +158,7 @@ public class DataHolder
 
                     if (!verticesByDate[value.GetTimeWithoutHours()].Contains(verticeWrappers[related.id]))
                         verticesByDate[value.GetTimeWithoutHours()].Add(verticeWrappers[related.id]);
-                    
+
                     verticeWrappers[related.id].AddChangeOrCommit(value);
                 }
             }
@@ -171,34 +169,29 @@ public class DataHolder
         startDate = minDate;
     }
 
-    public void UpdateUsageForFilter(DateTime from, DateTime to)
-    {
-        // TODO
-    }
 
-
-    public List<List<Pair<VerticeData,VerticeWrapper>>> GetVerticesForPlatform(VerticeType type)
+    public List<List<Pair<VerticeData, VerticeWrapper>>> GetVerticesForPlatform(VerticeType type)
     {
-        List<List<Pair<VerticeData,VerticeWrapper>>> list = new();
-        
-        foreach (var val in verticeWrappers.Values.Where(x=>x.verticeData.verticeType == type).OrderBy(x=>x.GetFirstDate()))
+        List<List<Pair<VerticeData, VerticeWrapper>>> list = new();
+
+        foreach (var val in verticeWrappers.Values.Where(x => x.verticeData.verticeType == type).OrderBy(x => x.GetFirstDate()))
         {
             if (type == VerticeType.RepoFile)
             {
                 // comparision by commits
-                list.Add(val.GetOrderedRelatedVerticesByType(VerticeType.Commit).Select(x=>new Pair<VerticeData,VerticeWrapper>(x,val)).ToList());
+                list.Add(val.GetOrderedRelatedVerticesByType(VerticeType.Commit).Select(x => new Pair<VerticeData, VerticeWrapper>(x, val)).ToList());
             }
             else if (type == VerticeType.Person)
             {
-                list.Add(new() { new Pair<VerticeData, VerticeWrapper>(null,val) });
+                list.Add(new() { new Pair<VerticeData, VerticeWrapper>(null, val) });
             }
             else
             {
                 // compare by changes
-                list.Add(val.GetOrderedRelatedVerticesByType(VerticeType.Change).Select(x=>new Pair<VerticeData,VerticeWrapper>(x,val)).ToList());
+                list.Add(val.GetOrderedRelatedVerticesByType(VerticeType.Change).Select(x => new Pair<VerticeData, VerticeWrapper>(x, val)).ToList());
             }
         }
-        
+
         return list;
     }
 }

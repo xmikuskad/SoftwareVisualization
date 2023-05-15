@@ -41,12 +41,12 @@ public class DataRenderer : MonoBehaviour
     private Dictionary<long, Dictionary<VerticeType, List<GameObject>>> verticePlatforms = new();
     private Dictionary<long, DateTime> currentProjectDate = new();
     private Dictionary<long, GameObject> datePlatformTrackers = new();
-    private Dictionary<long,DateTime> lastDate = new();
+    private Dictionary<long, DateTime> lastDate = new();
 
     public Dictionary<long, GameObject> projectNamesObjects = new();
     private long activeProjectId = -1;
     private List<LineRenderer> spawnedLines = new();
-    
+
     [Header("Properties")]
 
     public float renderDistanceBetweenObjs = 3;
@@ -79,7 +79,7 @@ public class DataRenderer : MonoBehaviour
     public GameObject linePrefab;
     public GameObject projectNamePrefab;
     public Material lineRendererMaterial;
-    
+
     [Header("References")]
 
     public Canvas hoverCanvas;
@@ -134,13 +134,14 @@ public class DataRenderer : MonoBehaviour
 
     private void Update()
     {
-        if(this.loadedProjects.Count == 0)
+        if (this.loadedProjects.Count == 0)
             return;
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             RenderNextDate();
-        } else if (Input.GetKeyDown(KeyCode.LeftArrow))
+        }
+        else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             RenderPreviousDate();
         }
@@ -153,7 +154,7 @@ public class DataRenderer : MonoBehaviour
         {
             lastDate[activeProjectId] = DateTime.MinValue.Date;
         }
-        
+
         foreach (var (key, value) in projectNamesObjects)
         {
             value.GetComponent<TMP_Text>().color = key == activeProjectId ? Color.red : Color.black;
@@ -161,14 +162,14 @@ public class DataRenderer : MonoBehaviour
 
         dateFilter[activeProjectId] = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
         // Load viz techniques
-        collabMatrix.fillMatrix(dataHolder);
+        collabMatrix.fillMatrix(dataHolder); // <-- subscribed in collabMatrix to project change
         contributionsCalendar.fillContributionsCalendar(dataHolder, dataHolder.startDate.Year);
         timelineRenderer.LoadTimeline(dataHolder);
         kiviatDiagram.initiateKiviat(dataHolder);
     }
 
 
-    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings,Dictionary<long,ShapeMapping> shapeMappings)
+    private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings, Dictionary<long, ShapeMapping> shapeMappings)
     {
         foreach (var (pid, val) in verticePlatforms)
         {
@@ -202,7 +203,7 @@ public class DataRenderer : MonoBehaviour
             newMat.color = colorMappings[ColorMapping.DATE_PLATFORM.id].color;
             platform.GetComponent<MeshRenderer>().material = newMat;
         }
-        
+
         foreach (var spawnedLine in spawnedLines)
         {
             Material lrMaterial = new Material(lineRendererMaterial);
@@ -213,7 +214,7 @@ public class DataRenderer : MonoBehaviour
         }
     }
 
-    private void OnVerticeSelected(List<Pair<VerticeData, VerticeWrapper>> list )
+    private void OnVerticeSelected(List<Pair<VerticeData, VerticeWrapper>> list)
     {
         PoolManager.Pools[PoolNames.LINES].DespawnAll();
 
@@ -225,7 +226,7 @@ public class DataRenderer : MonoBehaviour
 
             VerticeRenderer from = verticesWithEdges[p.Right.projectId][p.Right.verticeData.id]
                 .Where(x => x.commitOrChange?.id == p.Left.id).ToList()[0];
-            
+
             if (filterHolder.disabledVertices.Contains(from.verticeWrapper.verticeData.verticeType))
             {
                 continue;
@@ -272,13 +273,13 @@ public class DataRenderer : MonoBehaviour
         lr.SetPosition(1, to.transform.position);
         lr.startWidth = lineWidth;
         lr.endWidth = lineWidth;
-        
+
         spawnedLines.Add(lr);
     }
 
     private void OnReset(ResetEventReason reason)
     {
-        if(loadedProjects.Count == 0)
+        if (loadedProjects.Count == 0)
             return;
         if (reason == ResetEventReason.CLICK_OUTSIDE)
         {
@@ -288,9 +289,10 @@ public class DataRenderer : MonoBehaviour
                 RenderAllDates();
             }
             ClearLines();
-        } else if (reason == ResetEventReason.FILTER)
+        }
+        else if (reason == ResetEventReason.FILTER)
         {
-           ClearLines();
+            ClearLines();
         }
     }
 
@@ -342,8 +344,8 @@ public class DataRenderer : MonoBehaviour
         int days = (int)diff.TotalDays;
         Vector3 platformPos = datePlatformTrackers[projectId].transform.position;
         platformPos.z -= (1 + spaceBetweenObjects) * days;
-        
-        Debug.Log("Changing pos for "+projectId+" from "+datePlatformTrackers[projectId].transform.position+" to "+platformPos+ " | Last date "+lastDate[projectId]+" Current date "+currentProjectDate[projectId]);
+
+        Debug.Log("Changing pos for " + projectId + " from " + datePlatformTrackers[projectId].transform.position + " to " + platformPos + " | Last date " + lastDate[projectId] + " Current date " + currentProjectDate[projectId]);
 
         datePlatformTrackers[projectId].transform.position = platformPos;
 
@@ -406,8 +408,8 @@ public class DataRenderer : MonoBehaviour
         this.dateIndexTracker[dataHolder.projectId] = -1;
 
         RenderDataNew(dataHolder.projectId);
-        
-        if(this.filterHolder.disabledVertices.Count > 0)
+
+        if (this.filterHolder.disabledVertices.Count > 0)
             SingletonManager.Instance.dataManager.InvokeDataFilterEvent(filterHolder);
     }
 
@@ -665,7 +667,7 @@ public class DataRenderer : MonoBehaviour
             if (type != VerticeType.Person)
             {
                 SpawnVerticePlatform(zIndex, type, projectId, platformWidth, new Vector3(
-                        zIndex * (1 + spaceBetweenObjects)+0.5f,
+                        zIndex * (1 + spaceBetweenObjects) + 0.5f,
                         (-index) * platformDistanceBetween, platformWidth / 2f) + GetSpawnVector(projectId),
                     changes[0].Right);
             }

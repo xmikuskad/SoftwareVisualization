@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace UI
 {
-    public class TimelineBar: MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerUpHandler, IPointerDownHandler
+    public class TimelineBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerUpHandler, IPointerDownHandler
     {
         public TMP_Text tooltipObject;
         public DateTime date;
@@ -48,7 +48,7 @@ namespace UI
             SingletonManager.Instance.dataManager.DatesRangeSelectedEvent -= OnDatesRangeSelectedSelected;
             SingletonManager.Instance.dataManager.VerticesSelectedEvent -= OnVerticeSelected;
             SingletonManager.Instance.dataManager.DateChangeEvent -= OnDateChanged;
-            SingletonManager.Instance.dataManager.DateRenderChangedEvent += OnDateRenderChanged;
+            SingletonManager.Instance.dataManager.DateRenderChangedEvent -= OnDateRenderChanged;
         }
 
         public void OnDateRenderChanged(Pair<long, Pair<DateTime, DateTime>> pair)
@@ -63,7 +63,7 @@ namespace UI
                 this.image.material = originalMaterial;
                 return;
             }
-        
+
             if (this.date == date)
             {
                 SetHighlighted(true);
@@ -73,8 +73,8 @@ namespace UI
                 SetHidden(true);
             }
         }
-        
-        private void OnMappingChanged(Dictionary<long,ColorMapping> colorMappings,Dictionary<long,ShapeMapping> shapeMappings)
+
+        private void OnMappingChanged(Dictionary<long, ColorMapping> colorMappings, Dictionary<long, ShapeMapping> shapeMappings)
         {
             this.highlightMaterial.color = colorMappings[ColorMapping.HIGHLIGHTED.id].color;
             this.hiddenMaterial.color = colorMappings[ColorMapping.HIDDEN.id].color;
@@ -120,8 +120,8 @@ namespace UI
                 SetHidden(true);
             }
         }
-        
-        private void OnVerticeSelected(List<Pair<VerticeData,VerticeWrapper>> list)
+
+        private void OnVerticeSelected(List<Pair<VerticeData, VerticeWrapper>> list)
         {
             foreach (var val in list)
             {
@@ -131,13 +131,13 @@ namespace UI
                     return;
                 }
             }
-            
+
             SetHidden(true);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (tooltipObject!= null)
+            if (tooltipObject != null)
             {
                 tooltipObject.gameObject.SetActive(true);
                 // Vector3 mousePos = Input.mousePosition;
@@ -147,10 +147,10 @@ namespace UI
                 tooltipObject.text = date.ToString("dd/MM/yyyy");
             }
         }
- 
+
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (tooltipObject!= null)
+            if (tooltipObject != null)
             {
                 tooltipObject.gameObject.SetActive(false);
             }
@@ -171,7 +171,7 @@ namespace UI
         {
             this.timelineRenderer.SelectDate(this.date);
         }
-        
+
         public void OnPointerDown(PointerEventData eventData)   // This has to exists otherwise OnPointerUp is not called!
         {
         }
@@ -180,7 +180,7 @@ namespace UI
         {
             this.image.material = isHighlighted ? highlightMaterial : originalMaterial;
         }
-        
+
         public void SetHidden(bool isHidden)
         {
             this.image.material = isHidden ? hiddenMaterial : originalMaterial;
