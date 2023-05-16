@@ -221,8 +221,16 @@ namespace Data
             if (!Exists(selectedChange) && Exists(currentChange))
             {
                 VerticeWrapper currentChangeWrapper = currentVertice.relatedChangesOrCommits[currentChange.id];
-                return currentChangeWrapper.relatedVertices.ContainsKey(selectedVertice.verticeData.verticeType) &&
-                       currentChangeWrapper.relatedVertices[selectedVertice.verticeData.verticeType].Any(x => x.id == selectedVertice.verticeData.id);
+                if (selectedVertice.verticeData.verticeType == VerticeType.Person)
+                {
+                    return currentChangeWrapper.relatedVertices.ContainsKey(selectedVertice.verticeData.verticeType) &&
+                           currentChangeWrapper.relatedVertices[selectedVertice.verticeData.verticeType]
+                               .Any(x => x.id == selectedVertice.verticeData.id);
+                }
+                return currentVertice.verticeData.id == selectedVertice.verticeData.id && 
+                       currentChangeWrapper.relatedVertices.ContainsKey(selectedVertice.verticeData.verticeType) &&
+                       currentChangeWrapper.relatedVertices[selectedVertice.verticeData.verticeType]
+                           .Any(x => x.id == selectedVertice.verticeData.id);
             }
             
             // Only person doesnt have a change/commit attached
