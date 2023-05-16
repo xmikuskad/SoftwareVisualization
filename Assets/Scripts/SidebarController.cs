@@ -98,9 +98,9 @@ public class SidebarController : MonoBehaviour
     // project ID, list vsetkych objektov ktore su oznacene <commit/change/null, ticket/person/repo/file/wiki>
     private void OnVerticeSelected(List<Pair<VerticeData, VerticeWrapper>> list)
     {
-        if(list.Count == 0)
+        if (list.Count == 0)
             return;
-        
+
         unfilteredCurrentlyClickedObjects = list;
         currentlyClickedObjects = list.Where(x => !filterHolder.disabledVertices.Contains(x.Right.verticeData.verticeType)).ToList();
 
@@ -480,7 +480,8 @@ public class SidebarController : MonoBehaviour
 
     public void showCollabMatrix()
     {
-        collabMatrix.SetActive(true);
+        if (collabMatrix.gameObject.activeInHierarchy == false) collabMatrix.SetActive(true);
+        else collabMatrix.SetActive(false);
     }
 
     public void deactivateOverlayButtons()

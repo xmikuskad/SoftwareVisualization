@@ -160,7 +160,7 @@ public class DataRenderer : MonoBehaviour
             value.GetComponent<TMP_Text>().color = key == activeProjectId ? Color.red : Color.black;
         }
 
-        if(!dateFilter.ContainsKey(activeProjectId))
+        if (!dateFilter.ContainsKey(activeProjectId))
             dateFilter[activeProjectId] = new Pair<DateTime, DateTime>(DateTime.MinValue.Date, DateTime.MinValue.Date);
         // Load viz techniques
         collabMatrix.fillMatrix(dataHolder); // <-- subscribed in collabMatrix to project change
@@ -470,13 +470,13 @@ public class DataRenderer : MonoBehaviour
         GameObject go = Instantiate(arrowPrefab);
         Vector3 from = new Vector3(-helperDistanceFromGraph, 0, -helperDistanceFromGraph) + GetSpawnVector(projectId);
         Vector3 to = new Vector3(-helperDistanceFromGraph, 0, -helperDistanceFromGraph + platformWidth) + GetSpawnVector(projectId);
-        go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f, "Changes", Direction.LEFT);
+        go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f, "Time", Direction.LEFT);
 
 
         go = Instantiate(arrowPrefab);
         from = new Vector3(-helperDistanceFromGraph, 0, -helperDistanceFromGraph) + GetSpawnVector(projectId);
         to = new Vector3(-helperDistanceFromGraph + platformWidth, 0, -helperDistanceFromGraph) + GetSpawnVector(projectId);
-        go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f, "Elements", Direction.RIGHT);
+        go.GetComponent<ArrowRenderer>().SetUp(from, to, 2f, "Artifacts", Direction.RIGHT);
 
 
         go = Instantiate(projectNamePrefab, GetSpawnVector(projectId) + new Vector3(maxCount / 2f, projectNameDistance, platformWidth / 2f), Quaternion.identity);
