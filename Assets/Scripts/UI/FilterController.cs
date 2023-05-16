@@ -8,10 +8,10 @@ using UnityEngine.UI;
 
 public class FilterController : MonoBehaviour
 {
-    private Dictionary<EdgeType, Toggle> edgeFilter = new ();
+    private Dictionary<EdgeType, Toggle> edgeFilter = new();
     private Dictionary<VerticeType, Toggle> verticeFilter = new();
 
-    [Header("References")] 
+    [Header("References")]
     public GameObject verticeSpawn;
     public GameObject edgeSpawn;
     public GameObject checkboxPrefab;
@@ -28,8 +28,8 @@ public class FilterController : MonoBehaviour
         //     t.isOn = true;
         //     edgeFilter.Add(type,t);
         // }
-        
-        foreach (VerticeType type in (VerticeType[]) Enum.GetValues(typeof(VerticeType)))
+
+        foreach (VerticeType type in (VerticeType[])Enum.GetValues(typeof(VerticeType)))
         {
             // if(type == VerticeType.Change) continue;
             // if(type == VerticeType.Commit) continue;
@@ -37,7 +37,7 @@ public class FilterController : MonoBehaviour
             verticeCheckbox.GetComponentInChildren<TMP_Text>().text = type.ToString();
             Toggle t = verticeCheckbox.GetComponent<Toggle>();
             t.isOn = true;
-            verticeFilter.Add(type,t);
+            verticeFilter.Add(type, t);
         }
     }
 
@@ -45,8 +45,8 @@ public class FilterController : MonoBehaviour
     {
         SingletonManager.Instance.dataManager.InvokeResetEvent(ResetEventReason.FILTER);
         SingletonManager.Instance.dataManager.InvokeDataFilterEvent(new FilterHolder(
-            edgeFilter.Where(i=>!i.Value.isOn).Select(pair=>pair.Key).ToHashSet(),
-            verticeFilter.Where(i=>!i.Value.isOn).Select(pair=>pair.Key).ToHashSet()));
+            edgeFilter.Where(i => !i.Value.isOn).Select(pair => pair.Key).ToHashSet(),
+            verticeFilter.Where(i => !i.Value.isOn).Select(pair => pair.Key).ToHashSet()));
         CloseDialog();
     }
 
@@ -55,15 +55,16 @@ public class FilterController : MonoBehaviour
         dialogObj.SetActive(false);
         SingletonManager.Instance.pauseManager.SetEverythingPaused(false);
     }
-    
+
     public void OpenDialog()
     {
+        if (dialogObj.gameObject.activeInHierarchy) { CloseDialog(); return; }
         // This has to be 2 times
         dialogObj.SetActive(true);
         dialogObj.SetActive(true);
         SingletonManager.Instance.pauseManager.SetEverythingPaused(true);
     }
-    
+
     public void SetSpeed(float speed)
     {
         SingletonManager.Instance.animationManager.SetSpeed(speed);

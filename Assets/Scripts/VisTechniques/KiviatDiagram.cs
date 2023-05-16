@@ -236,4 +236,10 @@ public class KiviatDiagram : MonoBehaviour
         return filteredVerticeDatas;
     }
 
+    public void setActiveOrInactiveKekw()
+    {
+        if (kiviatDiagramMain.gameObject.activeInHierarchy == true) kiviatDiagramMain.gameObject.SetActive(false);
+        else kiviatDiagramMain.gameObject.SetActive(true);
+    }
+
 }

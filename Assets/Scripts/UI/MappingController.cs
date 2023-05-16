@@ -11,8 +11,8 @@ namespace UI
 {
     public class MappingController : MonoBehaviour
     {
-        private Dictionary<long, ColorMapping> tempColorMappings = new ();
-        private Dictionary<long, ShapeMapping> tempShapeMappings = new ();
+        private Dictionary<long, ColorMapping> tempColorMappings = new();
+        private Dictionary<long, ShapeMapping> tempShapeMappings = new();
         private Dictionary<long, Image> colorMappingImgs = new();
 
         private long selectedMapping = -1;
@@ -21,10 +21,10 @@ namespace UI
         public GameObject colorListItem;
         public GameObject colorListItemHolder;
         public ColorPicker colorPicker;
-        
+
         public GameObject shapeListItem;
         public GameObject shapeListItemHolder;
-        
+
         public GameObject shapeChoiceListItem;
         public GameObject shapeChoiceListItemHolder;
 
@@ -32,6 +32,9 @@ namespace UI
 
         public void OpenDialog()
         {
+
+            if (dialog.activeInHierarchy) { CloseDialog(); return; }
+
             ResetObjects();
             tempColorMappings = SingletonManager.Instance.preferencesManager.GetColorMappings();
             tempShapeMappings = SingletonManager.Instance.preferencesManager.GetShapeMappings();
@@ -44,27 +47,27 @@ namespace UI
                 img.color = colorMapping.color;
                 colorMappingImgs[colorMapping.id] = img;
                 go.GetComponentInChildren<TMP_Text>().text = colorMapping.name;
-                go.GetComponentInChildren<Button>().onClick.AddListener(() =>SelectMapping(tmp));
+                go.GetComponentInChildren<Button>().onClick.AddListener(() => SelectMapping(tmp));
             }
-            
+
             foreach (var shapeMapping in tempShapeMappings.Values)
             {
                 ShapeMapping tmp = shapeMapping;
                 GameObject go = Instantiate(shapeListItem, shapeListItemHolder.transform);
                 go.GetComponentInChildren<TMP_Text>().text = shapeMapping.name;
-                go.GetComponentInChildren<Button>().onClick.AddListener(() =>SelectMapping(tmp));
+                go.GetComponentInChildren<Button>().onClick.AddListener(() => SelectMapping(tmp));
             }
-            
-            foreach (VerticeShape s in (VerticeShape[]) Enum.GetValues(typeof(VerticeShape)))
+
+            foreach (VerticeShape s in (VerticeShape[])Enum.GetValues(typeof(VerticeShape)))
             {
                 VerticeShape _s = s;
                 GameObject go = Instantiate(shapeChoiceListItem, shapeChoiceListItemHolder.transform);
                 shapeChoices.Add(go);
                 go.GetComponentInChildren<TMP_Text>().text = s.ToString();
                 go.GetComponentInChildren<Image>().enabled = false;
-                go.GetComponentInChildren<Button>().onClick.AddListener(() =>SelectMapping(s));
+                go.GetComponentInChildren<Button>().onClick.AddListener(() => SelectMapping(s));
             }
-            
+
             // This actually needs to be duplicated!!
             dialog.SetActive(true);
             dialog.SetActive(true);
@@ -77,7 +80,7 @@ namespace UI
             shapeChoiceListItemHolder.gameObject.SetActive(false);
             dialog.SetActive(false);
         }
-        
+
         // Called from ColorPicker
         public void ColorChanged(Color32 color)
         {
@@ -92,12 +95,12 @@ namespace UI
             colorPicker.Color = colorMapping.color;
             colorPicker.gameObject.SetActive(true);
         }
-        
+
         public void SelectMapping(ShapeMapping shapeMapping)
         {
             this.selectedMapping = shapeMapping.id;
             shapeChoiceListItemHolder.gameObject.SetActive(true);
-            
+
             foreach (int i in Enum.GetValues(typeof(VerticeShape)))
             {
                 ShapeMapping _s = shapeMapping;
@@ -115,7 +118,7 @@ namespace UI
         public void SelectMapping(VerticeShape s)
         {
             this.tempShapeMappings[selectedMapping].shape = s;
-            
+
             foreach (int i in Enum.GetValues(typeof(VerticeShape)))
             {
                 ShapeMapping _s = tempShapeMappings[selectedMapping];
@@ -159,5 +162,14 @@ namespace UI
         {
             this.selectedMapping = -1;
         }
+
+
+        public void CloseDialog()
+        {
+            dialog.SetActive(false);
+            shapeChoiceListItemHolder.SetActive(false);
+            colorPicker.gameObject.SetActive(false);
+        }
+
     }
 }
