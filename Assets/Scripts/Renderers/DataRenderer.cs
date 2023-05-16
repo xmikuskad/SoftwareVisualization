@@ -198,6 +198,18 @@ public class DataRenderer : MonoBehaviour
             }
         }
 
+        foreach (var (pid, val) in platforms)
+        {
+            foreach (var (key, value) in val)
+            {
+                Color32 color =
+                    colorMappings[SingletonManager.Instance.preferencesManager.GetColorMappingByType(key).id].color;
+                Material newMat = new Material(transparentMaterial);
+                newMat.color = color;
+                value.GetComponent<MeshRenderer>().material = newMat;
+            }
+        }
+
         foreach (var (key, platform) in datePlatformTrackers)
         {
             Material newMat = new Material(verticeMaterial);
@@ -408,10 +420,15 @@ public class DataRenderer : MonoBehaviour
         this.loadedProjects.Add(dataHolder.projectId, dataHolder);
         this.dateIndexTracker[dataHolder.projectId] = -1;
 
+        if (this.filterHolder == null)
+        {
+            this.filterHolder = new();
+        }
         RenderDataNew(dataHolder.projectId);
-
         if (this.filterHolder.disabledVertices.Count > 0)
+        {
             SingletonManager.Instance.dataManager.InvokeDataFilterEvent(filterHolder);
+        }
     }
 
     // public void ResetData(bool resetAll)

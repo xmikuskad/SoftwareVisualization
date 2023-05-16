@@ -46,6 +46,7 @@ public class SidebarController : MonoBehaviour
         SingletonManager.Instance.dataManager.VerticesSelectedEvent += OnVerticeSelected;
         SingletonManager.Instance.dataManager.ResetEvent += OnAllVerticesDeselected;
         SingletonManager.Instance.dataManager.DataFilterEvent += OnDataFilter;
+        SingletonManager.Instance.dataManager.SpecificVerticeSelected += OnSpecificVerticeSelected;
     }
     void Update()
     {
@@ -93,6 +94,14 @@ public class SidebarController : MonoBehaviour
     private void OnAllVerticesDeselected(ResetEventReason reason)
     {
         slideIn();
+    }
+
+    private void OnSpecificVerticeSelected(long projectId, VerticeWrapper verticeWrapper)
+    {
+        OnVerticeSelected(new List<Pair<VerticeData, VerticeWrapper>>()
+        {
+            new(null,verticeWrapper)
+        });
     }
 
     // project ID, list vsetkych objektov ktore su oznacene <commit/change/null, ticket/person/repo/file/wiki>
