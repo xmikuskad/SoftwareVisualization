@@ -15,7 +15,7 @@ namespace UI
     {
         private long projectId = -1;
         private FilterHolder f = new();
-        
+
         [Header("References")] public GameObject dialog;
         [FormerlySerializedAs("colorListItem")] public GameObject listItem;
         [FormerlySerializedAs("colorListItemHolder")] public GameObject listItemHolder;
@@ -41,6 +41,7 @@ namespace UI
 
         public void OpenDialog()
         {
+            if (dialog.gameObject.activeInHierarchy) { CloseDialog(); return; }
             // This actually needs to be duplicated!!
             dialog.SetActive(true);
             dialog.SetActive(true);
@@ -56,7 +57,7 @@ namespace UI
 
         private void Search(VerticeWrapper v)
         {
-            SingletonManager.Instance.dataManager.InvokeSpecificVerticeSelected(projectId,v);
+            SingletonManager.Instance.dataManager.InvokeSpecificVerticeSelected(projectId, v);
             CloseDialog();
         }
 
